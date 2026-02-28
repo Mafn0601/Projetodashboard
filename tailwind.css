@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Melhorar acessibilidade e legibilidade */
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Melhorar foco para navegação por teclado */
+  :focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+
+  /* Melhorar legibilidade de links */
+  a {
+    @apply underline-offset-2;
+  }
+
+  /* Melhorar contraste de placeholders */
+  ::placeholder {
+    @apply text-slate-500;
+  }
+
+  /* Melhorar scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-400 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-500;
+  }
+}
+
+@layer components {
+  /* Botões com melhor feedback visual */
+  button {
+    @apply transition-all duration-200;
+  }
+
+  /* Inputs com melhor foco */
+  input, textarea, select {
+    @apply transition-all duration-200;
+  }
+
+  /* Cards com sombra consistente */
+  .card {
+    @apply rounded-xl border-2 border-slate-300 bg-white p-6 shadow-md;
+  }
+}

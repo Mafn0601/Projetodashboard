@@ -1,0 +1,1 @@
+// Arquivo movido para app/cadastros/cliente/consulta/page.tsx

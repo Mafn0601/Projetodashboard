@@ -1,0 +1,1 @@
+// Moved to components/cliente/ClientsTable.tsx

@@ -36,8 +36,8 @@ export default function ClienteTable({ clientes, onDelete }: Props) {
   return (
     <>
       <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-        <div className="scrollbar-thin max-h-80 overflow-auto">
-          <table className="w-full text-left text-xs">
+        <div className="scrollbar-thin max-h-80 overflow-auto overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[600px]">
           <thead className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 sticky top-0">
             <tr>
               <th className="px-3 py-2 font-medium">Cliente</th>

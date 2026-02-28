@@ -251,7 +251,7 @@ export default function AgendaOrcamentoModal({
           <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">
             Informações do Orçamento
           </h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-slate-600 dark:text-slate-400">Cliente</p>
               <p className="font-medium text-slate-900 dark:text-slate-100">

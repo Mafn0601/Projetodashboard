@@ -1,14 +1,16 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthContext';
 import { Sidebar } from './Sidebar';
 import { cn } from '@/lib/utils';
+import { Menu } from 'lucide-react';
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user, isLoading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const isLoginPage = pathname === '/login';
   const showSidebar = !isLoginPage && user && !isLoading;
@@ -44,10 +46,26 @@ export function AppLayout({ children }: { children: ReactNode }) {
   // Renderiza com sidebar se autenticado
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
-      {showSidebar && <Sidebar />}
+      {showSidebar && (
+        <>
+          <Sidebar 
+            mobileMenuOpen={mobileMenuOpen} 
+            onMobileMenuClose={() => setMobileMenuOpen(false)}
+          />
+          {/* Botão hambúrguer mobile */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="md:hidden fixed top-4 left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-colors"
+            aria-label="Abrir menu"
+          >
+            <Menu size={24} />
+          </button>
+        </>
+      )}
       <main className={cn(
         "flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 scrollbar-thin",
-        showSidebar ? "p-8" : "p-0"
+        showSidebar ? "p-4 md:p-8" : "p-0",
+        showSidebar && "pt-20 md:pt-8" // espaço para botão hambúrguer em mobile
       )}>
         <div className={cn(
           showSidebar ? "mx-auto max-w-6xl space-y-6" : "h-full"

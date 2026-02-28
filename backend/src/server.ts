@@ -27,6 +27,11 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.send('API Online 🚀');
+});
+
 // Rotas
 app.use('/api', routes);
 

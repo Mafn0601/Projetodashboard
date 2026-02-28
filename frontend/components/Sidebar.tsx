@@ -173,7 +173,12 @@ const SECTIONS_ORDER = [
   "Inteligência"
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileMenuOpen?: boolean;
+  onMobileMenuClose?: () => void;
+}
+
+export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarProps = {}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -209,7 +214,14 @@ export function Sidebar() {
     setExpandedSections(newExpanded);
   };
 
-  return (
+  const handleLinkClick = () => {
+    // Fechar drawer mobile ao clicar em um link
+    if (onMobileMenuClose) {
+      onMobileMenuClose();
+    }
+  };
+
+  const sidebarContent = (
     <aside
       className={cn(
         "flex h-screen flex-col border-r-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 text-slate-900 dark:text-slate-100 transition-all duration-200 shadow-lg sticky top-0",
@@ -275,6 +287,7 @@ export function Sidebar() {
                     >
                       <Link
                         href={item.href}
+                        onClick={handleLinkClick}
                         className={cn(
                           "flex flex-1 items-center rounded-lg text-base font-semibold transition-all",
                           collapsed ? "justify-center p-3" : "gap-3 px-3 py-3",
@@ -337,7 +350,7 @@ export function Sidebar() {
             </button>
 
             {userMenuOpen && (
-              <div className="absolute top-12 left-full ml-2 w-80 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-40 -translate-y-full">
+              <div className="absolute bottom-full left-0 md:top-12 md:left-full md:ml-2 mb-2 md:mb-0 w-80 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-40 md:-translate-y-full">
                 {/* Header do menu com info do usuário */}
                 <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-4 py-4 border-b border-slate-200 dark:border-slate-700">
                   <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{user.name}</p>
@@ -396,6 +409,32 @@ export function Sidebar() {
 
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Overlay para mobile */}
+      {mobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={onMobileMenuClose}
+          aria-hidden="true"
+        />
+      )}
+      
+      {/* Sidebar Desktop - fixa, escondida em mobile */}
+      <div className="hidden md:block">
+        {sidebarContent}
+      </div>
+      
+      {/* Sidebar Mobile - drawer overlay */}
+      <div className={cn(
+        "md:hidden fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
+        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        {sidebarContent}
+      </div>
+    </>
   );
 }
 

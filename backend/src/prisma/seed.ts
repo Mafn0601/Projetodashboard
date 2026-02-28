@@ -25,7 +25,7 @@ async function main() {
 
   // Criar parceiro exemplo
   const parceiro = await prisma.parceiro.upsert({
-    where: { nome: 'Parceiro Central' },
+    where: { cnpj: '12345678000190' },
     update: {},
     create: {
       nome: 'Parceiro Central',

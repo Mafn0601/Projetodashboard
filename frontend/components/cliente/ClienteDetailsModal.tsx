@@ -168,70 +168,70 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
           {/* Body */}
           <div className="p-6 space-y-6">
           {/* Seção: Informações do Cliente */}
-          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-5 md:p-4 border border-slate-200 dark:border-slate-800">
-            <h3 className="text-base md:text-sm font-semibold text-slate-900 dark:text-slate-100 mb-5 md:mb-4">Informações do Cliente</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-4">
+           <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações do Cliente</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Nome</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100 font-medium">{cliente.nomeCliente}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Nome</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{cliente.nomeCliente}</p>
               </div>
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Email</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100">{cliente.emailCliente || '-'}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Email</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{cliente.emailCliente || '-'}</p>
               </div>
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Telefone</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100">{cliente.telefone || '-'}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Telefone</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{cliente.telefone || '-'}</p>
               </div>
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">CPF/CNPJ</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100 font-mono">{cliente.cpfCnpj || '-'}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">CPF/CNPJ</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100 font-mono">{cliente.cpfCnpj || '-'}</p>
               </div>
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Responsável</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100">{obterLabelResponsavel(cliente.responsavel)}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Responsável</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelResponsavel(cliente.responsavel)}</p>
               </div>
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Parceiro</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100">{obterLabelParceiro(cliente.parceiro)}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Parceiro</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelParceiro(cliente.parceiro)}</p>
               </div>
             </div>
           </div>
 
           {/* Seção: Informações do Veículo */}
-          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-5 md:p-4 border border-slate-200 dark:border-slate-800">
-            <h3 className="text-base md:text-sm font-semibold text-slate-900 dark:text-slate-100 mb-5 md:mb-4">Informações do Veículo</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-4">
+           <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações do Veículo</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Fabricante</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100 font-medium">{obterLabelFabricante(cliente.fabricante)}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Fabricante</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{obterLabelFabricante(cliente.fabricante)}</p>
               </div>
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Modelo</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100">{obterLabelModelo(cliente.fabricante, cliente.modelo)}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Modelo</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelModelo(cliente.fabricante, cliente.modelo)}</p>
               </div>
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Placa/Chassi</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100 font-mono">{cliente.placaChassi || cliente.placa || cliente.chassi || '-'}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Placa/Chassi</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100 font-mono">{cliente.placaChassi || cliente.placa || cliente.chassi || '-'}</p>
               </div>
               <div>
-                <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Cor</p>
-                <p className="text-base md:text-sm text-slate-900 dark:text-slate-100">{cliente.cor || '-'}</p>
+               <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Cor</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{cliente.cor || '-'}</p>
               </div>
             </div>
           </div>
 
           {/* Seção: Metadados */}
-          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-5 md:p-4 border border-slate-200 dark:border-slate-800">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-4 text-sm md:text-xs">
+          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div>
-                <p className="text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Criado em</p>
+                <p className="text-slate-700 dark:text-slate-400 mb-1">Criado em</p>
                 <p className="text-slate-600 dark:text-slate-300">
                   {new Date(cliente.dataCriacao).toLocaleDateString('pt-BR')}
                 </p>
               </div>
               <div>
-                <p className="text-slate-700 dark:text-slate-400 mb-2 md:mb-1">Atualizado em</p>
+                 <p className="text-slate-700 dark:text-slate-400 mb-1">Atualizado em</p>
                 <p className="text-slate-600 dark:text-slate-300">
                   {new Date(cliente.dataAtualizacao).toLocaleDateString('pt-BR')}
                 </p>

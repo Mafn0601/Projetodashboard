@@ -19,9 +19,9 @@ export default function Page() {
         variant="success"
       />
 
-      <header className="flex items-center justify-between gap-4 mb-2">
+        <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white">
             Dashboard Comercial
           </h1>
           <p className="mt-3 text-base md:text-lg text-slate-700 dark:text-slate-400">
@@ -30,7 +30,7 @@ export default function Page() {
         </div>
       </header>
 
-      <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-400 dark:border-blue-600">
           <p className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
             OS Criadas

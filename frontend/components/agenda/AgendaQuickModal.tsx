@@ -442,21 +442,21 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Info do Cliente */}
         <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
-          <h3 className="text-base md:text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4 md:mb-3">Cliente</h3>
-          <div className="grid md:grid-cols-2 gap-4 md:gap-3 text-base md:text-sm">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">Cliente</h3>
+          <div className="grid md:grid-cols-2 gap-3 text-sm">
             <div>
-              <p className="text-sm md:text-xs text-slate-600 dark:text-slate-400 mb-1">Nome</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Nome</p>
               <p className="text-slate-900 dark:text-slate-100 font-medium">{cliente.nomeCliente}</p>
             </div>
             <div>
-              <p className="text-sm md:text-xs text-slate-600 dark:text-slate-400 mb-1">Telefone</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Telefone</p>
               <p className="text-slate-900 dark:text-slate-100">{cliente.telefone}</p>
             </div>
           </div>
         </div>
 
         {/* Formul\u00e1rio */}
-        <div className="space-y-4 md:space-y-3">
+        <div className="space-y-3">
           {isLoading && (
             <p className="text-sm text-slate-600 dark:text-slate-300">Carregando dados do agendamento...</p>
           )}

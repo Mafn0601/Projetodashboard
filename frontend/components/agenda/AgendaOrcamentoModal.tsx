@@ -247,31 +247,31 @@ export default function AgendaOrcamentoModal({
     >
       <div className="space-y-6">
         {/* Informações do Orçamento (Read-only) */}
-        <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-5 md:p-4 space-y-4 md:space-y-3">
-          <h3 className="font-semibold text-base md:text-sm text-slate-900 dark:text-slate-100 mb-4 md:mb-3">
+        <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 space-y-3">
+          <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 mb-3">
             Informações do Orçamento
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-4 text-base md:text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-slate-600 dark:text-slate-400 mb-1">Cliente</p>
+              <p className="text-slate-600 dark:text-slate-400">Cliente</p>
               <p className="font-medium text-slate-900 dark:text-slate-100">
                 {dadosOrcamento.nomeCliente}
               </p>
             </div>
             <div>
-              <p className="text-slate-600 dark:text-slate-400 mb-1">Veículo</p>
+                <p className="text-slate-600 dark:text-slate-400">Veículo</p>
               <p className="font-medium text-slate-900 dark:text-slate-100">
                 {dadosOrcamento.veiculo}
               </p>
             </div>
             <div>
-              <p className="text-slate-600 dark:text-slate-400 mb-1">Placa</p>
+                <p className="text-slate-600 dark:text-slate-400">Placa</p>
               <p className="font-medium text-slate-900 dark:text-slate-100">
                 {dadosOrcamento.placa}
               </p>
             </div>
             <div>
-              <p className="text-slate-600 dark:text-slate-400 mb-1">Responsável</p>
+                <p className="text-slate-600 dark:text-slate-400">Responsável</p>
               <p className="font-medium text-slate-900 dark:text-slate-100">
                 {dadosOrcamento.responsavel}
               </p>

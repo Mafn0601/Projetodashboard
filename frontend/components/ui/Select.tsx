@@ -98,7 +98,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         {label ? (
           <label
             htmlFor={selectId}
-            className="text-base md:text-sm font-medium text-slate-700 dark:text-slate-300"
+            className="text-sm font-medium text-slate-700 dark:text-slate-300"
           >
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
@@ -111,7 +111,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             onClick={() => !disabled && setIsOpen(!isOpen)}
             disabled={disabled}
             className={cn(
-              "flex h-12 md:h-11 w-full min-w-0 items-center justify-between rounded-lg border-2 bg-white dark:bg-slate-800 px-4 text-base md:text-sm text-slate-900 dark:text-slate-100 shadow-sm outline-none transition-all duration-200",
+              "flex h-11 w-full min-w-0 items-center justify-between rounded-lg border-2 bg-white dark:bg-slate-800 px-4 text-sm text-slate-900 dark:text-slate-100 shadow-sm outline-none transition-all duration-200",
               "hover:border-slate-400 dark:hover:border-slate-500",
               "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:shadow-md",
               "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50 dark:disabled:bg-slate-900",

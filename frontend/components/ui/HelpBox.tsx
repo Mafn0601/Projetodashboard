@@ -26,14 +26,14 @@ export function HelpBox({ title, message, variant = 'info', className }: HelpBox
 
   return (
     <div className={cn(
-      'rounded-lg border-2 p-5 md:p-4 flex gap-4 md:gap-3',
+      'rounded-lg border-2 p-4 flex gap-3',
       variantClasses[variant],
       className
     )}>
-      <HelpCircle className={cn('h-7 w-7 md:h-6 md:w-6 flex-shrink-0 mt-0.5', iconColor[variant])} />
+      <HelpCircle className={cn('h-6 w-6 flex-shrink-0 mt-0.5', iconColor[variant])} />
       <div className="flex-1">
-        {title && <h3 className="font-bold text-lg md:text-base mb-2 md:mb-1">{title}</h3>}
-        <p className="text-base leading-relaxed">{message}</p>
+        {title && <h3 className="font-bold text-base mb-1">{title}</h3>}
+        <p className="text-sm md:text-base">{message}</p>
       </div>
     </div>
   );

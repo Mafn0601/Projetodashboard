@@ -64,11 +64,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
       )}
       <main className={cn(
         "flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 scrollbar-thin",
-        showSidebar ? "p-5 md:p-8" : "p-0",
-        showSidebar && "pt-24 md:pt-8" // espaço para botão hambúrguer em mobile
+        showSidebar ? "p-4 md:p-8" : "p-0",
+        showSidebar && "pt-20 md:pt-8" // espaço para botão hambúrguer em mobile
       )}>
         <div className={cn(
-          showSidebar ? "mx-auto max-w-6xl space-y-8" : "h-full"
+          showSidebar ? "mx-auto max-w-6xl space-y-5 md:space-y-6" : "h-full"
         )}>
           {children}
         </div>

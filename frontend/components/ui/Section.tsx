@@ -12,7 +12,7 @@ type SectionProps = {
 
 export function Section({ title, description, children, className }: SectionProps) {
   return (
-    <section className={cn('space-y-5 md:space-y-4', className)}>
+    <section className={cn('space-y-4', className)}>
       {title && (
         <div>
           <h2 className="text-2xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">{title}</h2>

@@ -34,12 +34,12 @@ export function Modal({
 
   return (
     <div 
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm overflow-y-auto p-5 md:p-8"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm overflow-y-auto p-4 md:p-8"
       onClick={handleBackdropClick}
     >
       <div
         className={cn(
-          "relative w-full max-w-lg rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 md:p-8 shadow-2xl my-auto",
+          "relative w-full max-w-lg rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 md:p-8 shadow-2xl my-auto",
           className
         )}
       >
@@ -51,18 +51,18 @@ export function Modal({
         </button>
 
         {title ? (
-          <div className="mb-5 md:mb-6 pr-12">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">{title}</h2>
+          <div className="mb-4 md:mb-6 pr-12">
+            <h2 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-slate-100">{title}</h2>
             {description ? (
-              <p className="mt-2 md:mt-3 text-sm md:text-base text-slate-600 dark:text-slate-400">{description}</p>
+              <p className="mt-2 text-sm md:text-base text-slate-600 dark:text-slate-400">{description}</p>
             ) : null}
           </div>
         ) : null}
 
-        <div className="mt-5 md:mt-6 space-y-5 md:space-y-6 overflow-visible">{children}</div>
+        <div className="mt-4 md:mt-6 space-y-4 md:space-y-6 overflow-visible">{children}</div>
 
         {showFooter ? (
-          <div className="mt-6 md:mt-8 flex flex-col sm:flex-row justify-end gap-3 md:gap-4">
+          <div className="mt-5 md:mt-8 flex flex-col sm:flex-row justify-end gap-2 md:gap-4">
             <Button
               variant="ghost"
               size="md"

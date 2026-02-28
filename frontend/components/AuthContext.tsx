@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Redirecionar para login se não autenticado
   useEffect(() => {
     if (!isLoading && !user && pathname !== '/login') {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [user, isLoading, pathname, router]);
 
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUser(userFromEquipe);
       localStorage.setItem('user', JSON.stringify(userFromEquipe));
-      router.push('/');
+      router.replace('/');
       return true;
     }
 
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { password: _, ...userWithoutPassword } = foundUser;
       setUser(userWithoutPassword);
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      router.push('/');
+      router.replace('/');
       return true;
     }
 
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    router.push('/login');
+    router.replace('/login');
   };
 
   return (

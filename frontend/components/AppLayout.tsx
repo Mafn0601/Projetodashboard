@@ -30,6 +30,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="text-center">
+          <div className="inline-flex h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-r-transparent"></div>
+          <p className="mt-4 text-slate-700 dark:text-slate-400">Redirecionando para login...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Renderiza com sidebar se autenticado
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-900">

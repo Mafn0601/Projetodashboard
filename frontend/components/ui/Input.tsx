@@ -18,7 +18,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label ? (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            className="text-base md:text-sm font-medium text-slate-700 dark:text-slate-300"
           >
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
@@ -28,7 +28,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           ref={ref}
           className={cn(
-            "flex h-11 w-full rounded-lg border-2 bg-white dark:bg-slate-800 px-4 text-sm text-slate-900 dark:text-slate-100 shadow-sm outline-none ring-offset-white dark:ring-offset-slate-900 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-200",
+            "flex h-12 md:h-11 w-full rounded-lg border-2 bg-white dark:bg-slate-800 px-4 text-base md:text-sm text-slate-900 dark:text-slate-100 shadow-sm outline-none ring-offset-white dark:ring-offset-slate-900 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-200",
             "hover:border-slate-400 dark:hover:border-slate-500",
             "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:shadow-md",
             "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50 dark:disabled:bg-slate-900",

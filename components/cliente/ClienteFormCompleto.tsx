@@ -133,6 +133,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         descricaoServico: initial.descricaoServico || '',
           formaPagamento: initial.formaPagamento || '',
           meioPagamento: initial.meioPagamento || '',
+          origemPedido: initial.origemPedido || 'EXTERNO',
       });
     } else {
       setFormData({
@@ -157,6 +158,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         descricaoServico: '',
           formaPagamento: '',
           meioPagamento: '',
+          origemPedido: 'EXTERNO',
       });
     }
     setErrors({});

@@ -492,9 +492,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
                   <button
                     type="button"
-                    onMouseDown={() => console.log('THEME BUTTON MOUSE DOWN!!!')}
-                    onClick={(e) => {
-                      console.log('THEME BUTTON ONCLICK TRIGGERED!!!');
+                    onMouseDown={(e) => {
+                      console.log('THEME BUTTON MOUSE DOWN - EXECUTING TOGGLE!!!');
                       e.preventDefault();
                       e.stopPropagation();
                       handleThemeToggle();

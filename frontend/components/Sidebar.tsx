@@ -293,23 +293,22 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       <div className="mb-6 flex items-center justify-between gap-3">
         <div 
           className={cn(
-            "flex flex-col transition-all duration-200",
+            "flex flex-col transition-all duration-200 overflow-hidden",
             collapsed 
-              ? "opacity-0 w-0 overflow-hidden pointer-events-none" 
-              : "opacity-100 w-auto"
+              ? "opacity-0 max-w-0" 
+              : "opacity-100 max-w-xs"
           )}
         >
-          <span className="text-sm font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+          <span className="text-sm font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 whitespace-nowrap">
             Menu
           </span>
-          <span className="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">
+          <span className="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap">
             Gestão de OS e Vendas
           </span>
         </div>
         <button
           className={cn(
-            "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors",
-            collapsed && "mx-auto"
+            "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex-shrink-0"
           )}
           onClick={() => setCollapsed((v) => !v)}
           aria-label="Alternar tamanho do menu"

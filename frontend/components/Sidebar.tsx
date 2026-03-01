@@ -200,12 +200,12 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     if (!mounted) return;
     
     const html = document.documentElement;
-    if (theme === 'dark') {
+    const isDark = theme === 'dark';
+    
+    if (isDark) {
       html.classList.add('dark');
-      document.body.classList.add('dark');
     } else {
       html.classList.remove('dark');
-      document.body.classList.remove('dark');
     }
   }, [theme, mounted]);
 
@@ -438,7 +438,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
                   <button
                     onClick={() => {
-                      if (mounted && theme) {
+                      if (mounted) {
                         const newTheme = theme === "dark" ? "light" : "dark";
                         setTheme(newTheme);
                       }

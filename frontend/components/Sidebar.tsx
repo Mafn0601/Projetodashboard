@@ -202,6 +202,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     const html = document.documentElement;
     const isDark = theme === 'dark';
     
+    console.log('Theme useEffect triggered:', { theme, isDark, mounted });
+    
     if (isDark) {
       html.classList.add('dark');
     } else {
@@ -438,9 +440,12 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
                   <button
                     onClick={() => {
+                      console.log('Theme button clicked:', { mounted, theme });
                       if (mounted) {
                         const newTheme = theme === "dark" ? "light" : "dark";
+                        console.log('Switching theme to:', newTheme);
                         setTheme(newTheme);
+                        console.log('setTheme called with:', newTheme);
                       }
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"

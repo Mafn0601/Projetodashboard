@@ -9,10 +9,11 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="dark"
-      enableSystem
+      defaultTheme="system"
+      enableSystem={true}
       storageKey="theme-preference"
       themes={['light', 'dark']}
+      forcedTheme={undefined}
     >
       <AuthProvider>
         <ModalProvider>{children}</ModalProvider>

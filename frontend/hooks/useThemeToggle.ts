@@ -1,40 +1,39 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export function useThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const toggleTheme = () => {
-    if (!mounted) return;
+  const toggleTheme = useCallback(() => {
+    if (!mounted || !theme) return;
 
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    const currentTheme = theme === 'dark' ? 'dark' : 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     
-    // Atualizar o tema via next-themes
+    console.log('Toggle theme - current:', currentTheme, 'new:', newTheme);
+    
+    // Aplicar o tema
     setTheme(newTheme);
     
-    // Forçar atualização imediata do DOM
-    const html = document.documentElement;
-    if (newTheme === 'dark') {
-      html.classList.add('dark');
-    } else {
-      html.classList.remove('dark');
-    }
-    
-    // Salvar no localStorage
-    localStorage.setItem('theme-preference', newTheme);
-    
-    console.log('Theme toggled to:', newTheme);
-  };
+    // Força síncrona do DOM
+    setTimeout(() => {
+      const html = document.documentElement;
+      html.classList.toggle('dark', newTheme === 'dark');
+      document.body.classList.toggle('dark', newTheme === 'dark');
+      localStorage.setItem('theme-preference', newTheme);
+      console.log('Theme applied to DOM:', newTheme);
+    }, 0);
+  }, [mounted, theme, setTheme]);
 
   return {
-    theme,
+    theme: mounted ? theme : systemTheme,
     mounted,
     toggleTheme,
   };

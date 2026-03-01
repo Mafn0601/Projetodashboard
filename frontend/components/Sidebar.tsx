@@ -192,32 +192,40 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
   // Mount state
   useEffect(() => {
+    console.log('Sidebar mounted');
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    console.log('Theme changed:', theme);
+  }, [theme]);
+
   const handleThemeToggle = () => {
-    console.log('Button clicked - current theme:', theme);
+    console.log('=== THEME BUTTON CLICKED ===');
+    console.log('Mounted:', mounted);
+    console.log('Theme:', theme);
     
-    if (!mounted || !theme) {
-      console.log('Not ready yet', { mounted, theme });
+    if (!mounted) {
+      console.log('Not mounted yet');
+      return;
+    }
+    
+    if (!theme) {
+      console.log('Theme is undefined');
       return;
     }
 
     const newTheme = theme === 'dark' ? 'light' : 'dark';
-    console.log('Switching to:', newTheme);
+    console.log('New theme will be:', newTheme);
     
-    // Call setTheme
     setTheme(newTheme);
+    console.log('setTheme called');
     
-    // Force DOM update
-    const html = document.documentElement;
-    if (newTheme === 'dark') {
-      html.classList.add('dark');
-    } else {
-      html.classList.remove('dark');
-    }
-    
-    console.log('Theme set to:', newTheme);
+    setTimeout(() => {
+      const html = document.documentElement;
+      html.classList.toggle('dark', newTheme === 'dark');
+      console.log('DOM updated, dark class:', html.classList.contains('dark'));
+    }, 50);
   };
 
   // Fechar menu de usuário ao clicar fora (apenas desktop)
@@ -448,10 +456,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
 
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleThemeToggle();
-                    }}
+                    type="button"
+                    onClick={handleThemeToggle}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
                   >
                     {mounted && theme === "dark" ? <Sun className="h-4 w-4 text-yellow-500" /> : <Moon className="h-4 w-4 text-slate-600" />}

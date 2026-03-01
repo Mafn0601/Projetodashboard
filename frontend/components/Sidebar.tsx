@@ -290,7 +290,10 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
         collapsed ? "w-20 px-2" : "w-[86vw] max-w-72 px-4 md:w-72"
       )}
     >
-      <div className="mb-6 flex items-center justify-between gap-3">
+      <div className={cn(
+        "mb-6 flex items-center gap-3 transition-all duration-200",
+        collapsed ? "justify-center" : "justify-between"
+      )}>
         <div 
           className={cn(
             "flex flex-col transition-all duration-200 overflow-hidden",

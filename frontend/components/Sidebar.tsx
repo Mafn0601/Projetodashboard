@@ -287,12 +287,12 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     <aside
       className={cn(
         "flex flex-col h-screen border-r-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 text-slate-900 dark:text-slate-100 transition-all duration-200 shadow-lg sticky top-0",
-        collapsed ? "w-20 px-2" : "w-[86vw] max-w-72 px-4 md:w-72"
+        collapsed ? "w-20" : "w-[86vw] max-w-72 md:w-72"
       )}
     >
       <div className={cn(
         "flex items-center gap-3 transition-all duration-200",
-        collapsed ? "justify-center mb-3" : "justify-start mb-6"
+        collapsed ? "justify-center mb-3 px-2" : "justify-start mb-6 px-4"
       )}>
         <div 
           className={cn(
@@ -322,7 +322,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
       <nav className={cn(
         "scrollbar-invisible flex-1 overflow-y-auto text-base min-h-0",
-        collapsed ? "space-y-2 pr-0" : "space-y-5 pr-2"
+        collapsed ? "space-y-2 px-2" : "space-y-5 px-4 pr-2"
       )}>
         {SECTIONS_ORDER.map((section) => {
           const items = NAV_ITEMS.filter((item) => item.section === section);
@@ -390,16 +390,17 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       <div className={cn(
         "border-t-2 border-slate-300 dark:border-slate-700 pt-4 space-y-2 flex-shrink-0",
         collapsed ? "px-2" : "px-4"
-      )}>
+      )}
+      >
         {user && (
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className={cn(
-                "mb-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left flex items-center justify-between gap-3",
+                "mb-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-between gap-3",
                 collapsed 
-                  ? "h-10 w-10 p-2 flex items-center justify-center"
-                  : "w-full p-3"
+                  ? "h-10 w-10 p-2 flex items-center justify-center mx-auto"
+                  : "w-full p-3 text-left"
               )}
               title={collapsed ? "Conta" : undefined}
             >

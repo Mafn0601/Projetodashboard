@@ -202,8 +202,10 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     const html = document.documentElement;
     if (theme === 'dark') {
       html.classList.add('dark');
+      document.body.classList.add('dark');
     } else {
       html.classList.remove('dark');
+      document.body.classList.remove('dark');
     }
   }, [theme, mounted]);
 
@@ -435,18 +437,10 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
 
                   <button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       if (mounted && theme) {
                         const newTheme = theme === "dark" ? "light" : "dark";
                         setTheme(newTheme);
-                        // Forçar atualização imediata do localStorage
-                        localStorage.setItem('theme-preference', newTheme);
                       }
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"

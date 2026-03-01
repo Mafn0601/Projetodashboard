@@ -24,16 +24,27 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                const theme = localStorage.getItem('theme-preference');
-                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
+              (function() {
+                try {
+                  const theme = localStorage.getItem('theme-preference');
+                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  const isDark = theme === 'dark' || (!theme && prefersDark);
+                  
+                  const html = document.documentElement;
+                  if (isDark) {
+                    html.classList.add('dark');
+                    html.style.colorScheme = 'dark';
+                  } else {
+                    html.classList.remove('dark');
+                    html.style.colorScheme = 'light';
+                  }
+                } catch (e) {
+                  console.error('Theme initialization error:', e);
                 }
-              } catch (e) {}
+              })();
             `,
           }}
+          suppressHydrationWarning
         />
       </head>
       <body

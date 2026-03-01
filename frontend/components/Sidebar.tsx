@@ -445,28 +445,20 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                     <span>Configurações</span>
                   </button>
 
-                  <a
-                    href="/relatar-problema"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     onMouseDown={(e) => {
-                      console.log('🔍 Relatar Problema - MOUSE DOWN');
-                    }}
-                    onMouseUp={(e) => {
-                      console.log('🔍 Relatar Problema - MOUSE UP');
-                    }}
-                    onClick={(e) => {
-                      console.log('🔍 Relatar Problema - CLICKED');
-                      console.log('Current href:', e.currentTarget.href);
-                      console.log('Target:', e.currentTarget.target);
+                      e.preventDefault();
                       e.stopPropagation();
+                      console.log('🔍 Opening /relatar-problema in new tab');
+                      window.open('/relatar-problema', '_blank', 'noopener,noreferrer');
                       setUserMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm cursor-pointer"
                   >
                     <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     <span>Relatar um Problema</span>
-                  </a>
+                  </button>
 
                   <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
 

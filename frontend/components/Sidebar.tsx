@@ -217,8 +217,15 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
     // Só usar handleClickOutside em desktop
     if (userMenuOpen && typeof window !== 'undefined' && window.innerWidth >= 768) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      // Usar setTimeout para evitar que o clique que abre o menu também feche imediatamente
+      const timer = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 0);
+      
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
     }
   }, [userMenuOpen]);
 

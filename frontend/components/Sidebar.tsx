@@ -393,7 +393,10 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
 
                   <button
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    onClick={() => {
+                      setTheme(theme === "dark" ? "light" : "dark");
+                      setUserMenuOpen(false);
+                    }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
                   >
                     {theme === "dark" ? <Sun className="h-4 w-4 text-yellow-500" /> : <Moon className="h-4 w-4 text-slate-600" />}
@@ -449,7 +452,9 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       <div className={cn(
         "md:hidden fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      )}
+      style={{ pointerEvents: mobileMenuOpen ? 'auto' : 'none' }}
+      >
         {sidebarContent}
       </div>
     </>

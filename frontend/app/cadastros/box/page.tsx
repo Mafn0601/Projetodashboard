@@ -254,12 +254,12 @@ export default function BoxPage() {
               </h2>
               
               <div className="space-y-2">
-                <div className="overflow-x-scroll touch-pan-x pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
+                <div className="overflow-x-auto pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
                   <TimelineHeader />
                 </div>
                 {boxesDoParceiro.map(box => (
                   <div key={box.id} className="relative group">
-                    <div className="overflow-x-scroll touch-pan-x pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
+                    <div className="overflow-x-auto pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
                       <BoxTimeline
                         box={box}
                         ocupacoes={getOcupacoesParaData(box.id)}

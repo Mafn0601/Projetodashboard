@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { chamadoController } from '../controllers/chamadoController';
-import { authMiddleware } from '../middlewares/auth';
+import { authenticate } from '../middlewares/auth';
 
 const router = Router();
 
@@ -8,9 +8,9 @@ const router = Router();
 router.post('/', chamadoController.criar);
 
 // Rotas protegidas (apenas para administradores gerenciarem)
-router.get('/', authMiddleware, chamadoController.listarTodos);
-router.get('/:id', authMiddleware, chamadoController.buscarPorId);
-router.patch('/:id/status', authMiddleware, chamadoController.atualizarStatus);
-router.delete('/:id', authMiddleware, chamadoController.deletar);
+router.get('/', authenticate, chamadoController.listarTodos);
+router.get('/:id', authenticate, chamadoController.buscarPorId);
+router.patch('/:id/status', authenticate, chamadoController.atualizarStatus);
+router.delete('/:id', authenticate, chamadoController.deletar);
 
 export default router;

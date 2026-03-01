@@ -207,6 +207,9 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     const html = document.documentElement;
     const body = document.body;
     
+    console.log('useEffect triggered - resolvedTheme:', resolvedTheme);
+    console.log('Current dark class on html:', html.classList.contains('dark'));
+    
     if (resolvedTheme === 'dark') {
       html.classList.add('dark');
       body.classList.add('dark');
@@ -216,6 +219,9 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       body.classList.remove('dark');
       console.log('Removed dark class from DOM');
     }
+    
+    console.log('After update - dark class on html:', html.classList.contains('dark'));
+    console.log('localStorage theme-preference:', localStorage.getItem('theme-preference'));
   }, [resolvedTheme, mounted]);
 
   const handleThemeToggle = () => {
@@ -223,6 +229,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     console.log('Mounted:', mounted);
     console.log('Theme:', theme);
     console.log('Resolved Theme:', resolvedTheme);
+    console.log('localStorage before:', localStorage.getItem('theme-preference'));
     
     if (!mounted) {
       console.log('Not mounted yet');
@@ -230,14 +237,30 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     }
     
     // Use resolvedTheme para obter o tema real (dark ou light)
-    const currentTheme = resolvedTheme || theme || 'dark';
+    const currentTheme = resolvedTheme || 'dark';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     
     console.log('Current theme:', currentTheme);
     console.log('New theme will be:', newTheme);
     
+    // Força gravação imediata no localStorage
+    localStorage.setItem('theme-preference', newTheme);
+    console.log('localStorage after manual set:', localStorage.getItem('theme-preference'));
+    
+    // Atualiza o tema via next-themes
     setTheme(newTheme);
     console.log('setTheme called with:', newTheme);
+    
+    // Força atualização imediata do DOM
+    requestAnimationFrame(() => {
+      const html = document.documentElement;
+      if (newTheme === 'dark') {
+        html.classList.add('dark');
+      } else {
+        html.classList.remove('dark');
+      }
+      console.log('DOM force updated, dark class:', html.classList.contains('dark'));
+    });
   };
 
   // Fechar menu de usuário ao clicar fora (apenas desktop)

@@ -200,6 +200,24 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     console.log('Theme changed:', theme, 'Resolved:', resolvedTheme);
   }, [theme, resolvedTheme]);
 
+  // Force DOM update when resolvedTheme changes
+  useEffect(() => {
+    if (!mounted || !resolvedTheme) return;
+    
+    const html = document.documentElement;
+    const body = document.body;
+    
+    if (resolvedTheme === 'dark') {
+      html.classList.add('dark');
+      body.classList.add('dark');
+      console.log('Applied dark class to DOM');
+    } else {
+      html.classList.remove('dark');
+      body.classList.remove('dark');
+      console.log('Removed dark class from DOM');
+    }
+  }, [resolvedTheme, mounted]);
+
   const handleThemeToggle = () => {
     console.log('=== THEME BUTTON CLICKED ===');
     console.log('Mounted:', mounted);
@@ -220,12 +238,6 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     
     setTheme(newTheme);
     console.log('setTheme called with:', newTheme);
-    
-    setTimeout(() => {
-      const html = document.documentElement;
-      html.classList.toggle('dark', newTheme === 'dark');
-      console.log('DOM updated, dark class:', html.classList.contains('dark'));
-    }, 50);
   };
 
   // Fechar menu de usuário ao clicar fora (apenas desktop)

@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "./AuthContext";
-import { useThemeToggle } from "@/hooks/useThemeToggle";
+import { useTheme } from "next-themes";
 
 type NavItem = {
   label: string;
@@ -185,9 +185,40 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     new Set(["Root"])
   );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
-  const { theme, mounted, toggleTheme } = useThemeToggle();
+  const { theme, setTheme } = useTheme();
+
+  // Mount state
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleThemeToggle = () => {
+    console.log('Button clicked - current theme:', theme);
+    
+    if (!mounted || !theme) {
+      console.log('Not ready yet', { mounted, theme });
+      return;
+    }
+
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    console.log('Switching to:', newTheme);
+    
+    // Call setTheme
+    setTheme(newTheme);
+    
+    // Force DOM update
+    const html = document.documentElement;
+    if (newTheme === 'dark') {
+      html.classList.add('dark');
+    } else {
+      html.classList.remove('dark');
+    }
+    
+    console.log('Theme set to:', newTheme);
+  };
 
   // Fechar menu de usuário ao clicar fora (apenas desktop)
   useEffect(() => {
@@ -419,7 +450,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleTheme();
+                      handleThemeToggle();
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
                   >

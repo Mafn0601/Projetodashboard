@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "./AuthContext";
-import { useTheme } from "next-themes";
+import { useThemeToggle } from "@/hooks/useThemeToggle";
 
 type NavItem = {
   label: string;
@@ -181,35 +181,13 @@ interface SidebarProps {
 export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarProps = {}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
-  const [mounted, setMounted] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["Root"])
   );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
-  const { theme, setTheme } = useTheme();
-
-  // Marcar como mounted após o render inicial (hydration)
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Escutar mudanças no tema e atualizar o DOM
-  useEffect(() => {
-    if (!mounted) return;
-    
-    const html = document.documentElement;
-    const isDark = theme === 'dark';
-    
-    console.log('Theme useEffect triggered:', { theme, isDark, mounted });
-    
-    if (isDark) {
-      html.classList.add('dark');
-    } else {
-      html.classList.remove('dark');
-    }
-  }, [theme, mounted]);
+  const { theme, mounted, toggleTheme } = useThemeToggle();
 
   // Fechar menu de usuário ao clicar fora (apenas desktop)
   useEffect(() => {
@@ -440,13 +418,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
                   <button
                     onClick={() => {
-                      console.log('Theme button clicked:', { mounted, theme });
-                      if (mounted) {
-                        const newTheme = theme === "dark" ? "light" : "dark";
-                        console.log('Switching theme to:', newTheme);
-                        setTheme(newTheme);
-                        console.log('setTheme called with:', newTheme);
-                      }
+                      toggleTheme();
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
                   >

@@ -291,16 +291,21 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       )}
     >
       <div className="mb-6 flex items-center justify-between gap-3">
-        {!collapsed && (
-          <div className="flex flex-col">
-            <span className="text-sm font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-              Menu
-            </span>
-            <span className="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">
-              Gestão de OS e Vendas
-            </span>
-          </div>
-        )}
+        <div 
+          className={cn(
+            "flex flex-col transition-all duration-200",
+            collapsed 
+              ? "opacity-0 w-0 overflow-hidden pointer-events-none" 
+              : "opacity-100 w-auto"
+          )}
+        >
+          <span className="text-sm font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+            Menu
+          </span>
+          <span className="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">
+            Gestão de OS e Vendas
+          </span>
+        </div>
         <button
           className={cn(
             "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors",

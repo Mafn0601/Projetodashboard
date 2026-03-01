@@ -492,8 +492,14 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
                   <button
                     type="button"
-                    onClick={handleThemeToggle}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
+                    onMouseDown={() => console.log('THEME BUTTON MOUSE DOWN!!!')}
+                    onClick={(e) => {
+                      console.log('THEME BUTTON ONCLICK TRIGGERED!!!');
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleThemeToggle();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm cursor-pointer"
                   >
                     {mounted && resolvedTheme === "dark" ? <Sun className="h-4 w-4 text-yellow-500" /> : <Moon className="h-4 w-4 text-slate-600" />}
                     <span>{mounted && resolvedTheme === "dark" ? "Tema Claro" : "Tema Escuro"}</span>

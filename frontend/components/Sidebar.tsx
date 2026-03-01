@@ -207,7 +207,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     }
   }, [theme, mounted]);
 
-  // Fechar menu de usuário ao clicar fora
+  // Fechar menu de usuário ao clicar fora (apenas desktop)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -215,7 +215,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       }
     };
 
-    if (userMenuOpen) {
+    // Só usar handleClickOutside em desktop
+    if (userMenuOpen && typeof window !== 'undefined' && window.innerWidth >= 768) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
@@ -377,10 +378,13 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
             </button>
 
             {userMenuOpen && (
-              <div className="fixed top-0 left-0 right-0 bottom-0 md:inset-auto md:left-0 md:right-auto md:bottom-full md:mb-2 md:w-80 md:translate-x-0 md:translate-y-0 md:top-auto flex items-center justify-center md:items-stretch md:justify-start md:flex md:flex-col rounded-lg bg-white dark:bg-slate-800 border-0 md:border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[100] m-4 md:m-0 md:w-80 h-auto max-h-[90vh] md:max-h-none">
+              <div className="fixed top-0 left-0 right-0 bottom-0 md:inset-auto md:left-0 md:right-auto md:bottom-full md:mb-2 md:w-80 md:translate-x-0 md:translate-y-0 md:top-auto flex items-center justify-center md:items-stretch md:justify-start md:flex md:flex-col rounded-lg bg-white dark:bg-slate-800 border-0 md:border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[100] m-4 md:m-0 md:w-80 h-auto max-h-[90vh] md:max-h-none" onClick={(e) => e.stopPropagation()}>
                 {/* Close button para mobile */}
                 <button
-                  onClick={() => setUserMenuOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setUserMenuOpen(false);
+                  }}
                   className="md:hidden absolute top-4 right-4 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-slate-700 rounded p-1"
                   aria-label="Fechar menu"
                 >
@@ -398,7 +402,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                 {/* Opções do menu */}
                 <div className="py-2 max-h-[70vh] overflow-y-auto w-full">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       // Navigate to settings
                       setUserMenuOpen(false);
                     }}
@@ -409,7 +414,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   </button>
 
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       // Open report issue dialog
                       setUserMenuOpen(false);
                     }}
@@ -422,7 +428,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
 
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       if (mounted && theme) {
                         const newTheme = theme === "dark" ? "light" : "dark";
                         setTheme(newTheme);
@@ -438,7 +445,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   </button>
 
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       logout();
                       setUserMenuOpen(false);
                     }}
@@ -463,7 +471,10 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       {userMenuOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-black/50 z-[95]"
-          onClick={() => setUserMenuOpen(false)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setUserMenuOpen(false);
+          }}
           aria-hidden="true"
         />
       )}
@@ -472,7 +483,10 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       {mobileMenuOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={onMobileMenuClose}
+          onClick={(e) => {
+            e.stopPropagation();
+            onMobileMenuClose?.();
+          }}
           aria-hidden="true"
         />
       )}

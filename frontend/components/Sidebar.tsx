@@ -203,6 +203,14 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     }
   }, [userMenuOpen]);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      setCollapsed(false);
+    } else {
+      setUserMenuOpen(false);
+    }
+  }, [mobileMenuOpen]);
+
   const toggleSection = (section: string) => {
     if (section === "Root") return; // Dashboard sempre visível
     const newExpanded = new Set(expandedSections);
@@ -225,7 +233,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     <aside
       className={cn(
         "flex h-screen flex-col border-r-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 text-slate-900 dark:text-slate-100 transition-all duration-200 shadow-lg sticky top-0",
-        collapsed ? "w-20 px-2" : "w-72 px-4"
+        collapsed ? "w-20 px-2" : "w-[86vw] max-w-72 px-4 md:w-72"
       )}
     >
       <div className="mb-6 flex items-center justify-between gap-3">
@@ -350,7 +358,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
             </button>
 
             {userMenuOpen && (
-              <div className="absolute bottom-full left-0 md:top-12 md:left-full md:ml-2 mb-2 md:mb-0 w-80 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-40 md:-translate-y-full">
+              <div className="fixed left-3 right-3 bottom-20 md:absolute md:left-0 md:right-auto md:bottom-full md:mb-2 w-auto md:w-80 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[70] md:z-40">
                 {/* Header do menu com info do usuário */}
                 <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-4 py-4 border-b border-slate-200 dark:border-slate-700">
                   <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{user.name}</p>

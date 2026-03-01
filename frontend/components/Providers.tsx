@@ -12,6 +12,8 @@ export function Providers({ children }: { children: ReactNode }) {
       defaultTheme="dark"
       enableSystem
       disableTransitionOnChange
+      storageKey="theme-preference"
+      themes={['light', 'dark']}
     >
       <AuthProvider>
         <ModalProvider>{children}</ModalProvider>

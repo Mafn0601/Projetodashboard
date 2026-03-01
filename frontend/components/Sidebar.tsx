@@ -181,6 +181,7 @@ interface SidebarProps {
 export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarProps = {}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["Root"])
   );
@@ -188,6 +189,11 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+
+  // Marcar como mounted após o render inicial (hydration)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fechar menu de usuário ao clicar fora
   useEffect(() => {
@@ -405,13 +411,15 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
                   <button
                     onClick={() => {
-                      setTheme(theme === "dark" ? "light" : "dark");
-                      setUserMenuOpen(false);
+                      if (mounted && theme) {
+                        setTheme(theme === "dark" ? "light" : "dark");
+                        setUserMenuOpen(false);
+                      }
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
                   >
-                    {theme === "dark" ? <Sun className="h-4 w-4 text-yellow-500" /> : <Moon className="h-4 w-4 text-slate-600" />}
-                    <span>{theme === "dark" ? "Tema Claro" : "Tema Escuro"}</span>
+                    {mounted && theme === "dark" ? <Sun className="h-4 w-4 text-yellow-500" /> : <Moon className="h-4 w-4 text-slate-600" />}
+                    <span>{mounted && theme === "dark" ? "Tema Claro" : "Tema Escuro"}</span>
                   </button>
 
                   <button

@@ -593,9 +593,9 @@ function BoxCardAccordion({
         className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
         style={{ borderLeftWidth: '4px', borderLeftColor: box.cor }}
       >
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 break-words">
               {box.nome}
             </h3>
             {!box.ativo && (
@@ -604,7 +604,7 @@ function BoxCardAccordion({
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-700 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-700 dark:text-slate-400 mt-0.5 break-words">
             Parceiro: {box.parceiro}
           </p>
         </div>

@@ -449,8 +449,14 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                     href="/relatar-problema"
                     target="_blank"
                     rel="noopener noreferrer"
+                    onMouseDown={(e) => {
+                      console.log('🔍 Relatar Problema - MOUSE DOWN');
+                    }}
+                    onMouseUp={(e) => {
+                      console.log('🔍 Relatar Problema - MOUSE UP');
+                    }}
                     onClick={(e) => {
-                      console.log('🔍 Relatar Problema clicked');
+                      console.log('🔍 Relatar Problema - CLICKED');
                       console.log('Current href:', e.currentTarget.href);
                       console.log('Target:', e.currentTarget.target);
                       e.stopPropagation();

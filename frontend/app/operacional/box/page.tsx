@@ -300,7 +300,7 @@ export default function BoxPage() {
                 {/* Conteúdo Timeline - Visível quando expandido */}
                 {isParceirosExpandido && (
                   <div className="p-4 space-y-3">
-                    <div className="overflow-x-scroll touch-pan-x pb-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800">
+                    <div className="overflow-x-scroll touch-pan-x pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
                       <TimelineHeader />
                     </div>
                     {boxesDoParceiro.map(box => (

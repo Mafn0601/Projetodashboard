@@ -76,7 +76,7 @@ export function BoxTimeline({ box, ocupacoes, data }: Props) {
   };
 
   return (
-    <div className="border-2 border-slate-200 dark:border-slate-700/50 rounded-lg overflow-x-scroll touch-pan-x scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm hover:shadow-md">
+    <div className="border-2 border-slate-200 dark:border-slate-700/50 rounded-lg overflow-x-scroll touch-pan-x scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm hover:shadow-md pb-4" style={{ scrollbarWidth: 'thin' }}>
       <div className="flex gap-2 items-stretch min-w-[760px]">
       {/* Label do Box com informações */}
       <div 
@@ -171,7 +171,7 @@ export function TimelineHeader() {
   }, []);
 
   return (
-    <div className="flex gap-2 items-stretch mb-4 bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border-2 border-slate-300 dark:border-slate-700 min-w-[760px]">
+    <div className="flex gap-2 items-stretch mb-4 bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border-2 border-slate-300 dark:border-slate-700 min-w-[760px] pb-4" style={{ scrollbarWidth: 'thin' }}>
       {/* Espaço para o label do box */}
       <div className="w-36 md:w-40 flex-shrink-0 font-bold text-slate-800 dark:text-slate-300 flex items-center text-xs">
         BOX

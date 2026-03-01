@@ -202,7 +202,7 @@ export default function ClienteVeiculoModal({ open, setOpen, initialCliente, ini
                   <label className="block text-xs font-bold text-gray-700 mb-1">CPF/CNPJ *</label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i className="fa fa-id-card"></i></span>
-                    <input type="text" required value={cpfCnpj} onChange={(e) => handleCpfCnpj(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" placeholder="000.000.000-00" />
+                    <input id="cpf-cnpj" name="cpfCnpj" type="text" required value={cpfCnpj} onChange={(e) => handleCpfCnpj(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" placeholder="000.000.000-00" />
                   </div>
                 </div>
 
@@ -210,7 +210,7 @@ export default function ClienteVeiculoModal({ open, setOpen, initialCliente, ini
                   <label className="block text-xs font-bold text-gray-700 mb-1">Nome / Razão Social *</label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i className="fa fa-user"></i></span>
-                    <input type="text" required value={nome} onChange={(e) => setNome(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                    <input id="nome" name="nome" type="text" required value={nome} onChange={(e) => setNome(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                   </div>
                 </div>
 
@@ -218,7 +218,7 @@ export default function ClienteVeiculoModal({ open, setOpen, initialCliente, ini
                   <label className="block text-xs font-bold text-gray-700 mb-1">E-mail *</label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i className="fa fa-envelope"></i></span>
-                    <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                    <input id="email" name="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                   </div>
                 </div>
 
@@ -226,7 +226,7 @@ export default function ClienteVeiculoModal({ open, setOpen, initialCliente, ini
                   <label className="block text-xs font-bold text-gray-700 mb-1">Celular *</label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i className="fa fa-mobile"></i></span>
-                    <input type="text" required value={celular} onChange={(e) => setCelular(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                    <input id="celular" name="celular" type="text" required value={celular} onChange={(e) => setCelular(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                   </div>
                 </div>
 
@@ -234,7 +234,7 @@ export default function ClienteVeiculoModal({ open, setOpen, initialCliente, ini
                   <label className="block text-xs font-bold text-gray-700 mb-1">Tel. Comercial</label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i className="fa fa-phone"></i></span>
-                    <input type="text" value={comercial} onChange={(e) => setComercial(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                    <input id="comercial" name="comercial" type="text" value={comercial} onChange={(e) => setComercial(e.target.value)} className="w-full pl-10 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                   </div>
                 </div>
 
@@ -245,7 +245,7 @@ export default function ClienteVeiculoModal({ open, setOpen, initialCliente, ini
                 <div className="md:col-span-3">
                   <label className="block text-xs font-bold text-gray-700 mb-1">CEP *</label>
                   <div className="flex">
-                    <input type="text" required value={cep} onChange={(e) => setCep(e.target.value)} onBlur={buscarCep} className="w-full border border-gray-300 rounded-l px-3 py-2 text-sm focus:outline-none focus:border-blue-500" placeholder="00000-000" />
+                    <input id="cep" name="cep" type="text" required value={cep} onChange={(e) => setCep(e.target.value)} onBlur={buscarCep} className="w-full border border-gray-300 rounded-l px-3 py-2 text-sm focus:outline-none focus:border-blue-500" placeholder="00000-000" />
                     <button type="button" onClick={buscarCep} className="bg-gray-200 border border-l-0 border-gray-300 rounded-r px-3 hover:bg-gray-300">
                       <i className="fa fa-search text-gray-600"></i>
                     </button>
@@ -254,32 +254,32 @@ export default function ClienteVeiculoModal({ open, setOpen, initialCliente, ini
 
                 <div className="md:col-span-7">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Rua *</label>
-                  <input type="text" required value={rua} onChange={(e) => setRua(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="rua" name="rua" type="text" required value={rua} onChange={(e) => setRua(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Número *</label>
-                  <input type="text" required value={numero} onChange={(e) => setNumero(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="numero" name="numero" type="text" required value={numero} onChange={(e) => setNumero(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-4">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Complemento</label>
-                  <input type="text" value={complemento} onChange={(e) => setComplemento(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="complemento" name="complemento" type="text" value={complemento} onChange={(e) => setComplemento(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-4">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Bairro *</label>
-                  <input type="text" required value={bairro} onChange={(e) => setBairro(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="bairro" name="bairro" type="text" required value={bairro} onChange={(e) => setBairro(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-3">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Cidade *</label>
-                  <input type="text" required value={cidade} onChange={(e) => setCidade(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="cidade" name="cidade" type="text" required value={cidade} onChange={(e) => setCidade(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-1">
                   <label className="block text-xs font-bold text-gray-700 mb-1">UF *</label>
-                  <input type="text" required value={uf} onChange={(e) => setUf(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="uf" name="uf" type="text" required value={uf} onChange={(e) => setUf(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
               </div>
             </div>
@@ -306,42 +306,42 @@ export default function ClienteVeiculoModal({ open, setOpen, initialCliente, ini
 
                 <div className="md:col-span-3">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Versão</label>
-                  <input type="text" value={versao} onChange={(e) => setVersao(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="versao" name="versao" type="text" value={versao} onChange={(e) => setVersao(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-3">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Placa *</label>
-                  <input type="text" required value={placa} onChange={(e) => handlePlaca(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 uppercase" placeholder="AAA-0A00" />
+                  <input id="placa" name="placa" type="text" required value={placa} onChange={(e) => handlePlaca(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 uppercase" placeholder="AAA-0A00" />
                 </div>
 
                 <div className="md:col-span-4">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Chassi *</label>
-                  <input type="text" required value={chassi} onChange={(e) => setChassi(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="chassi" name="chassi" type="text" required value={chassi} onChange={(e) => setChassi(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-4">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Renavam</label>
-                  <input type="text" value={renavam} onChange={(e) => setRenavam(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="renavam" name="renavam" type="text" value={renavam} onChange={(e) => setRenavam(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-4">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Cor *</label>
-                  <input type="text" required value={cor} onChange={(e) => setCor(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="cor" name="cor" type="text" required value={cor} onChange={(e) => setCor(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Ano Fab. *</label>
-                  <input type="number" required value={anoFab} onChange={(e) => setAnoFab(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="anoFab" name="anoFab" type="number" required value={anoFab} onChange={(e) => setAnoFab(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Ano Mod. *</label>
-                  <input type="number" required value={anoMod} onChange={(e) => setAnoMod(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="anoMod" name="anoMod" type="number" required value={anoMod} onChange={(e) => setAnoMod(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-gray-700 mb-1">KM</label>
-                  <input type="number" value={km} onChange={(e) => setKm(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="km" name="km" type="number" value={km} onChange={(e) => setKm(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-3">
@@ -368,22 +368,22 @@ export default function ClienteVeiculoModal({ open, setOpen, initialCliente, ini
 
                 <div className="md:col-span-4">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Parceiro *</label>
-                  <input type="text" required value={parceiro} onChange={(e) => setParceiro(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="parceiro" name="parceiro" type="text" required value={parceiro} onChange={(e) => setParceiro(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-4">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Unidade *</label>
-                  <input type="text" required value={unidade} onChange={(e) => setUnidade(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="unidade" name="unidade" type="text" required value={unidade} onChange={(e) => setUnidade(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-4">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Responsável *</label>
-                  <input type="text" required value={responsavel} onChange={(e) => setResponsavel(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="responsavel" name="responsavel" type="text" required value={responsavel} onChange={(e) => setResponsavel(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
 
                 <div className="md:col-span-3">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Vendedor 1</label>
-                  <input type="text" value={vendedor1} onChange={(e) => setVendedor1(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                  <input id="vendedor1" name="vendedor1" type="text" value={vendedor1} onChange={(e) => setVendedor1(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                 </div>
                 <div className="md:col-span-3">
                   <label className="block text-xs font-bold text-gray-700 mb-1">Vendedor 2</label>

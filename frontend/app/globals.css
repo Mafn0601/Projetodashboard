@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50;
+  @apply bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50 transition-colors duration-300;
 }
 
 /* Scrollbar Moderno e Estilizado */
@@ -115,4 +115,13 @@ body {
 
 .zoom-in-95 {
   animation: zoomIn 150ms ease-out;
+}
+
+/* Smooth theme transitions */
+html {
+  @apply transition-colors duration-300;
+}
+
+.theme-transition {
+  @apply transition-colors duration-300;
 }

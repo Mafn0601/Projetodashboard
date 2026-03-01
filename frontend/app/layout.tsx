@@ -49,7 +49,7 @@ export default function RootLayout({
       </head>
       <body
         className={cn(
-          "min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased"
+          "min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased theme-transition"
         )}
       >
         <Providers>

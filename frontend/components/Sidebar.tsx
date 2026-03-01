@@ -220,18 +220,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     // Força gravação imediata no localStorage
     localStorage.setItem('theme-preference', newTheme);
     
-    // Atualiza o tema via next-themes
+    // Atualiza o tema via next-themes (que automaticamente adiciona/remove a classe 'dark')
     setTheme(newTheme);
-    
-    // Força atualização imediata do DOM
-    requestAnimationFrame(() => {
-      const html = document.documentElement;
-      if (newTheme === 'dark') {
-        html.classList.add('dark');
-      } else {
-        html.classList.remove('dark');
-      }
-    });
   };
 
   // Fechar menu de usuário ao clicar fora (apenas desktop)

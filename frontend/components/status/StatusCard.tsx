@@ -77,7 +77,7 @@ export function StatusCard({
       onPointerCancel={handlePointerCancel}
       onDragStart={handleDragStartInternal}
       onDragEnd={handleDragEndInternal}
-      className={`rounded-lg border-2 p-2 hover:shadow-md dark:hover:shadow-lg transition-all cursor-grab active:cursor-grabbing select-none text-left w-full ${
+      className={`rounded-lg border-2 p-2.5 md:p-2 hover:shadow-md dark:hover:shadow-lg transition-all cursor-grab active:cursor-grabbing select-none text-left w-full ${
         isDragging
           ? "opacity-50"
           : ""
@@ -88,15 +88,15 @@ export function StatusCard({
       }`}
     >
       {/* Header com número da OS e código */}
-      <div className="flex items-start justify-between gap-1 mb-1">
-        <h3 className={`font-semibold text-xs leading-tight truncate ${
+      <div className="flex items-start justify-between gap-1 mb-1.5 md:mb-1">
+        <h3 className={`font-semibold text-sm md:text-xs leading-tight truncate ${
           isSelected
             ? "text-blue-900 dark:text-blue-100"
             : "text-slate-900 dark:text-slate-100"
         }`}>
           {card.numero}
         </h3>
-        <span className={`flex-shrink-0 inline-block px-1 py-0.5 text-xs font-semibold rounded whitespace-nowrap ${
+        <span className={`flex-shrink-0 inline-block px-1.5 py-0.5 text-xs font-semibold rounded whitespace-nowrap ${
           isSelected
             ? "text-white bg-blue-600 dark:bg-blue-700"
             : "text-white bg-emerald-600 dark:bg-emerald-700"
@@ -106,7 +106,7 @@ export function StatusCard({
       </div>
 
       {/* Veículo */}
-      <p className={`text-xs font-medium mb-1 truncate ${
+      <p className={`text-sm md:text-xs font-medium mb-1.5 md:mb-1 truncate ${
         isSelected
           ? "text-blue-800 dark:text-blue-200"
           : "text-slate-700 dark:text-slate-300"
@@ -115,14 +115,14 @@ export function StatusCard({
       </p>
 
       {/* Divisor */}
-      <div className={`h-px mb-1 ${
+      <div className={`h-px mb-1.5 md:mb-1 ${
         isSelected
           ? "bg-blue-300 dark:bg-blue-700"
           : "bg-slate-200 dark:bg-slate-700"
       }`} />
 
       {/* Informações */}
-      <div className="space-y-0.5 text-xs">
+      <div className="space-y-1 md:space-y-0.5 text-xs">
         <div className="flex justify-between gap-1">
           <span className={`flex-shrink-0 ${
             isSelected

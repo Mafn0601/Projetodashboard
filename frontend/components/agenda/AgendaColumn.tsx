@@ -42,17 +42,17 @@ export function AgendaColumn({
 
   return (
     <div
-      className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 overflow-hidden flex flex-col"
+      className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 overflow-hidden flex flex-col min-h-[420px]"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
       {/* Header da Coluna */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-2 py-1.5 sticky top-0 z-10">
-        <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-50 truncate">
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-2 py-2 sticky top-0 z-10">
+        <h3 className="text-sm md:text-xs font-semibold text-slate-900 dark:text-slate-50 truncate">
           {nameDay}
         </h3>
         <div className="flex items-center justify-between mt-0.5">
-          <p className="text-[10px] text-slate-700 dark:text-slate-400">{date}</p>
+          <p className="text-xs md:text-[10px] text-slate-700 dark:text-slate-400">{date}</p>
           <span className="px-1.5 py-0 text-[10px] font-bold text-white bg-red-600 dark:bg-red-700 rounded-full min-w-5 text-center">
             {sortedItems.length}
           </span>
@@ -60,10 +60,10 @@ export function AgendaColumn({
       </div>
 
       {/* Área de Cards */}
-      <div className="flex-1 overflow-y-auto p-1 space-y-1">
+      <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5">
         {sortedItems.length === 0 ? (
           <div className="flex items-center justify-center h-16 text-center">
-            <p className="text-[10px] text-slate-700 dark:text-slate-400">
+            <p className="text-xs md:text-[10px] text-slate-700 dark:text-slate-400">
               Sem agenda
             </p>
           </div>

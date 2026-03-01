@@ -116,10 +116,10 @@ export default function StatusPage() {
       {/* Header */}
       <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+          <h1 className="text-2xl md:text-lg font-semibold text-slate-900 dark:text-slate-50">
             Quadro de Status - OS
           </h1>
-          <p className="text-xs text-slate-700 dark:text-slate-400">
+          <p className="text-base md:text-xs text-slate-700 dark:text-slate-400">
             Acompanhe o funil de status das Ordens de Serviço em tempo real.
           </p>
         </div>
@@ -127,16 +127,16 @@ export default function StatusPage() {
 
       {/* Resumo - Grid informativo */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-3">
-        <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-200 mb-2">
+        <h3 className="text-sm md:text-xs font-semibold text-slate-900 dark:text-slate-200 mb-2">
           Total por Status
         </h3>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {columns.map((column) => (
             <div
               key={column.id}
               className="rounded-lg bg-white dark:bg-slate-800 p-2 border border-slate-200 dark:border-slate-700"
             >
-              <p className="text-xs text-slate-700 dark:text-slate-400 truncate">
+              <p className="text-sm md:text-xs text-slate-700 dark:text-slate-400 truncate">
                 {column.title}
               </p>
               <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -149,13 +149,14 @@ export default function StatusPage() {
 
       {/* Kanban Board */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3">
-        <div className="flex gap-2 w-full">
+        <div className="overflow-x-auto pb-2">
+          <div className="flex gap-3 min-w-max md:min-w-0 md:w-full">
           {columns.map((column) => (
             <div
               key={`${column.id}-${updateKey}`}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, column.status)}
-              className="flex-1 min-w-0"
+              className="w-[220px] md:flex-1 md:min-w-0"
             >
               <StatusColumn
                 column={column}
@@ -168,6 +169,7 @@ export default function StatusPage() {
               />
             </div>
           ))}
+          </div>
         </div>
       </div>
 

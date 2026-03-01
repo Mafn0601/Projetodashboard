@@ -111,22 +111,26 @@ export default function Page() {
   };
 
   return (
-    <div className="space-y-2 max-w-full">
+    <div className="space-y-3 max-w-full">
       {/* Header */}
       <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-base font-semibold text-slate-900 dark:text-slate-50">
+          <h1 className="text-lg md:text-base font-semibold text-slate-900 dark:text-slate-50">
             Agenda de Agendamentos
           </h1>
-          <p className="text-[11px] text-slate-700 dark:text-slate-400">
+          <p className="text-xs md:text-[11px] text-slate-700 dark:text-slate-400">
             Próximos 7 dias (sem domingos). Agendamentos criados a partir de Clientes ou Orçamentos.
           </p>
         </div>
       </header>
 
       {/* Board de 7 Dias */}
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-2 min-h-[600px]">
-        <div key={updateKey} className="grid grid-cols-7 gap-1 w-full h-full">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-2 min-h-[520px] md:min-h-[600px]">
+        <div className="overflow-x-auto pb-2">
+          <div
+            key={updateKey}
+            className="grid grid-flow-col auto-cols-[minmax(180px,180px)] md:grid-flow-row md:grid-cols-7 md:auto-cols-auto gap-2 md:gap-1 min-w-max md:min-w-0"
+          >
           {validDays.map((day) => (
             <div
               key={day.formatted}
@@ -142,6 +146,7 @@ export default function Page() {
               />
             </div>
           ))}
+          </div>
         </div>
       </div>
 

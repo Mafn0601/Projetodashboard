@@ -205,20 +205,20 @@ export default function BoxPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <header className="flex items-center justify-between gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+          <h1 className="text-2xl md:text-lg font-semibold text-slate-900 dark:text-slate-50">
             Gerenciamento de Boxes
           </h1>
-          <p className="text-xs text-slate-700 dark:text-slate-400">
+          <p className="text-base md:text-xs text-slate-700 dark:text-slate-400">
             Gerencie os boxes de trabalho e visualize ocupações
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full sm:w-auto items-center gap-2">
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             <button
               onClick={() => setModoVisualizacao("timeline")}
-              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              className={`px-3 py-2 rounded text-sm md:text-xs font-medium transition-colors ${
                 modoVisualizacao === "timeline"
                   ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
                   : "text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
@@ -229,7 +229,7 @@ export default function BoxPage() {
             </button>
             <button
               onClick={() => setModoVisualizacao("lista")}
-              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              className={`px-3 py-2 rounded text-sm md:text-xs font-medium transition-colors ${
                 modoVisualizacao === "lista"
                   ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
                   : "text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
@@ -238,7 +238,7 @@ export default function BoxPage() {
               Lista
             </button>
           </div>
-          <Button onClick={abrirModal}>
+          <Button onClick={abrirModal} className="ml-auto sm:ml-0">
             <Plus className="h-4 w-4 mr-1" />
             Novo Box
           </Button>
@@ -248,7 +248,7 @@ export default function BoxPage() {
       {/* Seletor de Data para Timeline */}
       {modoVisualizacao === "timeline" && (
         <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Data:
             </label>
@@ -261,7 +261,7 @@ export default function BoxPage() {
               }}
               className="px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
             />
-            <span className="text-xs text-slate-700 dark:text-slate-400">
+            <span className="text-sm md:text-xs text-slate-700 dark:text-slate-400">
               Visualizando ocupações para {dataSelecionada}
             </span>
           </div>
@@ -300,7 +300,9 @@ export default function BoxPage() {
                 {/* Conteúdo Timeline - Visível quando expandido */}
                 {isParceirosExpandido && (
                   <div className="p-4 space-y-3">
-                    <TimelineHeader />
+                    <div className="overflow-x-auto pb-2">
+                      <TimelineHeader />
+                    </div>
                     {boxesDoParceiro.map(box => (
                       <div key={box.id} className="group">
                         <div className="flex items-stretch gap-2">
@@ -312,7 +314,7 @@ export default function BoxPage() {
                             />
                           </div>
                           {/* Botões de ação no lado */}
-                          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="hidden md:flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => abrirModalEdicao(box)}
                               className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
@@ -328,6 +330,22 @@ export default function BoxPage() {
                               <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
                             </button>
                           </div>
+                        </div>
+                        <div className="flex md:hidden gap-2 mt-2">
+                          <button
+                            onClick={() => abrirModalEdicao(box)}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-medium transition-colors"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-slate-700 dark:text-slate-300" />
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handleDelete(box.id)}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/40 rounded text-xs font-medium text-red-700 dark:text-red-300 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Excluir
+                          </button>
                         </div>
                       </div>
                     ))}

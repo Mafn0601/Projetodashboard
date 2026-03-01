@@ -23,10 +23,10 @@ export function StatusColumn({
   draggedCardId,
 }: StatusColumnProps) {
   return (
-    <div className="flex flex-col gap-2 flex-1 min-w-0">
+    <div className="flex flex-col gap-2 w-full min-w-0">
       {/* Header da coluna com título e contador */}
       <div className="flex items-center gap-2 px-1">
-        <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
+        <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-sm md:text-xs">
           {column.title}
         </h2>
         <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold text-white bg-red-600 dark:bg-red-700 rounded-full w-auto min-w-5 h-5">
@@ -36,7 +36,7 @@ export function StatusColumn({
 
       {/* Container de cards com scroll */}
       <div
-        className="flex flex-col gap-1.5 pb-2 min-h-80 max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800 pr-1"
+        className="flex flex-col gap-2 pb-2 min-h-80 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800 pr-1"
         data-status={column.status}
       >
         {column.cards.length === 0 ? (

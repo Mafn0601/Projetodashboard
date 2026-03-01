@@ -192,13 +192,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
   // Mount state
   useEffect(() => {
-    console.log('Sidebar mounted');
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    console.log('Theme changed:', theme, 'Resolved:', resolvedTheme);
-  }, [theme, resolvedTheme]);
 
   // Force DOM update when resolvedTheme changes
   useEffect(() => {
@@ -207,49 +202,26 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     const html = document.documentElement;
     const body = document.body;
     
-    console.log('useEffect triggered - resolvedTheme:', resolvedTheme);
-    console.log('Current dark class on html:', html.classList.contains('dark'));
-    
     if (resolvedTheme === 'dark') {
       html.classList.add('dark');
       body.classList.add('dark');
-      console.log('Applied dark class to DOM');
     } else {
       html.classList.remove('dark');
       body.classList.remove('dark');
-      console.log('Removed dark class from DOM');
     }
-    
-    console.log('After update - dark class on html:', html.classList.contains('dark'));
-    console.log('localStorage theme-preference:', localStorage.getItem('theme-preference'));
   }, [resolvedTheme, mounted]);
 
   const handleThemeToggle = () => {
-    console.log('=== THEME BUTTON CLICKED ===');
-    console.log('Mounted:', mounted);
-    console.log('Theme:', theme);
-    console.log('Resolved Theme:', resolvedTheme);
-    console.log('localStorage before:', localStorage.getItem('theme-preference'));
+    if (!mounted) return;
     
-    if (!mounted) {
-      console.log('Not mounted yet');
-      return;
-    }
-    
-    // Use resolvedTheme para obter o tema real (dark ou light)
     const currentTheme = resolvedTheme || 'dark';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     
-    console.log('Current theme:', currentTheme);
-    console.log('New theme will be:', newTheme);
-    
     // Força gravação imediata no localStorage
     localStorage.setItem('theme-preference', newTheme);
-    console.log('localStorage after manual set:', localStorage.getItem('theme-preference'));
     
     // Atualiza o tema via next-themes
     setTheme(newTheme);
-    console.log('setTheme called with:', newTheme);
     
     // Força atualização imediata do DOM
     requestAnimationFrame(() => {
@@ -259,7 +231,6 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       } else {
         html.classList.remove('dark');
       }
-      console.log('DOM force updated, dark class:', html.classList.contains('dark'));
     });
   };
 
@@ -441,7 +412,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
             </button>
 
             {userMenuOpen && (
-              <div className="absolute bottom-full left-0 right-auto mb-2 w-80 md:w-80 flex flex-col rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[100]" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute bottom-full left-0 right-auto mb-2 w-80 md:w-80 flex flex-col rounded-lg bg-white/100 dark:bg-slate-800/100 border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden z-[100]" onClick={(e) => e.stopPropagation()}>
                 {/* Close button para mobile */}
                 <button
                   onClick={(e) => {
@@ -459,7 +430,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                 {/* Header do menu com info do usuário */}
                 <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-4 py-4 border-b border-slate-200 dark:border-slate-700 w-full">
                   <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{user.name}</p>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 break-all">{user.email}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-200 mt-1 break-all">{user.email}</p>
                 </div>
 
                 {/* Opções do menu */}
@@ -472,7 +443,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
                   >
-                    <Settings className="h-4 w-4 text-slate-700 dark:text-slate-400" />
+                    <Settings className="h-4 w-4 text-slate-600 dark:text-slate-300" />
                     <span>Configurações</span>
                   </button>
 
@@ -493,7 +464,6 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   <button
                     type="button"
                     onMouseDown={(e) => {
-                      console.log('THEME BUTTON MOUSE DOWN - EXECUTING TOGGLE!!!');
                       e.preventDefault();
                       e.stopPropagation();
                       handleThemeToggle();

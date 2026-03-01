@@ -44,7 +44,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <p className="text-sm text-red-500">{error}</p>
         )}
         {helperText && !error && (
-          <p className="text-sm text-slate-700 dark:text-slate-400">{helperText}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{helperText}</p>
         )}
       </div>
     );

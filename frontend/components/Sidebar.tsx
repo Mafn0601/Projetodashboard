@@ -292,7 +292,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     >
       <div className={cn(
         "flex items-center gap-3 transition-all duration-200",
-        collapsed ? "justify-center mb-3 px-2" : "justify-start mb-6 px-4"
+        collapsed ? "mb-3 px-2" : "justify-start mb-6 px-4"
       )}>
         <div 
           className={cn(

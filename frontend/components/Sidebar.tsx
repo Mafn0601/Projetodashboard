@@ -450,6 +450,9 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => {
+                      console.log('🔍 Relatar Problema clicked');
+                      console.log('Current href:', e.currentTarget.href);
+                      console.log('Target:', e.currentTarget.target);
                       e.stopPropagation();
                       setUserMenuOpen(false);
                     }}

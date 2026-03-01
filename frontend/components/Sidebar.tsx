@@ -290,7 +290,10 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
         collapsed ? "w-20 px-2" : "w-[86vw] max-w-72 px-4 md:w-72"
       )}
     >
-      <div className="mb-6 flex items-center gap-3">
+      <div className={cn(
+        "flex items-center gap-3 transition-all duration-200",
+        collapsed ? "justify-center mb-3" : "justify-start mb-6"
+      )}>
         <div 
           className={cn(
             "flex flex-col transition-all duration-200 overflow-hidden",
@@ -308,8 +311,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
         </div>
         <button
           className={cn(
-            "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex-shrink-0",
-            collapsed && "ml-auto"
+            "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex-shrink-0"
           )}
           onClick={() => setCollapsed((v) => !v)}
           aria-label="Alternar tamanho do menu"

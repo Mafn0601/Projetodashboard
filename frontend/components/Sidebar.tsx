@@ -232,7 +232,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
   const sidebarContent = (
     <aside
       className={cn(
-        "flex h-screen flex-col border-r-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 text-slate-900 dark:text-slate-100 transition-all duration-200 shadow-lg sticky top-0",
+        "flex flex-col h-screen border-r-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 text-slate-900 dark:text-slate-100 transition-all duration-200 shadow-lg sticky top-0",
         collapsed ? "w-20 px-2" : "w-[86vw] max-w-72 px-4 md:w-72"
       )}
     >
@@ -260,7 +260,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       </div>
 
       <nav className={cn(
-        "scrollbar-invisible flex-1 overflow-y-auto text-base",
+        "scrollbar-invisible flex-1 overflow-y-auto text-base min-h-0",
         collapsed ? "space-y-2 pr-0" : "space-y-5 pr-2"
       )}>
         {SECTIONS_ORDER.map((section) => {
@@ -327,7 +327,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
       {/* Footer com informações do usuário */}
       <div className={cn(
-        "border-t-2 border-slate-300 dark:border-slate-700 pt-4 space-y-2",
+        "border-t-2 border-slate-300 dark:border-slate-700 pt-4 space-y-2 flex-shrink-0",
         collapsed ? "px-2" : "px-4"
       )}>
         {user && (

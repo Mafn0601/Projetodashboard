@@ -385,7 +385,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
             </button>
 
             {userMenuOpen && (
-              <div className="fixed top-0 left-0 right-0 bottom-0 md:inset-auto md:left-0 md:right-auto md:bottom-full md:mb-2 md:w-80 md:translate-x-0 md:translate-y-0 md:top-auto flex items-center justify-center md:items-stretch md:justify-start md:flex md:flex-col rounded-lg bg-white dark:bg-slate-800 border-0 md:border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[100] m-4 md:m-0 md:w-80 h-auto max-h-[90vh] md:max-h-none" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute bottom-full left-0 right-auto mb-2 w-80 md:w-80 flex flex-col rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[100]" onClick={(e) => e.stopPropagation()}>
                 {/* Close button para mobile */}
                 <button
                   onClick={(e) => {

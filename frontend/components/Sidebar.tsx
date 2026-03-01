@@ -359,15 +359,26 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
             </button>
 
             {userMenuOpen && (
-              <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm md:absolute md:inset-auto md:left-0 md:right-auto md:bottom-full md:mb-2 md:w-80 md:translate-x-0 md:translate-y-0 md:top-auto rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[100]">
+              <div className="fixed top-0 left-0 right-0 bottom-0 md:inset-auto md:left-0 md:right-auto md:bottom-full md:mb-2 md:w-80 md:translate-x-0 md:translate-y-0 md:top-auto flex items-center justify-center md:items-stretch md:justify-start md:flex md:flex-col rounded-lg bg-white dark:bg-slate-800 border-0 md:border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[100] m-4 md:m-0 md:w-80 h-auto max-h-[90vh] md:max-h-none">
+                {/* Close button para mobile */}
+                <button
+                  onClick={() => setUserMenuOpen(false)}
+                  className="md:hidden absolute top-4 right-4 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-slate-700 rounded p-1"
+                  aria-label="Fechar menu"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
                 {/* Header do menu com info do usuário */}
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-4 py-4 border-b border-slate-200 dark:border-slate-700">
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-4 py-4 border-b border-slate-200 dark:border-slate-700 w-full">
                   <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{user.name}</p>
                   <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 break-all">{user.email}</p>
                 </div>
 
                 {/* Opções do menu */}
-                <div className="py-2 max-h-[60vh] overflow-y-auto">
+                <div className="py-2 max-h-[70vh] overflow-y-auto w-full">
                   <button
                     onClick={() => {
                       // Navigate to settings
@@ -428,7 +439,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
       {/* Overlay para fechar menu de conta ao clicar fora (mobile) */}
       {userMenuOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/40 z-[90]"
+          className="md:hidden fixed inset-0 bg-black/50 z-[95]"
           onClick={() => setUserMenuOpen(false)}
           aria-hidden="true"
         />

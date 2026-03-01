@@ -45,7 +45,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   // Renderiza com sidebar se autenticado
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
       {showSidebar && (
         <>
           <Sidebar 
@@ -65,7 +65,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <main className={cn(
         "flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 scrollbar-thin",
         showSidebar ? "p-4 md:p-8" : "p-0",
-        showSidebar && "pt-20 md:pt-8" // espaço para botão hambúrguer em mobile
+        showSidebar && "pt-20 md:pt-8 pb-20 md:pb-8" // espaço para botão hambúrguer em mobile e espaço na base
       )}>
         <div className={cn(
           showSidebar ? "mx-auto max-w-6xl space-y-5 md:space-y-6" : "h-full"

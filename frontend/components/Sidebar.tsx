@@ -443,7 +443,6 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                         // Forçar atualização imediata do localStorage
                         localStorage.setItem('theme-preference', newTheme);
                       }
-                      setUserMenuOpen(false);
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
                   >

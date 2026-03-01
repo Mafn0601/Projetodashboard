@@ -195,6 +195,18 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     setMounted(true);
   }, []);
 
+  // Escutar mudanças no tema e atualizar o DOM
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const html = document.documentElement;
+    if (theme === 'dark') {
+      html.classList.add('dark');
+    } else {
+      html.classList.remove('dark');
+    }
+  }, [theme, mounted]);
+
   // Fechar menu de usuário ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -412,9 +424,12 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   <button
                     onClick={() => {
                       if (mounted && theme) {
-                        setTheme(theme === "dark" ? "light" : "dark");
-                        setUserMenuOpen(false);
+                        const newTheme = theme === "dark" ? "light" : "dark";
+                        setTheme(newTheme);
+                        // Forçar atualização imediata do localStorage
+                        localStorage.setItem('theme-preference', newTheme);
                       }
+                      setUserMenuOpen(false);
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
                   >

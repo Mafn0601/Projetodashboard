@@ -3,38 +3,63 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { AlertCircle, CheckCircle2, Send } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Send, XCircle } from 'lucide-react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function RelatarProblemaPage() {
   const [formData, setFormData] = useState({
     assunto: '',
     descricao: '',
     email: '',
-    urgencia: 'media',
+    urgencia: 'MEDIA',
   });
   const [enviado, setEnviado] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEnviando(true);
+    setErro(null);
 
-    // Simular envio (aqui você pode integrar com API/email)
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    setEnviado(true);
-    setEnviando(false);
-
-    // Reset após 3 segundos
-    setTimeout(() => {
-      setEnviado(false);
-      setFormData({
-        assunto: '',
-        descricao: '',
-        email: '',
-        urgencia: 'media',
+    try {
+      const response = await fetch(`${API_URL}/api/chamados`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          assunto: formData.assunto,
+          urgencia: formData.urgencia,
+          descricao: formData.descricao,
+        }),
       });
-    }, 3000);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao enviar chamado');
+      }
+
+      setEnviado(true);
+
+      // Reset após 3 segundos
+      setTimeout(() => {
+        setEnviado(false);
+        setFormData({
+          assunto: '',
+          descricao: '',
+          email: '',
+          urgencia: 'MEDIA',
+        });
+      }, 3000);
+    } catch (error) {
+      console.error('Erro ao enviar chamado:', error);
+      setErro(error instanceof Error ? error.message : 'Erro desconhecido ao enviar chamado');
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -82,6 +107,17 @@ export default function RelatarProblemaPage() {
           </div>
         </div>
 
+        {/* Erro */}
+        {erro && (
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+            <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-red-900 dark:text-red-100 mb-1">Erro ao enviar</h3>
+              <p className="text-sm text-red-700 dark:text-red-300">{erro}</p>
+            </div>
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email */}
@@ -127,9 +163,10 @@ export default function RelatarProblemaPage() {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="baixa">🟢 Baixa - Não afeta o uso</option>
-              <option value="media">🟡 Média - Dificulta algumas tarefas</option>
-              <option value="alta">🔴 Alta - Impede trabalho importante</option>
+              <option value="BAIXA">🟢 Baixa - Não afeta o uso</option>
+              <option value="MEDIA">🟡 Média - Dificulta algumas tarefas</option>
+              <option value="ALTA">🔴 Alta - Impede trabalho importante</option>
+              <option value="CRITICA">🔴 Crítica - Sistema completamente inoperante</option>
             </select>
           </div>
 

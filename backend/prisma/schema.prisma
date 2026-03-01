@@ -478,3 +478,34 @@ model MetaComissao {
   @@unique([mesReferencia, anoReferencia, nome])
   @@map("metas_comissao")
 }
+
+// ==================== CHAMADOS ====================
+
+model Chamado {
+  id          String           @id @default(uuid())
+  
+  email       String
+  assunto     String
+  urgencia    UrgenciaChamado  @default(MEDIA)
+  descricao   String           @db.Text
+  status      StatusChamado    @default(ABERTO)
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  @@map("chamados")
+}
+
+enum UrgenciaChamado {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum StatusChamado {
+  ABERTO
+  EM_ANDAMENTO
+  RESOLVIDO
+  FECHADO
+}

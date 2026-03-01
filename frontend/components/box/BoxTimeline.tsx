@@ -76,7 +76,7 @@ export function BoxTimeline({ box, ocupacoes, data }: Props) {
   };
 
   return (
-    <div className="border-2 border-slate-200 dark:border-slate-700/50 rounded-lg overflow-x-auto hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm hover:shadow-md">
+    <div className="border-2 border-slate-200 dark:border-slate-700/50 rounded-lg overflow-x-scroll touch-pan-x scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm hover:shadow-md">
       <div className="flex gap-2 items-stretch min-w-[760px]">
       {/* Label do Box com informações */}
       <div 

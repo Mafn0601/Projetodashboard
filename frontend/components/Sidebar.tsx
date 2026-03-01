@@ -436,6 +436,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       if (mounted && theme) {
                         const newTheme = theme === "dark" ? "light" : "dark";

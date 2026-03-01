@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -180,6 +180,7 @@ interface SidebarProps {
 
 export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarProps = {}) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["Root"])
@@ -450,8 +451,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                     onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('🔍 Opening /relatar-problema in new tab');
-                      window.open('/relatar-problema', '_blank', 'noopener,noreferrer');
+                      router.push('/relatar-problema');
                       setUserMenuOpen(false);
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm cursor-pointer"

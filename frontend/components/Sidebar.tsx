@@ -445,7 +445,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                     <span>Configurações</span>
                   </button>
 
-                  <Link
+                  <a
                     href="/relatar-problema"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -457,7 +457,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                   >
                     <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     <span>Relatar um Problema</span>
-                  </Link>
+                  </a>
 
                   <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
 

@@ -259,11 +259,13 @@ export default function BoxPage() {
                 </div>
                 {boxesDoParceiro.map(box => (
                   <div key={box.id} className="relative group">
-                    <BoxTimeline
-                      box={box}
-                      ocupacoes={getOcupacoesParaData(box.id)}
-                      data={dataSelecionada}
-                    />
+                    <div className="overflow-x-scroll touch-pan-x pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
+                      <BoxTimeline
+                        box={box}
+                        ocupacoes={getOcupacoesParaData(box.id)}
+                        data={dataSelecionada}
+                      />
+                    </div>
                     {/* Botões de ação no hover */}
                     <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                       <button

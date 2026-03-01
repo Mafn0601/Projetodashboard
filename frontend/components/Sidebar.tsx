@@ -207,6 +207,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     if (mobileMenuOpen) {
       setCollapsed(false);
     } else {
+      setCollapsed(true);
       setUserMenuOpen(false);
     }
   }, [mobileMenuOpen]);
@@ -358,7 +359,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
             </button>
 
             {userMenuOpen && (
-              <div className="fixed inset-0 md:absolute md:inset-auto md:left-0 md:right-auto md:bottom-full md:mb-2 md:w-80 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[70] md:z-40 md:top-auto m-4 md:m-0">
+              <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm md:absolute md:inset-auto md:left-0 md:right-auto md:bottom-full md:mb-2 md:w-80 md:translate-x-0 md:translate-y-0 md:top-auto rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden z-[100]">
                 {/* Header do menu com info do usuário */}
                 <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-4 py-4 border-b border-slate-200 dark:border-slate-700">
                   <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{user.name}</p>
@@ -366,7 +367,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                 </div>
 
                 {/* Opções do menu */}
-                <div className="py-2 max-h-[70vh] overflow-y-auto">
+                <div className="py-2 max-h-[60vh] overflow-y-auto">
                   <button
                     onClick={() => {
                       // Navigate to settings
@@ -422,9 +423,9 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
   return (
     <>
       {/* Overlay para fechar menu de conta ao clicar fora (mobile) */}
-      {mobileMenuOpen && userMenuOpen && (
+      {userMenuOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/20 z-[60]"
+          className="md:hidden fixed inset-0 bg-black/40 z-[90]"
           onClick={() => setUserMenuOpen(false)}
           aria-hidden="true"
         />

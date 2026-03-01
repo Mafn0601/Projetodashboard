@@ -306,7 +306,7 @@ export default function BoxPage() {
                     {boxesDoParceiro.map(box => (
                       <div key={box.id} className="group">
                         <div className="flex items-stretch gap-2">
-                          <div className="flex-1">
+                          <div className="flex-1 overflow-x-scroll touch-pan-x pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
                             <BoxTimeline
                               box={box}
                               ocupacoes={getOcupacoesParaData(box.id)}

@@ -212,37 +212,50 @@ export default function Page() {
     if (!validate()) return;
 
     try {
-      const dataToSubmit = {
-        login: formData.login,
-        ...(formData.senha && { senha: formData.senha }),
-        cpf: formData.cpf,
-        funcao: formData.funcao,
-        telefone: formData.telefone,
-        email: formData.email,
-        estado: formData.estado,
-        comissaoAtiva: formData.comissaoAtiva,
-        agencia: formData.agencia,
-        contaCorrente: formData.contaCorrente,
-        banco: formData.banco,
-        meioPagamento: formData.meioPagamento,
-        cpfCnpjRecebimento: formData.cpfCnpjRecebimento,
-        tipoComissao: formData.tipoComissao,
-        valorComissao: formData.valorComissao,
-        parceiroId: formData.parceiroId || '',
-        ativo: formData.ativo ?? true,
-      };
-
       if (editingId) {
-        // Atualizar
-        const equipeAtualizada = await equipeServiceAPI.update(editingId, dataToSubmit);
+        // Atualizar - parceiroId não pode ser alterado
+        const dataToUpdate = {
+          login: formData.login,
+          ...(formData.senha && { senha: formData.senha }),
+          cpf: formData.cpf,
+          funcao: formData.funcao,
+          telefone: formData.telefone,
+          email: formData.email,
+          estado: formData.estado,
+          comissaoAtiva: formData.comissaoAtiva,
+          agencia: formData.agencia,
+          contaCorrente: formData.contaCorrente,
+          banco: formData.banco,
+          meioPagamento: formData.meioPagamento,
+          cpfCnpjRecebimento: formData.cpfCnpjRecebimento,
+          tipoComissao: formData.tipoComissao,
+          valorComissao: formData.valorComissao,
+          ativo: formData.ativo ?? true,
+        };
+        const equipeAtualizada = await equipeServiceAPI.update(editingId, dataToUpdate);
         setEquipes(prev => prev.map(e => e.id === editingId ? equipeAtualizada as unknown as Equipe : e));
       } else {
-        // Criar
-        const novaEquipe = await equipeServiceAPI.create({
-          ...dataToSubmit,
-          parceiroId: formData.parceiroId || '',
+        // Criar - parceiroId é obrigatório
+        const dataToCreate = {
+          login: formData.login,
           senha: formData.senha || '',
-        });
+          cpf: formData.cpf,
+          funcao: formData.funcao,
+          telefone: formData.telefone,
+          email: formData.email,
+          estado: formData.estado,
+          comissaoAtiva: formData.comissaoAtiva,
+          agencia: formData.agencia,
+          contaCorrente: formData.contaCorrente,
+          banco: formData.banco,
+          meioPagamento: formData.meioPagamento,
+          cpfCnpjRecebimento: formData.cpfCnpjRecebimento,
+          tipoComissao: formData.tipoComissao,
+          valorComissao: formData.valorComissao,
+          parceiroId: formData.parceiroId || '',
+          ativo: formData.ativo ?? true,
+        };
+        const novaEquipe = await equipeServiceAPI.create(dataToCreate);
         setEquipes(prev => [...prev, novaEquipe as unknown as Equipe]);
       }
 

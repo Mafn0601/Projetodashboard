@@ -39,7 +39,10 @@ type Equipe = {
 const funcoes = [
   { value: "consultor_vendas", label: "Consultor de Vendas" },
   { value: "gerente_vendas", label: "Gerente de Vendas" },
-  { value: "operador", label: "Operador" }
+  { value: "gerente_comercial", label: "Gerente Comercial" },
+  { value: "operador", label: "Operador" },
+  { value: "auxiliar_administrativo", label: "Auxiliar Administrativo" },
+  { value: "tecnico", label: "Técnico" }
 ];
 
 // Meios de Pagamento para Comissão

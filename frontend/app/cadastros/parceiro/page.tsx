@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import CrudTemplate from "@/components/templates/crud-template";
+import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
 
 // Opções de Status
 const statusOptions = [
@@ -43,6 +44,28 @@ const estadosBrasil = [
 export default function Page() {
   const router = useRouter();
 
+  const handleBeforeCreateParceiro = async (entity: { [key: string]: unknown }) => {
+    const nome = String(entity.nome || '').trim();
+    const cnpj = String(entity.cnpj || '').trim();
+    const grupo = String(entity.grupo || '').trim();
+    const cidade = String(entity.cidade || '').trim();
+    const estado = String(entity.estado || '').trim();
+    const status = String(entity.status || 'ativo').trim().toLowerCase();
+
+    const endereco = [grupo, cidade, estado].filter(Boolean).join(' - ');
+
+    const parceiroCriado = await parceiroServiceAPI.create({
+      nome,
+      cnpj: cnpj || undefined,
+      endereco: endereco || undefined,
+      ativo: status !== 'inativo',
+    });
+
+    if (!parceiroCriado) {
+      throw new Error('Não foi possível salvar parceiro no Supabase. Verifique backend/CORS e tente novamente.');
+    }
+  };
+
   const handleRowClick = (item: { id: string; nome?: unknown; [key: string]: unknown }) => {
     const nomeParceiro = item.nome as string || 'parceiro';
     const slug = nomeParceiro.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
@@ -54,6 +77,8 @@ export default function Page() {
       title="Cadastro de Parceiros"
       entityKey="parceiros"
       useModal={true}
+      createModalMaxHeightClass="max-h-[94vh]"
+      onBeforeCreate={handleBeforeCreateParceiro}
       enableRowClick={true}
       onRowClick={handleRowClick}
       fields={[

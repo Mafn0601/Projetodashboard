@@ -99,6 +99,7 @@ export const createParceiroSchema = z.object({
   telefone: z.string().optional(),
   email: z.string().email('Email inválido').optional(),
   endereco: z.string().optional(),
+  ativo: z.boolean().optional(),
 });
 
 export const updateParceiroSchema = createParceiroSchema.partial();

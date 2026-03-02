@@ -24,6 +24,8 @@ export interface CrudTemplateProps {
   entityKey: string;
   fields: CrudField[];
   useModal?: boolean;
+  createModalMaxHeightClass?: string;
+  onBeforeCreate?: (entity: GenericEntity) => Promise<void>;
   enableRowClick?: boolean;
   onRowClick?: (item: GenericEntity) => void;
 }
@@ -42,6 +44,8 @@ export default function CrudTemplate({
   entityKey,
   fields,
   useModal = false,
+  createModalMaxHeightClass = "max-h-[90vh]",
+  onBeforeCreate,
   enableRowClick = false,
   onRowClick
 }: CrudTemplateProps) {
@@ -88,7 +92,7 @@ export default function CrudTemplate({
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nextErrors: Record<string, string> = {};
     fieldsWithOptions.forEach((field) => {
@@ -108,6 +112,17 @@ export default function CrudTemplate({
       id: generateId(entityKey),
       ...formState
     };
+
+    if (onBeforeCreate) {
+      try {
+        await onBeforeCreate(entity);
+      } catch (error) {
+        const mensagem = error instanceof Error ? error.message : 'Erro ao salvar no servidor';
+        alert(mensagem);
+        return;
+      }
+    }
+
     const next = appendItem<GenericEntity>(entityKey, entity);
     setItems(next);
     setFormState({});
@@ -460,7 +475,7 @@ export default function CrudTemplate({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={(e) => e.target === e.currentTarget && setIsModalOpen(false)}
         >
-          <div className="bg-white dark:bg-slate-950 rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
+          <div className={cn("bg-white dark:bg-slate-950 rounded-lg shadow-lg max-w-3xl w-full mx-4 overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col", createModalMaxHeightClass)}>
             <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
                 Novo Cadastro

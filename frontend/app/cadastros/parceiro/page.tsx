@@ -102,7 +102,7 @@ export default function Page() {
         { name: "cep", label: "CEP", hideInList: true },
         { name: "rua", label: "Rua", hideInList: true },
         { name: "numero", label: "Número", hideInList: true },
-        { name: "complemento", label: "Complemento", hideInList: true },
+        { name: "complemento", label: "Complemento", hideInList: true, required: false },
         { name: "bairro", label: "Bairro", hideInList: true }
       ]}
     />

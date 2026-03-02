@@ -187,6 +187,7 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
   );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -194,6 +195,18 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
   // Mount state
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Detectar se é mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Force DOM update when resolvedTheme changes
@@ -248,13 +261,20 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
   }, [userMenuOpen]);
 
   useEffect(() => {
-    if (mobileMenuOpen) {
+    if (isMobile) {
+      // No mobile, sempre forçar expandido quando o menu está aberto
       setCollapsed(false);
-    } else {
-      setCollapsed(true);
+    } else if (mobileMenuOpen) {
+      setCollapsed(false);
+    } else if (!isMobile) {
+      // Em desktop, permitir que o usuário controle o estado collapsed
+      // Não forçar nada aqui
+    }
+    
+    if (!mobileMenuOpen) {
       setUserMenuOpen(false);
     }
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen, isMobile]);
 
   const toggleSection = (section: string) => {
     if (section === "Root") return; // Dashboard sempre visível
@@ -274,46 +294,189 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     }
   };
 
+  // Componente do botão do menu da conta (reutilizável)
+  const UserMenuButton = () => (
+    <button
+      onClick={() => setUserMenuOpen(!userMenuOpen)}
+      className={cn(
+        "rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-between gap-3",
+        // No mobile sempre compacto no header, no desktop depende de collapsed
+        isMobile 
+          ? "h-10 w-10 p-2 flex items-center justify-center flex-shrink-0"
+          : collapsed 
+            ? "h-10 w-10 p-2 flex items-center justify-center mx-auto"
+            : "w-full p-3 text-left"
+      )}
+      title={isMobile || collapsed ? "Conta" : undefined}
+    >
+      <div className={cn(
+        "flex items-center gap-3 flex-1 min-w-0",
+        !isMobile && collapsed && "flex-col"
+      )}>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-bold flex-shrink-0">
+          {user?.name.charAt(0).toUpperCase()}
+        </div>
+        {/* No mobile nunca mostrar nome no header, no desktop depende de collapsed */}
+        {!isMobile && !collapsed && <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{user?.name}</p>}
+      </div>
+      {!isMobile && !collapsed && <ChevronDown size={16} className={cn(
+        "text-slate-700 dark:text-slate-400 transition-transform flex-shrink-0",
+        userMenuOpen && "rotate-180"
+      )} />}
+    </button>
+  );
+
+  // Componente do dropdown do menu da conta (reutilizável)
+  const UserMenuDropdown = () => (
+    <div 
+      className={cn(
+        "absolute left-0 right-auto w-80 md:w-80 flex flex-col rounded-lg bg-white/100 dark:bg-slate-800/100 border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden z-[100]",
+        // No mobile (header): abrir para baixo; No desktop (footer): abrir para cima
+        isMobile ? "top-full mt-2" : "bottom-full mb-2"
+      )} 
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Close button para mobile */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setUserMenuOpen(false);
+        }}
+        className="md:hidden absolute top-4 right-4 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-slate-700 rounded p-1 z-10"
+        aria-label="Fechar menu"
+      >
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      {/* Header do menu com info do usuário */}
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-4 py-4 border-b border-slate-200 dark:border-slate-700 w-full">
+        <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{user?.name}</p>
+        <p className="text-xs text-slate-600 dark:text-slate-200 mt-1 break-all">{user?.email}</p>
+      </div>
+
+      {/* Opções do menu */}
+      <div className="py-2 max-h-[70vh] overflow-y-auto w-full">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            // Navigate to settings
+            setUserMenuOpen(false);
+          }}
+          className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
+        >
+          <Settings className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+          <span>Configurações</span>
+        </button>
+
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            router.push('/relatar-problema');
+            setUserMenuOpen(false);
+          }}
+          className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm cursor-pointer"
+        >
+          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <span>Relatar um Problema</span>
+        </button>
+
+        <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
+
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleThemeToggle();
+          }}
+          className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm cursor-pointer"
+        >
+          {mounted && resolvedTheme === "dark" ? <Sun className="h-4 w-4 text-yellow-500" /> : <Moon className="h-4 w-4 text-slate-600" />}
+          <span>{mounted && resolvedTheme === "dark" ? "Tema Claro" : "Tema Escuro"}</span>
+        </button>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            logout();
+            setUserMenuOpen(false);
+          }}
+          className="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors text-sm font-semibold"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Sair</span>
+        </button>
+      </div>
+    </div>
+  );
+
   const sidebarContent = (
     <aside
       className={cn(
         "flex flex-col h-screen border-r-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 text-slate-900 dark:text-slate-100 transition-all duration-200 shadow-lg sticky top-0",
-        collapsed ? "w-20" : "w-[86vw] max-w-72 md:w-72"
+        // No mobile, sempre usar largura expandida; no desktop, respeitar collapsed
+        isMobile 
+          ? "w-[86vw] max-w-72"
+          : collapsed 
+            ? "w-20" 
+            : "w-[86vw] max-w-72 md:w-72"
       )}
     >
       <div className={cn(
         "flex items-center gap-3 transition-all duration-200",
-        collapsed ? "mb-3 px-2" : "justify-start mb-6 px-4"
+        // No mobile sempre expandido, no desktop depende de collapsed
+        isMobile ? "justify-between mb-6 px-4" : collapsed ? "mb-3 px-2" : "justify-start mb-6 px-4"
       )}>
         <div 
           className={cn(
             "flex flex-col transition-all duration-200 overflow-hidden",
-            collapsed 
-              ? "opacity-0 max-w-0" 
-              : "opacity-100 max-w-xs"
+            // No mobile sempre visível, no desktop depende de collapsed
+            isMobile 
+              ? "opacity-100 max-w-xs"
+              : collapsed 
+                ? "opacity-0 max-w-0" 
+                : "opacity-100 max-w-xs"
           )}
         >
           <span className="text-sm font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 whitespace-nowrap">
             Menu
           </span>
-          <span className="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap">
-            Gestão de OS e Vendas
-          </span>
-        </div>
-        <button
-          className={cn(
-            "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex-shrink-0"
+          {/* Texto "Gestão de OS e Vendas" apenas no desktop */}
+          {!isMobile && (
+            <span className="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+              Gestão de OS e Vendas
+            </span>
           )}
-          onClick={() => setCollapsed((v) => !v)}
-          aria-label="Alternar tamanho do menu"
-        >
-          {collapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
-        </button>
+        </div>
+        {/* No mobile: mostrar botão da conta; No desktop: mostrar botão de toggle */}
+        {isMobile ? (
+          user && (
+            <div className="relative" ref={userMenuRef}>
+              <UserMenuButton />
+              {userMenuOpen && <UserMenuDropdown />}
+            </div>
+          )
+        ) : (
+          <button
+            className={cn(
+              "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex-shrink-0"
+            )}
+            onClick={() => setCollapsed((v) => !v)}
+            aria-label="Alternar tamanho do menu"
+          >
+            {collapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
+          </button>
+        )}
       </div>
 
       <nav className={cn(
         "scrollbar-invisible flex-1 overflow-y-auto text-base min-h-0",
-        collapsed ? "space-y-2 px-2" : "space-y-5 px-4 pr-2"
+        // No mobile sempre expandido, no desktop depende de collapsed
+        isMobile ? "space-y-5 px-4 pr-2" : collapsed ? "space-y-2 px-2" : "space-y-5 px-4 pr-2"
       )}>
         {SECTIONS_ORDER.map((section) => {
           const items = NAV_ITEMS.filter((item) => item.section === section);
@@ -323,7 +486,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
           return (
             <div key={section}>
-              {section !== "Root" && !collapsed && (
+              {/* Títulos das seções: sempre visível no mobile, apenas quando expandido no desktop */}
+              {section !== "Root" && (isMobile || !collapsed) && (
                 <button
                   onClick={() => toggleSection(section)}
                   className="mb-3 flex w-full items-center justify-between px-3 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
@@ -350,23 +514,25 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
                         onClick={handleLinkClick}
                         className={cn(
                           "flex flex-1 items-center rounded-lg text-base font-semibold transition-all",
-                          collapsed ? "justify-center p-3" : "gap-3 px-3 py-3",
+                          // No mobile sempre expandido, no desktop depende de collapsed
+                          isMobile ? "gap-3 px-3 py-3" : collapsed ? "justify-center p-3" : "gap-3 px-3 py-3",
                           active
                             ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-500"
-                            : item.href === "/" && !collapsed
+                            : item.href === "/" && (isMobile || !collapsed)
                             ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300"
                             : "text-slate-700 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-600 dark:hover:text-blue-300"
                         )}
-                        title={collapsed ? item.label : undefined}
+                        title={isMobile ? undefined : collapsed ? item.label : undefined}
                       >
                         <Icon
                           className={cn(
                             "h-5 w-5 flex-shrink-0",
                             active && "text-white",
-                            !active && item.href === "/" && !collapsed && "text-blue-600 dark:text-blue-300"
+                            !active && item.href === "/" && (isMobile || !collapsed) && "text-blue-600 dark:text-blue-300"
                           )}
                         />
-                        {!collapsed && <span>{item.label}</span>}
+                        {/* No mobile sempre mostrar label, no desktop depende de collapsed */}
+                        {(isMobile || !collapsed) && <span>{item.label}</span>}
                       </Link>
                     </div>
                   );
@@ -377,122 +543,23 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
         })}
       </nav>
 
-      {/* Footer com informações do usuário */}
-      <div className={cn(
-        "border-t-2 border-slate-300 dark:border-slate-700 pt-4 space-y-2 flex-shrink-0",
-        collapsed ? "px-2" : "px-4"
-      )}
-      >
-        {user && (
-          <div className="relative" ref={userMenuRef}>
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className={cn(
-                "mb-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-between gap-3",
-                collapsed 
-                  ? "h-10 w-10 p-2 flex items-center justify-center mx-auto"
-                  : "w-full p-3 text-left"
-              )}
-              title={collapsed ? "Conta" : undefined}
-            >
-              <div className={cn(
-                "flex items-center gap-3 flex-1 min-w-0",
-                collapsed && "flex-col"
-              )}>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-bold flex-shrink-0">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                {!collapsed && <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{user.name}</p>}
-              </div>
-              {!collapsed && <ChevronDown size={16} className={cn(
-                "text-slate-700 dark:text-slate-400 transition-transform flex-shrink-0",
-                userMenuOpen && "rotate-180"
-              )} />}
-            </button>
-
-            {userMenuOpen && (
-              <div className="absolute bottom-full left-0 right-auto mb-2 w-80 md:w-80 flex flex-col rounded-lg bg-white/100 dark:bg-slate-800/100 border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden z-[100]" onClick={(e) => e.stopPropagation()}>
-                {/* Close button para mobile */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setUserMenuOpen(false);
-                  }}
-                  className="md:hidden absolute top-4 right-4 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-slate-700 rounded p-1"
-                  aria-label="Fechar menu"
-                >
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-
-                {/* Header do menu com info do usuário */}
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-4 py-4 border-b border-slate-200 dark:border-slate-700 w-full">
-                  <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{user.name}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-200 mt-1 break-all">{user.email}</p>
-                </div>
-
-                {/* Opções do menu */}
-                <div className="py-2 max-h-[70vh] overflow-y-auto w-full">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Navigate to settings
-                      setUserMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm"
-                  >
-                    <Settings className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-                    <span>Configurações</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      router.push('/relatar-problema');
-                      setUserMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm cursor-pointer"
-                  >
-                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    <span>Relatar um Problema</span>
-                  </button>
-
-                  <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
-
-                  <button
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleThemeToggle();
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm cursor-pointer"
-                  >
-                    {mounted && resolvedTheme === "dark" ? <Sun className="h-4 w-4 text-yellow-500" /> : <Moon className="h-4 w-4 text-slate-600" />}
-                    <span>{mounted && resolvedTheme === "dark" ? "Tema Claro" : "Tema Escuro"}</span>
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      logout();
-                      setUserMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors text-sm font-semibold"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Sair</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+      {/* Footer com informações do usuário - apenas no desktop */}
+      {!isMobile && (
+        <div className={cn(
+          "border-t-2 border-slate-300 dark:border-slate-700 pt-4 space-y-2 flex-shrink-0",
+          collapsed ? "px-2" : "px-4"
         )}
-
-      </div>
+        >
+          {user && (
+            <div className="relative" ref={userMenuRef}>
+              <div className="mb-3">
+                <UserMenuButton />
+              </div>
+              {userMenuOpen && <UserMenuDropdown />}
+            </div>
+        )}
+        </div>
+      )}
     </aside>
   );
 

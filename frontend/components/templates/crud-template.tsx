@@ -60,6 +60,7 @@ export default function CrudTemplate({
   const [editFormState, setEditFormState] = useState<Record<string, string>>({});
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [fieldsWithOptions, setFieldsWithOptions] = useState<CrudField[]>(fields);
+  const [loadingCep, setLoadingCep] = useState(false);
 
   useEffect(() => {
     const data = readArray<GenericEntity>(entityKey);
@@ -92,6 +93,51 @@ export default function CrudTemplate({
       delete next[field];
       return next;
     });
+  };
+
+  // Função para buscar CEP via API ViaCEP
+  const buscarCep = async (cep: string, isEditMode: boolean = false) => {
+    const cleanCep = cep.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+    
+    setLoadingCep(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        // Atualizar os campos de endereço com os dados do CEP
+        const updates: Record<string, string> = {};
+        if (data.logradouro) updates.rua = data.logradouro;
+        if (data.bairro) updates.bairro = data.bairro;
+        if (data.localidade) updates.cidade = data.localidade;
+        if (data.uf) updates.estado = data.uf;
+
+        if (isEditMode) {
+          setEditFormState((prev) => ({ ...prev, ...updates }));
+        } else {
+          setFormState((prev) => ({ ...prev, ...updates }));
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao buscar CEP", error);
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
+  // Handler especial para campo CEP que busca automaticamente
+  const handleCepChange = (value: string, isEditMode: boolean = false) => {
+    if (isEditMode) {
+      handleEditChange('cep', value);
+    } else {
+      handleChange('cep', value);
+    }
+    
+    // Buscar CEP automaticamente quando tiver 8 dígitos
+    const cleanCep = value.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      buscarCep(value, isEditMode);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -240,6 +286,27 @@ export default function CrudTemplate({
             />
           );
         }
+        // Campo CEP com busca automática
+        if (field.name === "cep") {
+          return (
+            <div key={field.name} className="relative">
+              <Input
+                label={field.label}
+                type={field.type ?? "text"}
+                value={formState[field.name] ?? ""}
+                onChange={(e) => handleCepChange(e.target.value, false)}
+                error={errors[field.name]}
+                required={isRequired}
+                placeholder="00000-000"
+              />
+              {loadingCep && (
+                <span className="absolute right-3 top-9 text-xs text-blue-600">
+                  Buscando...
+                </span>
+              )}
+            </div>
+          );
+        }
         return (
           <Input
             key={field.name}
@@ -298,6 +365,27 @@ export default function CrudTemplate({
               error={editErrors[field.name]}
               required={isRequired}
             />
+          );
+        }
+        // Campo CEP com busca automática
+        if (field.name === "cep") {
+          return (
+            <div key={field.name} className="relative">
+              <Input
+                label={field.label}
+                type={field.type ?? "text"}
+                value={editFormState[field.name] ?? ""}
+                onChange={(e) => handleCepChange(e.target.value, true)}
+                error={editErrors[field.name]}
+                required={isRequired}
+                placeholder="00000-000"
+              />
+              {loadingCep && (
+                <span className="absolute right-3 top-9 text-xs text-blue-600">
+                  Buscando...
+                </span>
+              )}
+            </div>
           );
         }
         return (

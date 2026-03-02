@@ -124,3 +124,26 @@ export const createTipoOSItemSchema = z.object({
   desconto: z.number().min(0).optional(),
   duracao: z.number().min(0).optional(),
 });
+// ==================== EQUIPE ====================
+
+export const createEquipeSchema = z.object({
+  login: z.string().min(3, 'Login deve ter no mínimo 3 caracteres'),
+  senha: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  cpf: z.string().optional(),
+  funcao: z.string().min(2, 'Função inválida'),
+  telefone: z.string().optional(),
+  email: z.string().email('Email inválido').optional(),
+  estado: z.string().optional(),
+  comissaoAtiva: z.boolean().optional(),
+  agencia: z.string().optional(),
+  contaCorrente: z.string().optional(),
+  banco: z.string().optional(),
+  meioPagamento: z.string().optional(),
+  cpfCnpjRecebimento: z.string().optional(),
+  tipoComissao: z.string().optional(),
+  valorComissao: z.string().optional(),
+  parceiroId: z.string().uuid('Parceiro ID inválido'),
+  ativo: z.boolean().optional(),
+});
+
+export const updateEquipeSchema = createEquipeSchema.partial().omit({ parceiroId: true });

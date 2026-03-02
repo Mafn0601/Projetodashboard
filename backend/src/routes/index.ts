@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authRoutes from './authRoutes';
 import clienteRoutes from './clienteRoutes';
 import parceiroRoutes from './parceiroRoutes';
+import equipeRoutes from './equipeRoutes';
 import veiculoRoutes from './veiculoRoutes';
 import agendamentoRoutes from './agendamentoRoutes';
 import ordemServicoRoutes from './ordemServicoRoutes';
@@ -18,6 +19,7 @@ router.get('/health', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/clientes', clienteRoutes);
 router.use('/parceiros', parceiroRoutes);
+router.use('/equipes', equipeRoutes);
 router.use('/veiculos', veiculoRoutes);
 router.use('/agendamentos', agendamentoRoutes);
 router.use('/ordens-servico', ordemServicoRoutes);

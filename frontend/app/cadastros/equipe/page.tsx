@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Select, SelectOption } from '@/components/ui/Select';
 import { MaskedInput } from '@/components/ui/MaskedInput';
 import { readArray, appendItem } from '@/lib/storage';
+import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 
 type Parceiro = {
   id: string;
@@ -15,10 +16,11 @@ type Parceiro = {
 
 type Equipe = {
   id: string;
-  parceiro: string;
+  parceiroId?: string;
+  parceiro?: string;
   login: string;
   senha?: string;
-  cpf: string;
+  cpf?: string;
   funcao: string;
   telefone?: string;
   email?: string;
@@ -31,6 +33,7 @@ type Equipe = {
   cpfCnpjRecebimento?: string;
   tipoComissao?: string;
   valorComissao?: string;
+  ativo?: boolean;
 };
 
 // ===== OPÇÕES DE SELEÇÃO =====
@@ -102,10 +105,11 @@ export default function Page() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedParceiros, setExpandedParceiros] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const didInitExpand = useRef(false);
   const [formData, setFormData] = useState<Equipe>({
     id: '',
-    parceiro: '',
+    parceiroId: '',
     login: '',
     senha: '',
     cpf: '',
@@ -120,23 +124,40 @@ export default function Page() {
     meioPagamento: '',
     cpfCnpjRecebimento: '',
     tipoComissao: '',
-    valorComissao: ''
+    valorComissao: '',
+    ativo: true
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const equipesData = readArray<Equipe>('equipes');
-    setEquipes(equipesData);
+    const carregarDados = async () => {
+      try {
+        setIsLoading(true);
+        // Carregar parceiros
+        const parceirosData = readArray<Parceiro>('parceiros');
+        setParceiros(parceirosData);
+        setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
 
-    const parceirosData = readArray<Parceiro>('parceiros');
-    setParceiros(parceirosData);
-    setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
+        // Carregar equipes da API
+        const equipesData = await equipeServiceAPI.findAll();
+        setEquipes(equipesData as unknown as Equipe[]);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        // Fallback para localStorage se a API falhar
+        const equipesData = readArray<Equipe>('equipes');
+        setEquipes(equipesData);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    carregarDados();
   }, []);
 
   const resetForm = () => {
     setFormData({
       id: '',
-      parceiro: '',
+      parceiroId: '',
       login: '',
       senha: '',
       cpf: '',
@@ -151,7 +172,8 @@ export default function Page() {
       meioPagamento: '',
       cpfCnpjRecebimento: '',
       tipoComissao: '',
-      valorComissao: ''
+      valorComissao: '',
+      ativo: true
     });
     setErrors({});
     setEditingId(null);
@@ -171,9 +193,9 @@ export default function Page() {
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.parceiro) newErrors.parceiro = 'Campo obrigatório';
+    if (!formData.parceiroId) newErrors.parceiroId = 'Campo obrigatório';
     if (!formData.login) newErrors.login = 'Campo obrigatório';
-    if (!formData.senha) newErrors.senha = 'Campo obrigatório';
+    if (!editingId && !formData.senha) newErrors.senha = 'Campo obrigatório';
     if (!formData.cpf) newErrors.cpf = 'Campo obrigatório';
     if (!formData.funcao) newErrors.funcao = 'Campo obrigatório';
     if (!formData.email) newErrors.email = 'Campo obrigatório';
@@ -186,24 +208,50 @@ export default function Page() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
 
-    const newEquipe: Equipe = {
-      ...formData,
-      id: editingId || generateId('equipe')
-    };
+    try {
+      const dataToSubmit = {
+        login: formData.login,
+        ...(formData.senha && { senha: formData.senha }),
+        cpf: formData.cpf,
+        funcao: formData.funcao,
+        telefone: formData.telefone,
+        email: formData.email,
+        estado: formData.estado,
+        comissaoAtiva: formData.comissaoAtiva,
+        agencia: formData.agencia,
+        contaCorrente: formData.contaCorrente,
+        banco: formData.banco,
+        meioPagamento: formData.meioPagamento,
+        cpfCnpjRecebimento: formData.cpfCnpjRecebimento,
+        tipoComissao: formData.tipoComissao,
+        valorComissao: formData.valorComissao,
+        parceiroId: formData.parceiroId || '',
+        ativo: formData.ativo ?? true,
+      };
 
-    if (editingId) {
-      const equipesAtualizadas = equipes.map(e => e.id === editingId ? newEquipe : e);
-      localStorage.setItem('equipes', JSON.stringify(equipesAtualizadas));
-      setEquipes(equipesAtualizadas);
-    } else {
-      appendItem('equipes', newEquipe);
-      setEquipes(prev => [...prev, newEquipe]);
+      if (editingId) {
+        // Atualizar
+        const equipeAtualizada = await equipeServiceAPI.update(editingId, dataToSubmit);
+        setEquipes(prev => prev.map(e => e.id === editingId ? equipeAtualizada as unknown as Equipe : e));
+      } else {
+        // Criar
+        const novaEquipe = await equipeServiceAPI.create({
+          ...dataToSubmit,
+          parceiroId: formData.parceiroId || '',
+          senha: formData.senha || '',
+        });
+        setEquipes(prev => [...prev, novaEquipe as unknown as Equipe]);
+      }
+
+      setIsModalOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao salvar equipe:', error);
+      setErrors({ submit: String(error) });
     }
-
-    setIsModalOpen(false);
     resetForm();
   };
 
@@ -213,29 +261,34 @@ export default function Page() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!editingId) return;
 
-    const equipeRemovida = equipes.find(e => e.id === editingId);
-    const equipesAtualizadas = equipes.filter(e => e.id !== editingId);
-    localStorage.setItem('equipes', JSON.stringify(equipesAtualizadas));
-    setEquipes(equipesAtualizadas);
-    if (equipeRemovida) {
-      const rawUser = localStorage.getItem('user');
-      if (rawUser) {
-        try {
-          const currentUser = JSON.parse(rawUser) as { email?: string };
-          const currentIdentifier = String(currentUser.email ?? '').toLowerCase();
-          const removedEmail = String(equipeRemovida.email ?? '').toLowerCase();
-          const removedLogin = String(equipeRemovida.login ?? '').toLowerCase();
-          if (currentIdentifier && (currentIdentifier === removedEmail || currentIdentifier === removedLogin)) {
-            localStorage.removeItem('user');
-          }
-        } catch {}
+    try {
+      const equipeRemovida = equipes.find(e => e.id === editingId);
+      await equipeServiceAPI.delete(editingId);
+      setEquipes(prev => prev.filter(e => e.id !== editingId));
+
+      if (equipeRemovida) {
+        const rawUser = localStorage.getItem('user');
+        if (rawUser) {
+          try {
+            const currentUser = JSON.parse(rawUser) as { email?: string };
+            const currentIdentifier = String(currentUser.email ?? '').toLowerCase();
+            const removedEmail = String(equipeRemovida.email ?? '').toLowerCase();
+            const removedLogin = String(equipeRemovida.login ?? '').toLowerCase();
+            if (currentIdentifier && (currentIdentifier === removedEmail || currentIdentifier === removedLogin)) {
+              localStorage.removeItem('user');
+            }
+          } catch {}
+        }
       }
+      setIsModalOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao deletar equipe:', error);
+      alert('Erro ao deletar equipe');
     }
-    setIsModalOpen(false);
-    resetForm();
   };
 
   const obterLabelParceiro = (parceiroId: string): string => {
@@ -250,23 +303,46 @@ export default function Page() {
 
   const filteredEquipes = equipes.filter(equipe => {
     const term = searchTerm.toLowerCase();
-    const parceiroNome = obterLabelParceiro(equipe.parceiro).toLowerCase();
+    const parceiroNome = obterLabelParceiro(equipe.parceiroId || '').toLowerCase();
     const funcaoLabel = obterLabelFuncao(equipe.funcao).toLowerCase();
     
     return (
       equipe.login.toLowerCase().includes(term) ||
-      equipe.cpf.includes(term) ||
+      (equipe.cpf && equipe.cpf.includes(term)) ||
       parceiroNome.includes(term) ||
       funcaoLabel.includes(term)
     );
   });
 
+  // Mapa de hierarquia das funções (menor número = maior hierarquia)
+  const hierarquiaFuncoes: Record<string, number> = {
+    'gerente_vendas': 1,
+    'gerente_comercial': 2,
+    'consultor_vendas': 3,
+    'operador': 4,
+    'tecnico': 5,
+    'auxiliar_administrativo': 6
+  };
+
+  // Função para obter o nível de hierarquia
+  const obterNivelHierarquia = (funcao: string): number => {
+    return hierarquiaFuncoes[funcao] ?? 999; // 999 para funções desconhecidas
+  };
+
   const groupedEquipes = filteredEquipes.reduce<Record<string, Equipe[]>>((acc, equipe) => {
-    const key = equipe.parceiro || 'sem_parceiro';
+    const key = equipe.parceiroId || 'sem_parceiro';
     if (!acc[key]) acc[key] = [];
     acc[key].push(equipe);
     return acc;
   }, {});
+
+  // Ordenar membros de cada grupo por hierarquia
+  Object.keys(groupedEquipes).forEach((parceiroId) => {
+    groupedEquipes[parceiroId].sort((a, b) => {
+      return obterNivelHierarquia(a.funcao) - obterNivelHierarquia(b.funcao);
+    });
+  });
+
   const partnerIds = Object.keys(groupedEquipes);
 
   useEffect(() => {
@@ -387,7 +463,7 @@ export default function Page() {
                   {isExpanded && membros.map((equipe) => (
                     <tr key={equipe.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
-                        {obterLabelParceiro(equipe.parceiro)}
+                        {obterLabelParceiro(equipe.parceiroId || '')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
                         {equipe.login}
@@ -443,10 +519,10 @@ export default function Page() {
                 <div className="space-y-4">
                   <Select
                     label="Parceiro *"
-                    value={formData.parceiro}
-                    onChange={(value) => handleChange('parceiro', value)}
+                    value={formData.parceiroId || ''}
+                    onChange={(value) => handleChange('parceiroId', value)}
                     options={parceiroOptions}
-                    error={errors.parceiro}
+                    error={errors.parceiroId}
                   />
                   <Input
                     label="E-mail *"

@@ -73,17 +73,30 @@ model Parceiro {
 }
 
 model Equipe {
-  id          String   @id @default(uuid())
-  nome        String
-  login       String   @unique
-  senha       String   // Hash bcrypt
+  id                    String   @id @default(uuid())
+  login                 String   @unique
+  senha                 String   // Hash bcrypt
+  cpf                   String?  @unique
+  funcao                String   // consultor_vendas, gerente_vendas, gerente_comercial, operador, tecnico, auxiliar_administrativo
+  telefone              String?
+  email                 String?
+  estado                String?
   
-  parceiroId  String
-  parceiro    Parceiro @relation(fields: [parceiroId], references: [id], onDelete: Cascade)
+  comissaoAtiva         Boolean  @default(false)
+  agencia               String?
+  contaCorrente         String?
+  banco                 String?
+  meioPagamento         String?  // pix, transferencia, ted, doc
+  cpfCnpjRecebimento    String?
+  tipoComissao          String?  // percentual, monetario
+  valorComissao         String?
   
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  parceiroId            String
+  parceiro              Parceiro @relation(fields: [parceiroId], references: [id], onDelete: Cascade)
+  
+  ativo                 Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
   
   @@map("equipes")
 }

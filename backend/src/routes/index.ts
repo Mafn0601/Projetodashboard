@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes';
 import clienteRoutes from './clienteRoutes';
+import veiculoRoutes from './veiculoRoutes';
 import agendamentoRoutes from './agendamentoRoutes';
 import ordemServicoRoutes from './ordemServicoRoutes';
 import chamadoRoutes from './chamadoRoutes';
@@ -15,6 +16,7 @@ router.get('/health', (req, res) => {
 // Rotas da API
 router.use('/auth', authRoutes);
 router.use('/clientes', clienteRoutes);
+router.use('/veiculos', veiculoRoutes);
 router.use('/agendamentos', agendamentoRoutes);
 router.use('/ordens-servico', ordemServicoRoutes);
 router.use('/chamados', chamadoRoutes);

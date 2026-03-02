@@ -7,7 +7,10 @@ import { Select, SelectOption } from '@/components/ui/Select';
 import { MaskedInput, currencyToNumber, numberToCurrency } from '@/components/ui/MaskedInput';
 import { readArray } from '@/lib/storage';
 import { mockFabricantes, mockModelos } from '@/lib/mockFormData';
-import { saveCompleto, ClienteCompleto } from '@/services/clienteService';
+import type { ClienteCompleto } from '@/services/clienteService';
+import { clienteServiceAPI } from '@/services/clienteServiceAPI';
+import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
+import { ordemServicoServiceAPI } from '@/services/ordemServicoServiceAPI';
 import { addStatusCardFromOrcamento } from '@/services/statusService';
 import { useRouter } from 'next/navigation';
 import AgendaOrcamentoModal from '@/components/agenda/AgendaOrcamentoModal';
@@ -356,15 +359,14 @@ export default function Page() {
     return true;
   };
 
-  // Salvar cliente na tabela
-  const salvarCliente = () => {
+  // Salvar cliente na tabela via API
+  const salvarCliente = async () => {
     const agora = new Date().toISOString();
     
     // Encontrar o nome do tipo de OS
     const tipoSelecionado = tiposOs.find(t => t.id === tipo);
     
-    const novoCliente: ClienteCompleto = {
-      id: `cli_${Date.now()}`,
+    const novoCliente: Partial<ClienteCompleto> = {
       responsavel: responsavel,
       parceiro: parceiro,
       nome: nomeCliente,
@@ -388,35 +390,40 @@ export default function Page() {
       dataAtualizacao: agora,
     };
 
-    saveCompleto(novoCliente);
-    return novoCliente.id;
+    console.log('📤 Salvando cliente via API...');
+    const clienteCriado = await clienteServiceAPI.create(novoCliente);
+    if (!clienteCriado) {
+      throw new Error('Falha ao salvar cliente');
+    }
+    console.log('✅ Cliente salvo:', clienteCriado.id);
+    return clienteCriado.id;
   };
 
   // Salvar orçamento
-  const handleSalvarOrcamento = () => {
+  const handleSalvarOrcamento = async () => {
     if (!validarCamposObrigatorios()) {
       return;
     }
 
     try {
-      salvarCliente();
-      alert('Orçamento salvo com sucesso!');
+      await salvarCliente();
+      alert('✅ Orçamento salvo com sucesso!');
       // Limpar formulário se desejar
     } catch (error) {
-      console.error('Erro ao salvar orçamento:', error);
+      console.error('❌ Erro ao salvar orçamento:', error);
       alert('Erro ao salvar orçamento. Tente novamente.');
     }
   };
 
   // Gerar ordem de serviço - AGORA ABRE MODAL DE AGENDAMENTO
-  const handleGerarOS = () => {
+  const handleGerarOS = async () => {
     if (!validarCamposObrigatorios()) {
       return;
     }
 
     try {
-      // 1. Salvar cliente
-      const clienteId = salvarCliente();
+      // 1. Salvar cliente via API
+      const clienteId = await salvarCliente();
       
       // 2. Obter nomes e validar seleções
       const parceiroNome = parceiroOptions.find(p => p.value === parceiro)?.label || parceiro;
@@ -471,8 +478,10 @@ export default function Page() {
   };
   
   // Callback quando agendamento é confirmado
-  const handleAgendamentoSuccess = (agendamentoId: string) => {
+  const handleAgendamentoSuccess = async (agendamentoId: string) => {
     try {
+      console.log('📤 Criando ordem de serviço via API...');
+      
       // Obter dados para criar a OS
       const parceiroNome = parceiroOptions.find(p => p.value === parceiro)?.label || parceiro;
       const responsavelNome = responsavelOptions.find(r => r.value === responsavel)?.label || responsavel;
@@ -490,13 +499,14 @@ export default function Page() {
         agendamentoId, // Vincular ao agendamento
       });
       
+      console.log('✅ OS criada:', novoCard);
       alert(`✅ Ordem de Serviço ${novoCard.numero} criada e agendada com sucesso!\n\nCliente: ${nomeCliente}\nVeículo: ${veiculoCompleto}\n\nRedirecionando para Agendamento...`);
       
       // Redirecionar para a página de Agendamento
       router.push('/operacional/agendamento');
       
     } catch (error) {
-      console.error('Erro ao gerar ordem de serviço:', error);
+      console.error('❌ Erro ao gerar ordem de serviço:', error);
       alert('Erro ao gerar ordem de serviço. Tente novamente.');
     }
   };

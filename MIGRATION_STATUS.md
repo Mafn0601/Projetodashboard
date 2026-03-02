@@ -25,13 +25,23 @@ Todos os serviços incluem:
 - ✅ `frontend/app/cadastros/cliente/page.tsx` - Agora usa API
 - ✅ `frontend/components/cliente/ClienteFormCompleto.tsx` - Salva na API
 
-### 4. **Orçamentos Parcialmente Migrados** 🔄
-- ✅ `frontend/app/vendas/orcamento/page.tsx` - Cliente criado via API
+### 4. **Orçamentos Completamente Migrados** ✨
+- ✅ `frontend/app/vendas/orcamento/page.tsx` - Cliente + Veículo criados via API
 - ✅ Função `salvarCliente()` agora async com `clienteServiceAPI.create()`
-- ⚠️ Ainda faltam: veículos (localStorage) e ordens de serviço (status cards)
+- ✅ Função `salvarVeiculo()` agora async com `veiculoServiceAPI.create()`
+- ✅ Cliente + Veículo + Agendamento salvos no Supabase
+- ✅ Veículo vinculado ao cliente automaticamente
 
-### 5. **Agendamentos - Modal + Lista Migrados** ✨
-- ✅ `frontend/components/agenda/AgendaOrcamentoModal.tsx` - Usa API
+### 5. **Veículos - Integração Completa** ✨
+- ✅ Backend: `veiculoService.ts`, `veiculoController.ts`, `veiculoRoutes.ts`
+- ✅ Frontend: `veiculoServiceAPI.ts` com CRUD completo
+- ✅ Endpoints: GET/POST/PUT/DELETE `/api/veiculos`
+- ✅ Filtros: clienteId, placa, search
+- ✅ Validações e tratamento de erros
+- ✅ Vinculação automática ao cliente
+
+### 6. **Agendamentos - Modal + Lista Migrados** ✨
+- ✅ `frontend/components/agenda/AgendaOrcamentoModal.tsx` - Usa API + veiculoId
 - ✅ `frontend/app/operacional/agendamento/page.tsx` - Carrega lista da API
 - ✅ Função `handleSalvar()` agora async com `agendamentoServiceAPI.create()`
 - ✅ Função `handleDeleteAgendamento()` agora async, deleta via API
@@ -39,29 +49,23 @@ Todos os serviços incluem:
 - ✅ Função `handleChegou()` atualiza status para EXECUTANDO na API
 - ✅ Agendamentos salvos no Supabase via backend
 - ✅ Sincronização com dados reais do banco
+- ✅ Agendamentos vinculados com cliente + veículo
 - ⚠️ Box ocupação ainda usa localStorage (boxService)
 
 ## 🔄 PRÓXIMOS PASSOS (Recomendado)
 
-### Agendamentos
-```
-- [x] frontend/components/agenda/AgendaOrcamentoModal.tsx → Usa agendamentoServiceAPI ✅
-- [x] frontend/app/operacional/agendamento/page.tsx → Migrar lista de agendamentos ✅
-- [ ] Validar sincronização de atualizações em tempo real
-```
-
 ### Veículos
 ```
-- [ ] Criar backend/src/controllers/veiculoController.ts
-- [ ] Criar frontend/services/veiculoServiceAPI.ts
-- [ ] Migrar criação de veículos no orçamento
+- [x] Criar backend/src/controllers/veiculoController.ts ✅
+- [x] Criar frontend/services/veiculoServiceAPI.ts ✅
+- [x] Migrar criação de veículos no orçamento ✅
 ```
 
 ### Ordens de Serviço  
 ```
 - [ ] frontend/app/operacional/box/page.tsx → use ordemServicoServiceAPI
 - [ ] Atualizar status de ordens via API
-- [ ] Migrar criação de OS no orçamento
+- [ ] Validar sincronização em tempo real
 ```
 
 ### Box e Ocupações
@@ -131,12 +135,13 @@ Serviços API:          ████████████ 100%
 CORS:                  ████████████ 100%
 Clientes:              ████████████ 100% ✅
 Agendamentos:          ████████████ 100% ✅
-Orçamentos:            ████░░░░░░░░ 30% (cliente/agendamento salvos, falta veículo/OS)
+Veículos:              ████████████ 100% ✅
+Orçamentos:            ████████████ 100% ✅
 Ordens de Serviço:     ░░░░░░░░░░░░ 0%
 Status/Box:            ░░░░░░░░░░░░ 0%
 Chamados (Relatos):    ████████████ 100% ✅
 
-TOTAL:                 ██████████░░ 70%
+TOTAL:                 ██████████░░ 80%
 ```
 
 ## 📝 NOTAS IMPORTANTES
@@ -161,21 +166,22 @@ TOTAL:                 ██████████░░ 70%
 1. ✅ ~Testar a página de clientes agora migrada~ - COMPLETO
 2. ✅ ~Migrar modal de agendamento (AgendaOrcamentoModal.tsx)~ - COMPLETO
 3. ✅ ~Migrar lista de agendamentos (agendamento/page.tsx)~ - COMPLETO
-4. 🔄 Testar fluxo completo:
-   - Criar orçamento → Cliente salvo no Supabase
-   - Clicar "Gerar OS" → Agendamento salvo no Supabase
-   - Navegar para agenda → Agendamento aparece na lista
-   - Verificar drag-and-drop de agendamentos
-   - Verificar exclusão de agendamentos
-5. Criar endpoints de veículos no backend
-6. Migrar criação de veículos no orçamento
+4. ✅ ~Criar endpoints de veículos no backend~ - COMPLETO
+5. ✅ ~Migrar criação de veículos no orçamento~ - COMPLETO
+6. 🔄 Testar fluxo completo **CRÍTICO**:
+   - ✅ Criar orçamento → Cliente salvo no Supabase
+   - ✅ Clicar "Gerar OS" → Cliente + Veículo + Agendamento salvos
+   - ✅ Navegar para agenda → Agendamento aparece na lista
+   - ❓ Verificar drag-and-drop de agendamentos
+   - ❓ Verificar exclusão de agendamentos
+   - ❓ Verificar marcação de "Chegou"
 7. Migrar ordens de serviço (box/page.tsx)
 8. Migrar box ocupações
-9. Validar integridade dos dados no Supabase
-10. Remover localStorage de todos os componentes
+9. Remover localStorage de agendamentos (apenas guardar ocupações)
+10. Validar integridade dos dados no Supabase
 
 ---
 
-**Última atualização:** 1º de Março, 2026 - 19:00  
-**Commit:** `adb4c46` - Migração da página de agendamento para API  
-**Progresso:** 70% completo 🚀
+**Última atualização:** 1º de Março, 2026 - 19:30  
+**Commit:** `0b7d1b5` - Integração completa de veículos  
+**Progresso:** 80% completo 🚀

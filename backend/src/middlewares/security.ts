@@ -28,6 +28,7 @@ export const securityHeaders = helmet({
   frameguard: {
     action: 'deny',
   },
+  noSniff: true,
   referrerPolicy: {
     policy: 'strict-origin-when-cross-origin',
   },

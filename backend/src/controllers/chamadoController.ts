@@ -7,8 +7,11 @@ export const chamadoController = {
     try {
       const { email, assunto, urgencia, descricao } = req.body;
 
+      console.log('📥 Recebendo chamado:', { email, assunto, urgencia });
+
       // Validação básica
       if (!email || !assunto || !urgencia || !descricao) {
+        console.log('❌ Validação falhou - campos faltando');
         return res.status(400).json({
           error: 'Todos os campos são obrigatórios',
         });
@@ -16,6 +19,7 @@ export const chamadoController = {
 
       // Validar urgência
       if (!Object.values(UrgenciaChamado).includes(urgencia)) {
+        console.log('❌ Urgência inválida:', urgencia);
         return res.status(400).json({
           error: 'Urgência inválida',
         });
@@ -28,9 +32,10 @@ export const chamadoController = {
         descricao,
       });
 
+      console.log('✅ Chamado criado com sucesso:', chamado.id);
       return res.status(201).json(chamado);
     } catch (error) {
-      console.error('Erro ao criar chamado:', error);
+      console.error('❌ Erro ao criar chamado:', error);
       return res.status(500).json({
         error: 'Erro ao criar chamado',
       });

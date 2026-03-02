@@ -3,6 +3,12 @@ const nextConfig = {
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
     
+    // Em desenvolvimento, usar CSP mais permissivo
+    if (isDevelopment) {
+      return [];
+    }
+    
+    // Em produção, usar CSP restritivo
     return [
       {
         source: '/:path*',
@@ -11,20 +17,17 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval'",
-              "script-src-elem 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "object-src 'none'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              isDevelopment 
-                ? "connect-src 'self' http://localhost:3001 http://localhost:5000"
-                : "connect-src 'self' https://projetodashboard-uebg.onrender.com",
+              "connect-src 'self' https://projetodashboard-uebg.onrender.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
               "upgrade-insecure-requests"
-            ].filter(Boolean).join('; ')
+            ].join('; ')
           },
           {
             key: 'X-Frame-Options',

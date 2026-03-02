@@ -58,6 +58,11 @@ export default function Page() {
       nome,
       cnpj: cnpj || undefined,
       endereco: endereco || undefined,
+      cep: String(entity.cep || '').trim() || undefined,
+      rua: String(entity.rua || '').trim() || undefined,
+      numero: String(entity.numero || '').trim() || undefined,
+      complemento: String(entity.complemento || '').trim() || undefined,
+      bairro: String(entity.bairro || '').trim() || undefined,
       ativo: status !== 'inativo',
     });
 
@@ -86,13 +91,19 @@ export default function Page() {
         { name: "nome", label: "Nome da Empresa" },
         { name: "grupo", label: "Grupo", required: false },
         { name: "cidade", label: "Cidade" },
-        { name: "estado", label: "Estado", type: "select", options: estadosBrasil },
+        { name: "estado", label: "Estado", type: "select", options: estadosBrasil, forceAboveInCreate: true },
         { 
           name: "status", 
           label: "Status", 
           type: "select", 
-          options: statusOptions
-        }
+          options: statusOptions,
+          forceAboveInCreate: true
+        },
+        { name: "cep", label: "CEP", hideInList: true },
+        { name: "rua", label: "Rua", hideInList: true },
+        { name: "numero", label: "Número", hideInList: true },
+        { name: "complemento", label: "Complemento", hideInList: true },
+        { name: "bairro", label: "Bairro", hideInList: true }
       ]}
     />
   );

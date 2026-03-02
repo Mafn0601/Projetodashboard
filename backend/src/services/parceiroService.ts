@@ -53,6 +53,11 @@ export class ParceiroService {
     telefone?: string;
     email?: string;
     endereco?: string;
+    cep?: string;
+    rua?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
     ativo?: boolean;
   }) {
     const cnpj = data.cnpj?.trim();
@@ -74,6 +79,11 @@ export class ParceiroService {
         telefone: data.telefone,
         email: data.email,
         endereco: data.endereco,
+        cep: data.cep,
+        rua: data.rua,
+        numero: data.numero,
+        complemento: data.complemento,
+        bairro: data.bairro,
         ativo: data.ativo ?? true,
       },
     });
@@ -89,6 +99,11 @@ export class ParceiroService {
       telefone?: string;
       email?: string;
       endereco?: string;
+      cep?: string;
+      rua?: string;
+      numero?: string;
+      complemento?: string;
+      bairro?: string;
       ativo?: boolean;
     }>
   ) {

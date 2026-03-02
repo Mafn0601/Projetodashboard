@@ -7,6 +7,11 @@ export interface ParceiroAPI {
   telefone?: string;
   email?: string;
   endereco?: string;
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -18,6 +23,11 @@ interface CreateParceiroData {
   telefone?: string;
   email?: string;
   endereco?: string;
+  cep?: string;
+  rua?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
   ativo?: boolean;
 }
 

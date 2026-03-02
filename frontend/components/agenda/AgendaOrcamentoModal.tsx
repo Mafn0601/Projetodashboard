@@ -12,7 +12,7 @@ import {
   getTipoBoxPreferidoPorServico,
   addOcupacao,
 } from '@/services/boxService';
-import { addAgendamento } from '@/services/agendaService';
+import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import {
   getBrasiliaTodayISO,
   getBrasiliaNow,
@@ -31,6 +31,7 @@ type Props = {
   onClose: () => void;
   onSuccess: (agendamentoId: string) => void;
   dadosOrcamento: {
+    clienteId: string; // ID do cliente no backend
     nomeCliente: string;
     telefone: string;
     veiculo: string; // Fabricante + Modelo + Versão
@@ -163,7 +164,7 @@ export default function AgendaOrcamentoModal({
     }
   }, [dataIso, horario, dadosOrcamento.tipoOsNome, dadosOrcamento.duracao, boxId]);
 
-  const handleSalvar = () => {
+  const handleSalvar = async () => {
     setErroValidacao('');
 
     // Validações
@@ -188,25 +189,25 @@ export default function AgendaOrcamentoModal({
       const dataCurta = toDdMmFromISODate(dataIso);
       const dataCompleta = toDdMmYyyyFromISODate(dataIso);
 
-      // Criar agendamento
-      const novoAgendamento = addAgendamento({
-        titulo: `${dadosOrcamento.veiculo}`,
-        cliente: dadosOrcamento.nomeCliente,
-        telefone: dadosOrcamento.telefone,
-        placa: dadosOrcamento.placa,
-        data: dataCurta,
-        horario,
-        duracaoEstimada: dadosOrcamento.duracao,
-        responsavel: dadosOrcamento.responsavel,
-        tipo: dadosOrcamento.tipoOsNome,
-        boxId: boxId,
-        boxNome: boxSelecionado?.nome || '',
-        tag: 'EXTERNO',
-        formaPagamento: dadosOrcamento.formaPagamento || '',
-        meioPagamento: dadosOrcamento.meioPagamento || '',
+      // Criar agendamento via API
+      console.log('📤 Criando agendamento via API...');
+      const novoAgendamento = await agendamentoServiceAPI.create({
+        clienteId: dadosOrcamento.clienteId,
+        responsavelId: dadosOrcamento.responsavelId,
+        dataAgendamento: dataIso, // ISO date string
+        horarioAgendamento: horario,
+        tipoAgendamento: dadosOrcamento.tipoOsNome,
+        descricaoServico: `${dadosOrcamento.veiculo} - ${dadosOrcamento.nomeCliente}`,
+        observacoes: `Box: ${boxSelecionado?.nome || ''} | Placa: ${dadosOrcamento.placa} | Duração: ${dadosOrcamento.duracao}min`,
       });
 
-      // Criar ocupação do box
+      if (!novoAgendamento) {
+        throw new Error('Falha ao criar agendamento');
+      }
+
+      console.log('✅ Agendamento criado via API:', novoAgendamento);
+
+      // Criar ocupação do box (mantém localStorage por enquanto)
       addOcupacao({
         boxId: boxId,
         boxNome: boxSelecionado?.nome || '',
@@ -224,7 +225,7 @@ export default function AgendaOrcamentoModal({
       onSuccess(novoAgendamento.id);
       onClose();
     } catch (error) {
-      console.error('Erro ao criar agendamento:', error);
+      console.error('❌ Erro ao criar agendamento:', error);
       setErroValidacao('Erro ao criar agendamento. Tente novamente.');
     }
   };

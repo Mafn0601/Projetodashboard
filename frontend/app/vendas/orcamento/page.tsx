@@ -452,6 +452,7 @@ export default function Page() {
       const itemId = produtos.length > 0 ? produtos[0].id : '';
       
       setDadosAgendamento({
+        clienteId, // ID do cliente salvo via API
         nomeCliente,
         telefone: telCelular,
         veiculo: veiculoCompleto,

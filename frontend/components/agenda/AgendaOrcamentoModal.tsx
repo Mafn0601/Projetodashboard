@@ -32,6 +32,7 @@ type Props = {
   onSuccess: (agendamentoId: string) => void;
   dadosOrcamento: {
     clienteId: string; // ID do cliente no backend
+    veiculoId?: string; // ID do veículo no backend (opcional)
     nomeCliente: string;
     telefone: string;
     veiculo: string; // Fabricante + Modelo + Versão
@@ -193,6 +194,7 @@ export default function AgendaOrcamentoModal({
       console.log('📤 Criando agendamento via API...');
       const novoAgendamento = await agendamentoServiceAPI.create({
         clienteId: dadosOrcamento.clienteId,
+        veiculoId: dadosOrcamento.veiculoId, // Vincular veículo se disponível
         responsavelId: dadosOrcamento.responsavelId,
         dataAgendamento: dataIso, // ISO date string
         horarioAgendamento: horario,

@@ -11,6 +11,7 @@ import type { ClienteCompleto } from '@/services/clienteService';
 import { clienteServiceAPI } from '@/services/clienteServiceAPI';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { ordemServicoServiceAPI } from '@/services/ordemServicoServiceAPI';
+import { veiculoServiceAPI } from '@/services/veiculoServiceAPI';
 import { addStatusCardFromOrcamento } from '@/services/statusService';
 import { useRouter } from 'next/navigation';
 import AgendaOrcamentoModal from '@/components/agenda/AgendaOrcamentoModal';
@@ -399,6 +400,42 @@ export default function Page() {
     return clienteCriado.id;
   };
 
+  const salvarVeiculo = async (clienteId: string) => {
+    // Não salvar veículo se não houver placa
+    if (!chassis_placa || chassis_placa.trim() === '') {
+      console.warn('⚠️ Placa não informada, veículo não será salvo');
+      return null;
+    }
+
+    const fabricanteNome = fabricanteOptions.find(f => f.value === fabricanteSel)?.label || fabricanteSel;
+    const modeloNome = modeloOptions.find(m => m.value === modeloSel)?.label || modeloSel;
+
+    const novoVeiculo = {
+      clienteId,
+      placa: chassis_placa.toUpperCase(),
+      marca: fabricanteNome,
+      modelo: modeloNome,
+      fabricante: fabricanteNome,
+      anoModelo: anoFabMod,
+      anoFabricacao: anoFabMod,
+      cor: '',
+      combustivel: '',
+    };
+
+    try {
+      console.log('📤 Salvando veículo via API...');
+      const veiculoCriado = await veiculoServiceAPI.create(novoVeiculo);
+      if (!veiculoCriado) {
+        throw new Error('Falha ao salvar veículo');
+      }
+      console.log('✅ Veículo salvo:', veiculoCriado.id);
+      return veiculoCriado.id;
+    } catch (error) {
+      console.error('❌ Erro ao salvar veículo:', error);
+      throw error;
+    }
+  };
+
   // Salvar orçamento
   const handleSalvarOrcamento = async () => {
     if (!validarCamposObrigatorios()) {
@@ -425,20 +462,29 @@ export default function Page() {
       // 1. Salvar cliente via API
       const clienteId = await salvarCliente();
       
-      // 2. Obter nomes e validar seleções
+      // 2. Salvar veículo via API
+      let veiculoId: string | null = null;
+      try {
+        veiculoId = await salvarVeiculo(clienteId);
+      } catch (error) {
+        console.warn('⚠️ Erro ao salvar veículo (continuando):', error);
+        // Continuar mesmo se veículo falhar
+      }
+      
+      // 3. Obter nomes e validar seleções
       const parceiroNome = parceiroOptions.find(p => p.value === parceiro)?.label || parceiro;
       const responsavelNome = responsavelOptions.find(r => r.value === responsavel)?.label || responsavel;
       const fabricanteNome = fabricanteOptions.find(f => f.value === fabricanteSel)?.label || fabricanteSel;
       const modeloNome = modeloOptions.find(m => m.value === modeloSel)?.label || modeloSel;
       const veiculoCompleto = `${fabricanteNome} ${modeloNome} ${versao || ''} ${anoFabMod}`.trim();
       
-      // 3. Verificar se há produtos/serviços adicionados
+      // 4. Verificar se há produtos/serviços adicionados
       if (produtos.length === 0) {
         alert('Adicione pelo menos um serviço ou produto antes de gerar a OS.');
         return;
       }
       
-      // 4. Calcular duração total
+      // 5. Calcular duração total
       const duracaoTotal = produtos.reduce((total, p) => total + (p.duracaoMin || 0), 0);
       
       if (duracaoTotal === 0) {
@@ -446,13 +492,14 @@ export default function Page() {
         return;
       }
       
-      // 5. Preparar dados do agendamento
+      // 6. Preparar dados do agendamento
       const tipoOSNome = tipoOptions.find(t => t.value === tipo)?.label || '';
       const itemNome = produtos.length > 0 ? produtos[0].nome : '';
       const itemId = produtos.length > 0 ? produtos[0].id : '';
       
       setDadosAgendamento({
-        clienteId, // ID do cliente salvo via API
+        clienteId,
+        veiculoId, // ID do veículo salvo via API (pode ser null)
         nomeCliente,
         telefone: telCelular,
         veiculo: veiculoCompleto,
@@ -469,7 +516,7 @@ export default function Page() {
         meioPagamento: '',
       });
       
-      // 6. Abrir modal de agendamento
+      // 7. Abrir modal de agendamento
       setIsAgendamentoOpen(true);
       
     } catch (error) {

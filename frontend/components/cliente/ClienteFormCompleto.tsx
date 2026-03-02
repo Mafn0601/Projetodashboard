@@ -6,6 +6,7 @@ import { Select, type SelectOption } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import * as clienteService from '@/services/clienteService';
+import { clienteServiceAPI } from '@/services/clienteServiceAPI';
 import { validateForm } from '@/lib/validation';
 import { readArray } from '@/lib/storage';
 import {
@@ -315,15 +316,23 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         dataAtualizacao: new Date().toISOString(),
       };
 
+      let resultado;
       if (initial?.id) {
-        clienteService.updateCompleto(initial.id, cliente);
+        console.log('📤 Atualizando cliente via API...');
+        resultado = await clienteServiceAPI.update(initial.id, cliente);
       } else {
-        clienteService.saveCompleto(cliente);
+        console.log('📤 Criando cliente via API...');
+        resultado = await clienteServiceAPI.create(cliente);
       }
 
-      onSaved(cliente);
+      if (resultado) {
+        console.log('✅ Cliente salvo com sucesso:', resultado);
+        onSaved(resultado);
+      } else {
+        throw new Error('Erro ao salvar cliente - resposta vazia');
+      }
     } catch (error) {
-      console.error('Erro ao salvar cliente:', error);
+      console.error('❌ Erro ao salvar cliente:', error);
     } finally {
       setIsSubmitting(false);
     }

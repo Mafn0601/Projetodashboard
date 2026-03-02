@@ -2,23 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import ClienteTable from '@/components/cliente/ClienteTable';
-import * as clienteService from '@/services/clienteService';
+import { clienteServiceAPI } from '@/services/clienteServiceAPI';
+import type { ClienteCompleto } from '@/services/clienteService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import ClienteModalCompleto from '@/components/cliente/ClienteModalCompleto';
 import * as authService from '@/services/authService';
 
 export default function Page() {
-  const [clientes, setClientes] = useState<clienteService.ClienteCompleto[]>([]);
+  const [clientes, setClientes] = useState<ClienteCompleto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCompleto, setEditingCompleto] = useState<clienteService.ClienteCompleto | undefined>();
+  const [editingCompleto, setEditingCompleto] = useState<ClienteCompleto | undefined>();
   const [currentRole, setCurrentRole] = useState<'admin' | 'user' | null>(null);
   const [busca, setBusca] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  // Carregar clientes completos ao montar
+  // Carregar clientes da API ao montar
   useEffect(() => {
-    const all = clienteService.getAllCompleto();
-    setClientes(all);
+    const loadClientes = async () => {
+      try {
+        setLoading(true);
+        const resultado = await clienteServiceAPI.findAll();
+        setClientes(resultado || []);
+      } catch (error) {
+        console.error('Erro ao carregar clientes:', error);
+        setClientes([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadClientes();
+
     try {
       const s = authService.getUser();
       if (s && (s.role === 'admin' || s.role === 'user')) setCurrentRole(s.role);
@@ -40,10 +55,22 @@ export default function Page() {
     );
   });
 
-  // Callback para deletar completo
-  const handleDelete = (id: string) => {
-    const remaining = clienteService.removeCompleto(id);
-    setClientes(remaining);
+  // Callback para deletar cliente
+  const handleDelete = async (id: string) => {
+    const sucesso = await clienteServiceAPI.delete(id);
+    if (sucesso) {
+      setClientes(prev => prev.filter(c => c.id !== id));
+    }
+  };
+
+  // Recarregar liste após salvar
+  const handleSaved = async (cliente?: ClienteCompleto) => {
+    if (cliente) {
+      const resultado = await clienteServiceAPI.findAll();
+      setClientes(resultado || []);
+    }
+    setIsModalOpen(false);
+    setEditingCompleto(undefined);
   };
 
   return (
@@ -78,14 +105,7 @@ export default function Page() {
       <ClienteModalCompleto
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditingCompleto(undefined); }}
-        onSaved={(cliente) => {
-          // atualizar lista completa também
-          if (cliente) {
-            const all = clienteService.getAllCompleto();
-            setClientes(all);
-          }
-          setIsModalOpen(false);
-        }}
+        onSaved={handleSaved}
         initial={editingCompleto}
       />
 
@@ -95,7 +115,11 @@ export default function Page() {
         <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
           Clientes Cadastrados
         </h2>
-        {clientes.length === 0 ? (
+        {loading ? (
+          <p className="text-xs text-slate-700 dark:text-slate-400">
+            Carregando clientes...
+          </p>
+        ) : clientes.length === 0 ? (
           <p className="text-xs text-slate-700 dark:text-slate-400">
             Nenhum cliente cadastrado até o momento.
           </p>

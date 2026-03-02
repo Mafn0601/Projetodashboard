@@ -23,6 +23,9 @@ export default function RelatarProblemaPage() {
     setEnviando(true);
     setErro(null);
 
+    console.log('📤 Enviando chamado para:', `${API_URL}/api/chamados`);
+    console.log('📦 Dados:', { email: formData.email, assunto: formData.assunto, urgencia: formData.urgencia });
+
     try {
       const response = await fetch(`${API_URL}/api/chamados`, {
         method: 'POST',
@@ -37,10 +40,16 @@ export default function RelatarProblemaPage() {
         }),
       });
 
+      console.log('📨 Resposta status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Erro da API:', errorData);
         throw new Error(errorData.error || 'Erro ao enviar chamado');
       }
+
+      const data = await response.json();
+      console.log('✅ Chamado criado:', data);
 
       setEnviado(true);
 
@@ -55,7 +64,7 @@ export default function RelatarProblemaPage() {
         });
       }, 3000);
     } catch (error) {
-      console.error('Erro ao enviar chamado:', error);
+      console.error('❌ Erro ao enviar chamado:', error);
       setErro(error instanceof Error ? error.message : 'Erro desconhecido ao enviar chamado');
     } finally {
       setEnviando(false);

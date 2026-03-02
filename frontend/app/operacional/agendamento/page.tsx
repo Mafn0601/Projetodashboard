@@ -2,16 +2,13 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getNext7ValidDays } from "@/lib/dateUtils";
+import { getNext7ValidDays, toDdMmFromISODate } from "@/lib/dateUtils";
 import {
-  getAgendamentos,
   getAgendamentosPorData,
-  deleteAgendamento,
-  moveAgendamento,
-  initializeAgendamentos,
   AgendaItem,
 } from "@/services/agendaService";
 import { addStatusCardFromAgendamento } from "@/services/statusService";
+import { agendamentoServiceAPI, Agendamento } from "@/services/agendamentoServiceAPI";
 import { AgendaColumn } from "@/components/agenda/AgendaColumn";
 import AgendaDetailsModal from "@/components/agenda/AgendaDetailsModal";
 
@@ -20,54 +17,76 @@ export default function Page() {
   const [updateKey, setUpdateKey] = useState(0);
   const [selectedAgendamento, setSelectedAgendamento] = useState<AgendaItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiAgendamentos, setApiAgendamentos] = useState<Agendamento[]>([]);
 
-  // Inicializar agendamentos com boxes automáticos na primeira carga
+  // Carregar agendamentos da API
   useEffect(() => {
-    initializeAgendamentos();
-    setUpdateKey(prev => prev + 1); // Recarregar UI
-  }, []);
-
-  // Monitorar mudanças no localStorage e eventos customizados de novo agendamento
-  useEffect(() => {
-    const handleNewAgendamento = () => {
-      setUpdateKey(prev => prev + 1);
+    const loadAgendamentos = async () => {
+      console.log('📤 Carregando agendamentos da API...');
+      setIsLoading(true);
+      const agendamentos = await agendamentoServiceAPI.findAll({
+        status: 'CONFIRMADO' // Apenas agendamentos confirmados
+      });
+      setApiAgendamentos(agendamentos);
+      console.log('✅ Agendamentos carregados da API:', agendamentos.length);
+      setIsLoading(false);
     };
 
-    const handleStorageChange = () => {
-      setUpdateKey(prev => prev + 1);
-    };
+    loadAgendamentos();
+  }, [updateKey]);
 
-    // Ouvir evento customizado (disparado quando agendamento é criado na mesma página)
-    window.addEventListener('agendamento:novo', handleNewAgendamento);
-    // Ouvir mudanças no localStorage (disparado quando agendamento é criado em outra aba)
-    window.addEventListener('storage', handleStorageChange);
+  // Converter dados da API para formato AgendaItem
+  const mapAgendamentoToAgendaItem = (agendamento: Agendamento): AgendaItem => {
+    const cliente = (agendamento as any).cliente;
+    const veiculo = (agendamento as any).veiculo;
+    const responsavel = (agendamento as any).responsavel;
 
-    return () => {
-      window.removeEventListener('agendamento:novo', handleNewAgendamento);
-      window.removeEventListener('storage', handleStorageChange);
+    const titulo = veiculo
+      ? `${veiculo.anoModelo || ''} ${veiculo.marca || ''} - ${veiculo.modelo || ''}`.trim()
+      : 'Agendamento';
+
+    const dataIso = agendamento.dataAgendamento;
+    const data = toDdMmFromISODate(dataIso);
+
+    return {
+      id: agendamento.id,
+      titulo,
+      placa: veiculo?.placa || '',
+      responsavel: responsavel?.nome || 'Sem responsável',
+      cliente: cliente?.nome || 'Sem cliente',
+      telefone: cliente?.telefone || '',
+      tipo: agendamento.tipoAgendamento,
+      tag: 'EXTERNO', // Padrão para API
+      horario: agendamento.horarioAgendamento || '09:00',
+      data,
+      boxId: undefined,
+      boxNome: undefined,
+      duracaoEstimada: 60, // Padrão, pode ser melhorado
+      clienteId: cliente?.id,
+      formaPagamento: undefined,
+      meioPagamento: undefined,
     };
-  }, []);
+  };
+
+  // Memoize agendamentos convertidos
+  const allAgendamentos = useMemo(() => {
+    return apiAgendamentos.map(mapAgendamentoToAgendaItem);
+  }, [apiAgendamentos]);
 
   // Gera os 7 dias válidos (sem domingo) a partir de hoje
   const validDays = useMemo(() => getNext7ValidDays(), []);
-
-  // Obtém todos os agendamentos (recalcula quando updateKey muda)
-  const allAgendamentos = useMemo(() => {
-    // Limpar flag de novo agendamento
-    try {
-      localStorage.removeItem('agendamento:novo');
-    } catch {}
-    return getAgendamentos();
-  }, [updateKey]);
 
   // Agrupa agendamentos por data
   const agendamentosPorData = useMemo(() => {
     const agrupado: { [key: string]: typeof allAgendamentos } = {};
     validDays.forEach((day) => {
-      agrupado[day.formatted] = getAgendamentosPorData(day.formatted);
+      agrupado[day.formatted] = allAgendamentos.filter(
+        (a) => a.data === day.formatted
+      );
     });
     return agrupado;
-  }, [validDays, updateKey]);
+  }, [validDays, allAgendamentos]);
 
   const handleSelectAgendamento = useCallback((id: string) => {
     const agendamento = allAgendamentos.find((a) => a.id === id);
@@ -77,24 +96,60 @@ export default function Page() {
     }
   }, [allAgendamentos]);
 
-  const handleDeleteAgendamento = useCallback((id: string) => {
-    deleteAgendamento(id);
-    setUpdateKey((prev) => prev + 1);
-  }, []);
-
-  const handleMoveItem = useCallback((itemId: string, newDate: string) => {
-    if (moveAgendamento(itemId, newDate)) {
+  const handleDeleteAgendamento = useCallback(async (id: string) => {
+    try {
+      console.log('📤 Deletando agendamento via API...');
+      await agendamentoServiceAPI.delete(id);
+      console.log('✅ Agendamento deletado');
       setUpdateKey((prev) => prev + 1);
+    } catch (error) {
+      console.error('❌ Erro ao deletar agendamento:', error);
     }
   }, []);
 
-  const handleChegou = useCallback((agendamento: AgendaItem) => {
-    addStatusCardFromAgendamento(agendamento);
-    deleteAgendamento(agendamento.id);
-    setUpdateKey((prev) => prev + 1);
-    setIsModalOpen(false);
-    setSelectedAgendamento(null);
-    router.push("/operacional/status");
+  const handleMoveItem = useCallback(async (itemId: string, newDate: string) => {
+    try {
+      const agendamento = apiAgendamentos.find((a) => a.id === itemId);
+      if (!agendamento) return;
+
+      console.log('📤 Movendo agendamento para nova data via API...');
+      
+      // Converter dd/mm para ISO date (assume ano atual)
+      const [dia, mes] = newDate.split('/');
+      const ano = new Date().getFullYear();
+      const novaDataISO = `${ano}-${mes}-${dia}T${agendamento.horarioAgendamento || '09:00'}:00`;
+
+      await agendamentoServiceAPI.update(itemId, {
+        dataAgendamento: novaDataISO,
+      });
+
+      console.log('✅ Agendamento movido');
+      setUpdateKey((prev) => prev + 1);
+    } catch (error) {
+      console.error('❌ Erro ao mover agendamento:', error);
+    }
+  }, [apiAgendamentos]);
+
+  const handleChegou = useCallback(async (agendamento: AgendaItem) => {
+    try {
+      console.log('📤 Marcando agendamento como chegado...');
+      
+      // Atualizar status para EXECUTANDO
+      await agendamentoServiceAPI.update(agendamento.id, {
+        status: 'EXECUTANDO'
+      });
+
+      // Criar card de status
+      addStatusCardFromAgendamento(agendamento);
+      
+      console.log('✅ Agendamento marcado como chegado');
+      setUpdateKey((prev) => prev + 1);
+      setIsModalOpen(false);
+      setSelectedAgendamento(null);
+      router.push("/operacional/status");
+    } catch (error) {
+      console.error('❌ Erro ao marcar agendamento como chegado:', error);
+    }
   }, [router]);
 
   const handleDragOver = (e: React.DragEvent) => {

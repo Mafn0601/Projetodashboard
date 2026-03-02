@@ -316,12 +316,12 @@ export default function Page() {
 
   // Mapa de hierarquia das funções (menor número = maior hierarquia)
   const hierarquiaFuncoes: Record<string, number> = {
-    'gerente_vendas': 1,
-    'gerente_comercial': 2,
-    'consultor_vendas': 3,
-    'operador': 4,
-    'tecnico': 5,
-    'auxiliar_administrativo': 6
+    'gerente_comercial': 1,
+    'auxiliar_administrativo': 2,
+    'tecnico': 3,
+    'gerente_vendas': 4,
+    'consultor_vendas': 5,
+    'operador': 6
   };
 
   // Função para obter o nível de hierarquia

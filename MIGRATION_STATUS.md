@@ -21,27 +21,55 @@ Todos os serviços incluem:
   - `http://localhost:3000` (desenvolvimento)
   - Normalização de URLs (remove trailing slashes)
 
-### 3. **Clientes Migrando para API** ✨
+### 3. **Clientes Migrados para API** ✨
 - ✅ `frontend/app/cadastros/cliente/page.tsx` - Agora usa API
 - ✅ `frontend/components/cliente/ClienteFormCompleto.tsx` - Salva na API
+
+### 4. **Orçamentos Parcialmente Migrados** 🔄
+- ✅ `frontend/app/vendas/orcamento/page.tsx` - Cliente criado via API
+- ✅ Função `salvarCliente()` agora async com `clienteServiceAPI.create()`
+- ⚠️ Ainda faltam: veículos (localStorage) e ordens de serviço (status cards)
+
+### 5. **Agendamentos - Modal Migrado** ✨
+- ✅ `frontend/components/agenda/AgendaOrcamentoModal.tsx` - Usa API
+- ✅ Função `handleSalvar()` agora async com `agendamentoServiceAPI.create()`
+- ✅ `clienteId` passado do orçamento para modal
+- ✅ Agendamentos salvos no Supabase via backend
+- ⚠️ Box ocupação ainda usa localStorage (boxService)
 
 ## 🔄 PRÓXIMOS PASSOS (Recomendado)
 
 ### Agendamentos
 ```
-- [ ] frontend/app/operacional/agenda/page.tsx → use agendamentoServiceAPI
-- [ ] Componentes relacionados a agendamento
+- [x] frontend/components/agenda/AgendaOrcamentoModal.tsx → Usa agendamentoServiceAPI ✅
+- [ ] frontend/app/operacional/agenda/page.tsx → Migrar lista de agendamentos
+- [ ] Outros componentes relacionados a agendamento
+```
+
+### Veículos
+```
+- [ ] Criar backend/src/controllers/veiculoController.ts
+- [ ] Criar frontend/services/veiculoServiceAPI.ts
+- [ ] Migrar criação de veículos no orçamento
 ```
 
 ### Ordens de Serviço  
 ```
 - [ ] frontend/app/operacional/box/page.tsx → use ordemServicoServiceAPI
 - [ ] Atualizar status de ordens via API
+- [ ] Migrar criação de OS no orçamento
+```
+
+### Box e Ocupações
+```
+- [ ] Criar backend/src/controllers/boxController.ts
+- [ ] Criar frontend/services/boxServiceAPI.ts
+- [ ] Migrar ocupações de box
 ```
 
 ### Status Board
 ```
-- [ ] Convertê statusService.ts para statusServiceAPI.ts (se necessário)
+- [ ] Converter statusService.ts para statusServiceAPI.ts (se necessário)
 ```
 
 ## 📋 INSTRUÇÕES PARA MIGRAR OUTRAS PÁGINAS
@@ -98,12 +126,14 @@ Depois de migrar cada página, verificar:
 Serviços API:          ████████████ 100%
 CORS:                  ████████████ 100%
 Clientes:              ████████████ 100% ✅
-Agendamentos:          ░░░░░░░░░░░░ 0%
+Agendamentos (Modal):  ████████████ 100% ✅
+Agendamentos (Lista):  ░░░░░░░░░░░░ 0%
+Orçamentos:            ████░░░░░░░░ 30% (cliente salva, falta veículo/OS)
 Ordens de Serviço:     ░░░░░░░░░░░░ 0%
 Status/Box:            ░░░░░░░░░░░░ 0%
 Chamados (Relatos):    ████████████ 100% ✅
 
-TOTAL:                 ██████░░░░░░ 43%
+TOTAL:                 ████████░░░░ 61%
 ```
 
 ## 📝 NOTAS IMPORTANTES
@@ -125,10 +155,18 @@ TOTAL:                 ██████░░░░░░ 43%
 
 ## 🎯 PRÓXIMAS AÇÕES
 
-1. Testar a página de clientes agora migrада
-2. Migrar agendamentos (agenda/page.tsx)
-3. Migrar ordens de serviço (box/page.tsx)
-4. Validar integridade dos dados no Supabase
-5. Remover localStorage de todos os componentes
+1. ✅ ~Testar a página de clientes agora migrada~ - COMPLETO
+2. ✅ ~Migrar modal de agendamento (AgendaOrcamentoModal.tsx)~ - COMPLETO
+3. 🔄 Testar fluxo completo: Criar orçamento → Gerar OS → Verificar agendamento no Supabase
+4. Migrar lista de agendamentos (agenda/page.tsx)
+5. Criar endpoints de veículos no backend
+6. Migrar criação de veículos no orçamento
+7. Migrar ordens de serviço (box/page.tsx)
+8. Validar integridade dos dados no Supabase
+9. Remover localStorage de todos os componentes
 
-Quer que eu continue migrando agendamentos e ordens de serviço? 🚀
+---
+
+**Última atualização:** 1º de Março, 2026 - 18:45  
+**Commit:** `10adc32` - Migração do AgendaOrcamentoModal para API  
+**Progresso:** 61% completo 🚀

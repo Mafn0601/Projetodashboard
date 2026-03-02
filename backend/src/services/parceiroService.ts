@@ -55,10 +55,22 @@ export class ParceiroService {
     endereco?: string;
     ativo?: boolean;
   }) {
+    const cnpj = data.cnpj?.trim();
+
+    if (cnpj) {
+      const parceiroComMesmoCnpj = await prisma.parceiro.findUnique({
+        where: { cnpj },
+      });
+
+      if (parceiroComMesmoCnpj) {
+        throw new AppError('Já existe um parceiro cadastrado com este CNPJ', 409);
+      }
+    }
+
     const parceiro = await prisma.parceiro.create({
       data: {
         nome: data.nome,
-        cnpj: data.cnpj,
+        cnpj,
         telefone: data.telefone,
         email: data.email,
         endereco: data.endereco,
@@ -86,9 +98,23 @@ export class ParceiroService {
       throw new AppError('Parceiro não encontrado', 404);
     }
 
+    const cnpjAtualizado = data.cnpj?.trim();
+    if (cnpjAtualizado && cnpjAtualizado !== parceiro.cnpj) {
+      const parceiroComMesmoCnpj = await prisma.parceiro.findUnique({
+        where: { cnpj: cnpjAtualizado },
+      });
+
+      if (parceiroComMesmoCnpj) {
+        throw new AppError('Já existe um parceiro cadastrado com este CNPJ', 409);
+      }
+    }
+
     const parceiroAtualizado = await prisma.parceiro.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        cnpj: cnpjAtualizado,
+      },
     });
 
     return parceiroAtualizado;

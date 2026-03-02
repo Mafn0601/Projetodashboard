@@ -61,8 +61,8 @@ export default function Page() {
       ativo: status !== 'inativo',
     });
 
-    if (!parceiroCriado) {
-      throw new Error('Não foi possível salvar parceiro no Supabase. Verifique backend/CORS e tente novamente.');
+    if (!parceiroCriado?.id) {
+      throw new Error('Falha ao criar parceiro no Supabase');
     }
   };
 

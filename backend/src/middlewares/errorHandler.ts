@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { Prisma } from '@prisma/client';
 
 export class AppError extends Error {
   constructor(
@@ -30,6 +31,15 @@ export function errorHandler(
       error: 'Validation error',
       details: error.errors,
     });
+  }
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        error: 'Registro duplicado para campo único',
+        details: error.meta,
+      });
+    }
   }
 
   return res.status(500).json({

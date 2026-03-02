@@ -22,7 +22,7 @@ interface CreateParceiroData {
 }
 
 class ParceiroServiceAPI {
-  async create(parceiro: CreateParceiroData): Promise<ParceiroAPI | null> {
+  async create(parceiro: CreateParceiroData): Promise<ParceiroAPI> {
     try {
       console.log('📤 Criando parceiro via API...', parceiro);
 
@@ -35,8 +35,9 @@ class ParceiroServiceAPI {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro ao criar parceiro');
+        const errorBody = await response.json().catch(() => null);
+        const message = errorBody?.error || `Erro ao criar parceiro (HTTP ${response.status})`;
+        throw new Error(message);
       }
 
       const novoParceiro = await response.json();
@@ -44,7 +45,7 @@ class ParceiroServiceAPI {
       return novoParceiro;
     } catch (error) {
       console.error('❌ Erro ao criar parceiro:', error);
-      return null;
+      throw error;
     }
   }
 }

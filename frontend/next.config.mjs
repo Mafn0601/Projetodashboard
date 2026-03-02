@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
     return [
       {
         source: '/:path*',
@@ -15,12 +17,14 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' http://localhost:3001 https://projetodashboard-uebg.onrender.com",
+              isDevelopment 
+                ? "connect-src 'self' http://localhost:3001 http://localhost:5000"
+                : "connect-src 'self' https://projetodashboard-uebg.onrender.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
               "upgrade-insecure-requests"
-            ].join('; ')
+            ].filter(Boolean).join('; ')
           },
           {
             key: 'X-Frame-Options',

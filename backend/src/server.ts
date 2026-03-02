@@ -13,10 +13,39 @@ const PORT = process.env.PORT || 3001;
 
 app.set('trust proxy', 1);
 
-// Middlewares globais
+// Configurar CORS com suporte a múltiplas origens
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://projetodashboard.vercel.app',
+  'https://projetodashboard-uebg.onrender.com',
+  process.env.FRONTEND_URL,
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Permitir requisições sem origin (mobile/desktop apps)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Normalizar URL removendo trailing slash
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (!allowed) return false;
+      const normalizedAllowed = allowed.replace(/\/$/, '');
+      return normalizedOrigin === normalizedAllowed;
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS não permitido'));
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(securityHeaders);

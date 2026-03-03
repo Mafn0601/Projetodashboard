@@ -1,7 +1,5 @@
-/**
- * Funções utilitárias para manipulação de datas
- * Focado em geração de calendários para agenda
- */
+// funções pra mexer com datas e horários
+// focado em geração de calendários pra agenda
 
 export const BRASILIA_TIME_ZONE = "America/Sao_Paulo";
 export const BUSINESS_START_MINUTES = 8 * 60; // 08:00
@@ -34,6 +32,7 @@ function getDatePartsInTimeZone(date: Date, timeZone: string) {
   };
 }
 
+// pega a data/hora atual de Brasília
 export function getBrasiliaNow(): Date {
   const now = new Date();
   const parts = getDatePartsInTimeZone(now, BRASILIA_TIME_ZONE);
@@ -44,12 +43,14 @@ export function getBrasiliaYear(): number {
   return getDatePartsInTimeZone(new Date(), BRASILIA_TIME_ZONE).year;
 }
 
+// retorna a data de hoje em formato ISO (YYYY-MM-DD)
 export function getBrasiliaTodayISO(): string {
   const now = new Date();
   const parts = getDatePartsInTimeZone(now, BRASILIA_TIME_ZONE);
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
 }
 
+// converte ISO pra dd/mm
 export function toDdMmFromISODate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
   if (!year || !month || !day) return "";
@@ -69,6 +70,7 @@ export function toISODateFromDdMm(data: string, year?: number): string {
   return `${safeYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
+// verifica se é domingo
 export function isSundayISODate(isoDate: string): boolean {
   const [year, month, day] = isoDate.split("-").map(Number);
   if (!year || !month || !day) return false;
@@ -81,12 +83,14 @@ export function isPastBrasiliaISODate(isoDate: string): boolean {
   return isoDate < getBrasiliaTodayISO();
 }
 
+// converte hora pra minutos
 export function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
   if (Number.isNaN(hours) || Number.isNaN(minutes)) return -1;
   return hours * 60 + minutes;
 }
 
+// checa se tá dentro do horário comercial
 export function isWithinBusinessHours(time: string, durationMinutes: number): boolean {
   const start = timeToMinutes(time);
   if (start < 0 || durationMinutes <= 0) return false;

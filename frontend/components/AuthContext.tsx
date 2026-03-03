@@ -28,7 +28,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Usuários mockados para demonstração
+// usuários mock pra testes
 const MOCK_USERS = [
   {
     id: '1',
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Verificar se há usuário salvo no localStorage ao montar
+  // verifica se tem alguém logado no localStorage
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  // Redirecionar para login se não autenticado
+  // manda pra tela de login se não tá autenticado
   useEffect(() => {
     if (!isLoading && !user && pathname !== '/login') {
       router.replace('/login');
@@ -79,12 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, isLoading, pathname, router]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simular delay de API
+    // simula chamada de API
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const identifier = email.trim().toLowerCase();
     const senha = password.trim();
 
+    // busca usuário nas equipes
     const equipes = readArray<EquipeUser>('equipes');
     const equipeUser = equipes.find((u) => {
       const loginValue = String(u.login ?? '').trim().toLowerCase();

@@ -4,6 +4,7 @@ import { loginSchema, registerSchema } from '../validators/schemas';
 import { AuthRequest } from '../middlewares/auth';
 
 export class AuthController {
+  // registra um novo usuário
   async register(req: Request, res: Response, next: NextFunction) {
     try {
       const validatedData = registerSchema.parse(req.body);
@@ -14,6 +15,7 @@ export class AuthController {
     }
   }
 
+  // faz login e retorna o token
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const validatedData = loginSchema.parse(req.body);
@@ -24,6 +26,7 @@ export class AuthController {
     }
   }
 
+  // pega dados do usuário logado
   async me(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const usuario = await authService.getMe(req.user!.userId);

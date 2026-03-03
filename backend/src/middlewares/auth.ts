@@ -6,6 +6,7 @@ export interface AuthRequest extends Request {
   user?: JWTPayload;
 }
 
+// middleware de autenticação
 export function authenticate(
   req: AuthRequest,
   res: Response,
@@ -18,6 +19,7 @@ export function authenticate(
       throw new AppError('Token não fornecido', 401);
     }
 
+    // formato esperado: "Bearer <token>"
     const [, token] = authHeader.split(' ');
 
     if (!token) {
@@ -33,6 +35,7 @@ export function authenticate(
   }
 }
 
+// middleware de autorização por role
 export function authorize(...roles: string[]) {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {

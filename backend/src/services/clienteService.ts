@@ -11,6 +11,7 @@ export class ClienteService {
   }) {
     const where: Prisma.ClienteWhereInput = {};
 
+    // FIXME: implementar full-text search em produção
     if (filters?.search) {
       where.OR = [
         { nome: { contains: filters.search, mode: 'insensitive' } },

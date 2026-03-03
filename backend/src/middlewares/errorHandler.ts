@@ -20,12 +20,14 @@ export function errorHandler(
 ) {
   console.error('Error:', error);
 
+  // erros customizados da aplicação
   if (error instanceof AppError) {
     return res.status(error.statusCode).json({
       error: error.message,
     });
   }
 
+  // erros de validação do Zod
   if (error instanceof ZodError) {
     return res.status(400).json({
       error: 'Validation error',
@@ -33,7 +35,9 @@ export function errorHandler(
     });
   }
 
+  // erros do Prisma
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    // unique constraint violation
     if (error.code === 'P2002') {
       return res.status(409).json({
         error: 'Registro duplicado para campo único',
@@ -42,6 +46,7 @@ export function errorHandler(
     }
   }
 
+  // qualquer outro erro não tratado
   return res.status(500).json({
     error: 'Internal server error',
   });

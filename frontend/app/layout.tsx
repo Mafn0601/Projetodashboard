@@ -21,6 +21,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* script pra carregar o tema antes de renderizar - evita o flash */}
         <script
           dangerouslySetInnerHTML={{
             __html: `

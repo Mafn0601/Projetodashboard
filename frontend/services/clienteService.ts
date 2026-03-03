@@ -59,6 +59,7 @@ export type ClienteCompleto = {
 const KEY = 'clientes';
 const KEY_COMPLETO = 'clientesCompleto';
 
+// funções básicas de CRUD pra clientes
 export function getAll(): Cliente[] {
   return readArray<Cliente>(KEY);
 }
@@ -78,17 +79,12 @@ export function remove(id: string): Cliente[] {
   return next;
 }
 
-/**
- * Funções para ClienteCompleto (novo formulário expandido)
- */
-
+// funções pro formulário expandido de cliente
 export function getAllCompleto(): ClienteCompleto[] {
   return readArray<ClienteCompleto>(KEY_COMPLETO);
 }
 
-/**
- * Converte horário do formato hora_X para HH:mm
- */
+// converte formato hora_X pra HH:mm
 function formatarHorario(horario: string | undefined): string {
   if (!horario) return '09:00';
   
@@ -104,32 +100,28 @@ function formatarHorario(horario: string | undefined): string {
   return horario;
 }
 
-/**
- * Obtém label do responsável
- */
+// pega o nome do responsável
 function obterLabelResponsavel(respId: string | undefined): string {
   if (!respId) return 'Não informado';
   
-  // Primeiro, tentar encontrar em mockResponsaveis
+  // tenta achar em mockResponsaveis primeiro
   const item = mockResponsaveis.find(r => r.value === respId);
   if (item) return item.label;
   
-  // Se não encontrar, procurar em equipes (para novos responsáveis)
+  // se não achar, procura em equipes
   try {
     const equipes = readArray<any>('equipes');
     const equipe = equipes.find(e => e.id === respId);
     if (equipe) return equipe.nome || equipe.login || respId;
   } catch (error) {
-    // Se houver erro ao ler equipes, continuar
+    // ignora se der erro ao ler equipes
   }
   
-  // Fallback: retornar o ID se não encontrar em nenhum lugar
+  // se não encontrou nada, retorna o ID mesmo
   return respId;
 }
 
-/**
- * Obtém label do tipo de agendamento (busca de Tipo de OS)
- */
+// busca o nome do tipo de OS
 function obterLabelTipoAgendamento(tipoId: string | undefined): string {
   if (!tipoId) return 'Serviço Geral';
   const tiposOs = readArray<TipoOS>('tiposOs');
@@ -137,10 +129,7 @@ function obterLabelTipoAgendamento(tipoId: string | undefined): string {
   return item ? item.nome : tipoId;
 }
 
-/**
- * Converte data do formato ISO para dd/mm
- * Usa timezone local para evitar problemas de shift de dia
- */
+// converte data ISO pra dd/mm (cuida do timezone local)
 function formatarDataAgendamento(data: string | undefined): string {
   if (!data) return formatDate(getBrasiliaNow());
   

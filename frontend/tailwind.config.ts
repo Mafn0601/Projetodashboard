@@ -22,6 +22,7 @@ const config: Config = {
         lg: "0.75rem",
         xl: "1rem"
       },
+      // tamanhos de fonte customizados
       fontSize: {
         xs: ["14px", "20px"],
         sm: ["16px", "24px"],

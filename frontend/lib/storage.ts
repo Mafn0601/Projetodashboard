@@ -1,5 +1,6 @@
 import { isBrowser } from "./utils";
 
+// lê um array do localStorage
 export function readArray<T>(key: string): T[] {
   if (!isBrowser) return [];
   try {
@@ -7,6 +8,7 @@ export function readArray<T>(key: string): T[] {
     if (!raw) return [];
     return JSON.parse(raw) as T[];
   } catch {
+    // se der erro no parse, só retorna vazio
     return [];
   }
 }
@@ -16,6 +18,7 @@ export function writeArray<T>(key: string, value: T[]): void {
   window.localStorage.setItem(key, JSON.stringify(value));
 }
 
+// adiciona um item no final do array
 export function appendItem<T>(key: string, item: T): T[] {
   const current = readArray<T>(key);
   const next = [...current, item];
@@ -23,6 +26,7 @@ export function appendItem<T>(key: string, item: T): T[] {
   return next;
 }
 
+// atualiza um item específico por ID
 export function updateItemById<T extends { id: string | number }>(
   key: string,
   id: string | number,

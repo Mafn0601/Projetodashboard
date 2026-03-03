@@ -9,10 +9,12 @@ export interface JWTPayload {
   role: string;
 }
 
+// gera um token JWT novo
 export function generateToken(payload: JWTPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as any });
 }
 
+// valida e decodifica o token
 export function verifyToken(token: string): JWTPayload {
   return jwt.verify(token, JWT_SECRET) as JWTPayload;
 }

@@ -11,6 +11,7 @@ export class AuthService {
     senha: string;
     role?: 'ADMIN' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO';
   }) {
+    // verifica se já tem alguém com esse email
     const emailExists = await prisma.usuario.findUnique({
       where: { email: data.email },
     });
@@ -19,6 +20,7 @@ export class AuthService {
       throw new AppError('Email já cadastrado', 400);
     }
 
+    // verifica o login também
     const loginExists = await prisma.usuario.findUnique({
       where: { login: data.login },
     });
@@ -29,6 +31,7 @@ export class AuthService {
 
     const senhaHash = await hashPassword(data.senha);
 
+    // cria o usuário novo no banco
     const usuario = await prisma.usuario.create({
       data: {
         ...data,
@@ -64,10 +67,12 @@ export class AuthService {
       throw new AppError('Credenciais inválidas', 401);
     }
 
+    // checa se o usuário tá ativo ainda
     if (!usuario.ativo) {
       throw new AppError('Usuário inativo', 401);
     }
 
+    // compara a senha fornecida com o hash do banco
     const senhaValida = await comparePassword(senha, usuario.senha);
 
     if (!senhaValida) {
@@ -80,6 +85,7 @@ export class AuthService {
       role: usuario.role,
     });
 
+    // TODO: adicionar refresh token no futuro
     return {
       usuario: {
         id: usuario.id,

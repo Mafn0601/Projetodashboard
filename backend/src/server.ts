@@ -5,7 +5,7 @@ import routes from './routes';
 import { errorHandler } from './middlewares/errorHandler';
 import { globalRateLimit, securityHeaders } from './middlewares/security';
 
-// Carregar variáveis de ambiente
+// carrega as configs do .env
 dotenv.config();
 
 const app: Express = express();
@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3001;
 
 app.set('trust proxy', 1);
 
-// Configurar CORS com suporte a múltiplas origens
+// lista de origens permitidas pra CORS
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
@@ -24,12 +24,12 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir requisições sem origin (mobile/desktop apps)
+    // permite requests sem origin (tipo apps mobile)
     if (!origin) {
       return callback(null, true);
     }
 
-    // Normalizar URL removendo trailing slash
+    // tira a barra do final pra normalizar
     const normalizedOrigin = origin.replace(/\/$/, '');
     const isAllowed = allowedOrigins.some(allowed => {
       if (!allowed) return false;
@@ -54,7 +54,7 @@ app.use(globalRateLimit);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging middleware (desenvolvimento)
+// logs só em dev pra não poluir produção
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`, req.body);
@@ -62,23 +62,23 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-// Root endpoint
+// endpoint raiz só pra checar se tá vivo
 app.get('/', (req, res) => {
   res.send('API Online 🚀');
 });
 
-// Rotas
+// todas as rotas principais
 app.use('/api', routes);
 
-// 404 Handler
+// pega rotas que não existem
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Error Handler (deve ser o último middleware)
+// tratamento de erros - tem que ser o último
 app.use(errorHandler);
 
-// Iniciar servidor
+// sobe o servidor
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);

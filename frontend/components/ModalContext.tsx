@@ -8,7 +8,7 @@ export type ModalType =
   | "quickCreateLead"
   | "quickCreateFatura";
   
-// adiciona tipo para veiculo
+// tipo estendido pro modal de veículo
 export type ExtendedModalType = ModalType | "quickCreateVeiculo";
 
 interface ModalState {
@@ -45,7 +45,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 export function useModal() {
   const ctx = useContext(ModalContext);
   if (!ctx) {
-    throw new Error("useModal deve ser usado dentro de ModalProvider");
+    throw new Error("useModal precisa estar dentro de ModalProvider");
   }
   return ctx;
 }

@@ -3,12 +3,12 @@ const nextConfig = {
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
     
-    // Em desenvolvimento, usar CSP mais permissivo
+    // em dev, não usa CSP pq atrapalha
     if (isDevelopment) {
       return [];
     }
     
-    // Em produção, usar CSP restritivo
+    // em prod, aplica as políticas de segurança
     return [
       {
         source: '/:path*',

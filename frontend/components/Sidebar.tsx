@@ -42,6 +42,7 @@ type NavItem = {
   section: string;
 };
 
+// TODO: talvez adicionar badges com contadores nos itens?
 const NAV_ITEMS: NavItem[] = [
   {
     label: "Dashboard Comercial",
@@ -49,7 +50,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: LayoutDashboard,
     section: "Root"
   },
-  // Operacional
+  // se\u00e7\u00e3o operacional
   {
     label: "Tarefas",
     href: "/operacional/tarefas",

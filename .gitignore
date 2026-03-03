@@ -1,4 +1,4 @@
-# Root
+# arquivos da raiz
 node_modules/
 .next/
 
@@ -19,28 +19,28 @@ backend/.env
 backend/.env.local
 backend/.env.*.local
 
-# Common env
+# arquivos env
 .env
 .env.local
 .env.*.local
 
-# Logs
+# logs diversos
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Coverage
+# coverage de testes
 coverage/
 
-# TypeScript
+# TypeScript build
 *.tsbuildinfo
 
-# Misc
+# arquivos do sistema
 .DS_Store
 *.pem
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp

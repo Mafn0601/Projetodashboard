@@ -3,6 +3,7 @@ import clienteService from '../services/clienteService';
 import { createClienteSchema, updateClienteSchema } from '../validators/schemas';
 
 export class ClienteController {
+  // busca todos os clientes (com filtros opcionais)
   async findAll(req: Request, res: Response, next: NextFunction) {
     try {
       const { search, ativo, skip, take } = req.query;
@@ -31,6 +32,7 @@ export class ClienteController {
     }
   }
 
+  // cria um cliente novo
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const validatedData = createClienteSchema.parse(req.body);

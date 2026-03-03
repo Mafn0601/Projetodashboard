@@ -7,6 +7,7 @@ export class AgendamentoController {
     try {
       const { status, clienteId, responsavelId, dataInicio, dataFim, skip, take } = req.query;
       
+      // monta os filtros
       const filters = {
         status: status as string,
         clienteId: clienteId as string,
@@ -38,7 +39,7 @@ export class AgendamentoController {
     try {
       const validatedData = createAgendamentoSchema.parse(req.body);
       
-      // Transformar para formato Prisma
+      // converte pro formato que o Prisma espera
       const agendamento = await agendamentoService.create({
         cliente: { connect: { id: validatedData.clienteId } },
         veiculo: validatedData.veiculoId ? { connect: { id: validatedData.veiculoId } } : undefined,
@@ -63,7 +64,7 @@ export class AgendamentoController {
       const { id } = req.params;
       const validatedData = updateAgendamentoSchema.parse(req.body);
       
-      // Transformar para formato Prisma
+      // monta o objeto de update pro Prisma
       const updateData: any = {};
       
       if (validatedData.clienteId) {

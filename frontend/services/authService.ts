@@ -11,7 +11,9 @@ export function login(role: 'admin' | 'user') {
       window.localStorage.setItem(KEY, JSON.stringify(session));
       window.localStorage.setItem('currentUserRole', role);
     }
-  } catch {}
+  } catch {
+    // ignora erros de localStorage (modo privado, etc)
+  }
 }
 
 export function getUser(): UserSession | null {

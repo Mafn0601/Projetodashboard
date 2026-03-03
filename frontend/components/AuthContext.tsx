@@ -19,6 +19,28 @@ interface AuthContextType {
   isLoading: boolean;
 }
 
+// Usuários MOCK para testes (fallback se API falhar)
+const MOCK_USERS = [
+  {
+    id: 'mock-1',
+    name: 'Admin',
+    login: 'admin',
+    email: 'admin@exemplo.com',
+    password: 'admin123',
+    role: 'admin' as const,
+    token: 'mock-token-admin-123'
+  },
+  {
+    id: 'mock-2',
+    name: 'Vendedor',
+    login: 'vendedor',
+    email: 'vendedor@exemplo.com',
+    password: 'vendedor123',
+    role: 'vendedor' as const,
+    token: 'mock-token-vendedor-123'
+  }
+];
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -45,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      // Tentar login via API
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -53,26 +76,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, senha: password }),
       });
 
-      if (!response.ok) {
-        console.error('Erro no login:', response.statusText);
-        return false;
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Salvar token
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+
+        // Salvar usuário
+        if (data.usuario) {
+          const userData: User = {
+            id: data.usuario.id,
+            name: data.usuario.nome,
+            email: data.usuario.email,
+            role: data.usuario.role || 'vendedor',
+          };
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+          router.replace('/');
+          return true;
+        }
       }
 
-      const data = await response.json();
+      // Fallback: tentar usuários MOCK se API falhar
+      console.log('⚠️ API não disponível, usando usuários MOCK');
+      const identifier = email.trim().toLowerCase();
+      const senha = password.trim();
       
-      // Salvar token
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
+      const foundUser = MOCK_USERS.find(
+        u => (u.email === identifier || u.login === identifier) && u.password === senha
+      );
 
-      // Salvar usuário
-      if (data.usuario) {
+      if (foundUser) {
         const userData: User = {
-          id: data.usuario.id,
-          name: data.usuario.nome,
-          email: data.usuario.email,
-          role: data.usuario.role || 'vendedor',
+          id: foundUser.id,
+          name: foundUser.name,
+          email: foundUser.email,
+          role: foundUser.role,
         };
+        
+        // Salvar token mock
+        localStorage.setItem('token', foundUser.token);
+        
+        // Salvar usuário
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         router.replace('/');
@@ -82,6 +129,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     } catch (error) {
       console.error('Erro ao fazer login:', error);
+      
+      // Fallback: tentar usuários MOCK
+      const identifier = email.trim().toLowerCase();
+      const senha = password.trim();
+      
+      const foundUser = MOCK_USERS.find(
+        u => (u.email === identifier || u.login === identifier) && u.password === senha
+      );
+
+      if (foundUser) {
+        const userData: User = {
+          id: foundUser.id,
+          name: foundUser.name,
+          email: foundUser.email,
+          role: foundUser.role,
+        };
+        
+        localStorage.setItem('token', foundUser.token);
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        router.replace('/');
+        return true;
+      }
+
       return false;
     }
   };

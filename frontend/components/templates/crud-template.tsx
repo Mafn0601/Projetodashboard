@@ -118,7 +118,13 @@ export default function CrudTemplate({
       const url = `${apiUrl}/api/cep/${cleanCep}`;
       console.log('🌐 Chamando backend:', url);
       
-      const res = await fetch(url, { headers });
+      // Adicionar timeout de 10s
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      
+      const res = await fetch(url, { headers, signal: controller.signal });
+      clearTimeout(timeout);
+      
       const data = await res.json();
       console.log('📥 Resposta do backend:', data);
       
@@ -141,7 +147,11 @@ export default function CrudTemplate({
         console.log('⚠️ CEP não encontrado ou erro na resposta:', data);
       }
     } catch (error) {
-      console.error("❌ Erro ao buscar CEP:", error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error("❌ Timeout ao buscar CEP (10s expirado)");
+      } else {
+        console.error("❌ Erro ao buscar CEP:", error);
+      }
     } finally {
       setLoadingCep(false);
     }

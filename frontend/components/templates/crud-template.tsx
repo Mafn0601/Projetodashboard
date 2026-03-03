@@ -5,7 +5,7 @@ import { appendItem, readArray } from "@/lib/storage";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select, SelectOption } from "../ui/Select";
-import { MaskedInput, MaskType } from "../ui/MaskedInput";
+import { MaskedInput, MaskType, applyCepMask, applyCpfCnpjMask, applyPhoneMask, applyPlateMask, applyPlacaChassiMask, applyCurrencyMask, applyAnoFabModMask } from "../ui/MaskedInput";
 import { cn } from "@/lib/utils";
 
 export type CrudFieldType = "text" | "number" | "email" | "select" | "masked";
@@ -182,7 +182,28 @@ export default function CrudTemplate({
     setEditingId(item.id as string);
     const initialState: Record<string, string> = {};
     fieldsWithOptions.forEach((field) => {
-      initialState[field.name] = String(item[field.name] ?? "");
+      let value = String(item[field.name] ?? "");
+      
+      // Aplicar formatação para campos masked
+      if (field.type === "masked" && field.mask && value) {
+        if (field.mask === 'cep') {
+          value = applyCepMask(value);
+        } else if (field.mask === 'cpfCnpj') {
+          value = applyCpfCnpjMask(value);
+        } else if (field.mask === 'phone') {
+          value = applyPhoneMask(value);
+        } else if (field.mask === 'plate') {
+          value = applyPlateMask(value);
+        } else if (field.mask === 'placaChassi') {
+          value = applyPlacaChassiMask(value);
+        } else if (field.mask === 'currency') {
+          value = applyCurrencyMask(value);
+        } else if (field.mask === 'anoFabMod') {
+          value = applyAnoFabModMask(value);
+        }
+      }
+      
+      initialState[field.name] = value;
     });
     setEditFormState(initialState);
     setEditErrors({});
@@ -513,6 +534,25 @@ export default function CrudTemplate({
                               const option = field.options.find(opt => opt.value === value);
                               if (option) {
                                 value = option.label;
+                              }
+                            }
+                            
+                            // Renderização especial para campos masked (aplicar formatação)
+                            if (field.type === "masked" && field.mask && value !== "-") {
+                              if (field.mask === 'cep') {
+                                value = applyCepMask(value);
+                              } else if (field.mask === 'cpfCnpj') {
+                                value = applyCpfCnpjMask(value);
+                              } else if (field.mask === 'phone') {
+                                value = applyPhoneMask(value);
+                              } else if (field.mask === 'plate') {
+                                value = applyPlateMask(value);
+                              } else if (field.mask === 'placaChassi') {
+                                value = applyPlacaChassiMask(value);
+                              } else if (field.mask === 'currency') {
+                                value = applyCurrencyMask(value);
+                              } else if (field.mask === 'anoFabMod') {
+                                value = applyAnoFabModMask(value);
                               }
                             }
                             

@@ -17,7 +17,7 @@ interface MaskedInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
 /**
  * Aplica máscara de telefone: (__) _____-____
  */
-function applyPhoneMask(value: string): string {
+export function applyPhoneMask(value: string): string {
   const numbers = value.replace(/\D/g, '');
   if (!numbers) return '';
   if (numbers.length <= 2) return `(${numbers}`;
@@ -28,7 +28,7 @@ function applyPhoneMask(value: string): string {
 /**
  * Aplica máscara de placa: ___-____
  */
-function applyPlateMask(value: string): string {
+export function applyPlateMask(value: string): string {
   const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
   if (cleaned.length <= 3) return cleaned;
   return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}`;
@@ -37,7 +37,7 @@ function applyPlateMask(value: string): string {
 /**
  * Aplica máscara de CPF/CNPJ: 000.000.000-00 ou 00.000.000/0000-00
  */
-function applyCpfCnpjMask(value: string): string {
+export function applyCpfCnpjMask(value: string): string {
   const numbers = value.replace(/\D/g, '');
   if (numbers.length <= 11) {
     // CPF: 000.000.000-00
@@ -58,7 +58,7 @@ function applyCpfCnpjMask(value: string): string {
 /**
  * Aplica máscara de Placa ou Chassi: ABC-1234 ou 9BWZZZ377VT004251 (17 caracteres)
  */
-function applyPlacaChassiMask(value: string): string {
+export function applyPlacaChassiMask(value: string): string {
   const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
   
   // Se tiver até 7 caracteres, trata como placa: ABC-1234
@@ -74,7 +74,7 @@ function applyPlacaChassiMask(value: string): string {
 /**
  * Aplica máscara de ano fabricação/modelo: 0000/0000
  */
-function applyAnoFabModMask(value: string): string {
+export function applyAnoFabModMask(value: string): string {
   const numbers = value.replace(/\D/g, '');
   if (!numbers) return '';
   if (numbers.length <= 4) return numbers;
@@ -84,7 +84,7 @@ function applyAnoFabModMask(value: string): string {
 /**
  * Aplica máscara de CEP: 12345-678
  */
-function applyCepMask(value: string): string {
+export function applyCepMask(value: string): string {
   const numbers = value.replace(/\D/g, '');
   if (!numbers) return '';
   if (numbers.length <= 5) return numbers;
@@ -94,7 +94,7 @@ function applyCepMask(value: string): string {
 /**
  * Aplica máscara de moeda brasileira: 1.234,56
  */
-function applyCurrencyMask(value: string): string {
+export function applyCurrencyMask(value: string): string {
   // Remove tudo que não é dígito
   const numbers = value.replace(/\D/g, '');
   

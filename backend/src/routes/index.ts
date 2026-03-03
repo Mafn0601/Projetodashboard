@@ -7,6 +7,7 @@ import veiculoRoutes from './veiculoRoutes';
 import agendamentoRoutes from './agendamentoRoutes';
 import ordemServicoRoutes from './ordemServicoRoutes';
 import chamadoRoutes from './chamadoRoutes';
+import viaCepRoutes from './viaCepRoutes';
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.get('/health', (req, res) => {
 
 // Rotas da API
 router.use('/auth', authRoutes);
+router.use('/cep', viaCepRoutes);
 router.use('/clientes', clienteRoutes);
 router.use('/parceiros', parceiroRoutes);
 router.use('/equipes', equipeRoutes);

@@ -95,31 +95,51 @@ export default function CrudTemplate({
     });
   };
 
-  // Função para buscar CEP via API ViaCEP
+  // Função para buscar CEP via API do backend (que chama ViaCEP)
   const buscarCep = async (cep: string, isEditMode: boolean = false) => {
     const cleanCep = cep.replace(/\D/g, '');
-    if (cleanCep.length !== 8) return;
+    console.log('🔍 Buscando CEP:', cleanCep, 'isEditMode:', isEditMode);
+    
+    if (cleanCep.length !== 8) {
+      console.log('❌ CEP inválido (não tem 8 dígitos):', cleanCep.length);
+      return;
+    }
     
     setLoadingCep(true);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const url = `/api/cep/${cleanCep}`;
+      console.log('🌐 Chamando backend:', url);
+      
+      const res = await fetch(url, { headers });
       const data = await res.json();
-      if (!data.erro) {
+      console.log('📥 Resposta do backend:', data);
+      
+      if (res.ok && data.rua) {
         // Atualizar os campos de endereço com os dados do CEP
         const updates: Record<string, string> = {};
-        if (data.logradouro) updates.rua = data.logradouro;
+        if (data.rua) updates.rua = data.rua;
         if (data.bairro) updates.bairro = data.bairro;
-        if (data.localidade) updates.cidade = data.localidade;
-        if (data.uf) updates.estado = data.uf;
+        if (data.cidade) updates.cidade = data.cidade;
+        if (data.estado) updates.estado = data.estado;
 
+        console.log('✅ Atualizando campos:', updates);
+        
         if (isEditMode) {
           setEditFormState((prev) => ({ ...prev, ...updates }));
         } else {
           setFormState((prev) => ({ ...prev, ...updates }));
         }
+      } else {
+        console.log('⚠️ CEP não encontrado ou erro na resposta:', data);
       }
     } catch (error) {
-      console.error("Erro ao buscar CEP", error);
+      console.error("❌ Erro ao buscar CEP:", error);
     } finally {
       setLoadingCep(false);
     }
@@ -127,6 +147,8 @@ export default function CrudTemplate({
 
   // Handler especial para campo CEP que busca automaticamente
   const handleCepChange = (value: string, isEditMode: boolean = false) => {
+    console.log('📝 CEP digitado:', value, 'isEditMode:', isEditMode);
+    
     if (isEditMode) {
       handleEditChange('cep', value);
     } else {
@@ -135,7 +157,10 @@ export default function CrudTemplate({
     
     // Buscar CEP automaticamente quando tiver 8 dígitos
     const cleanCep = value.replace(/\D/g, '');
+    console.log('🔢 CEP limpo:', cleanCep, 'comprimento:', cleanCep.length);
+    
     if (cleanCep.length === 8) {
+      console.log('✨ Disparando busca no ViaCEP');
       buscarCep(value, isEditMode);
     }
   };

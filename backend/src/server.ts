@@ -31,15 +31,21 @@ app.use(cors({
 
     // tira a barra do final pra normalizar
     const normalizedOrigin = origin.replace(/\/$/, '');
+    
+    // Verifica se a origem está na lista de permitidas
     const isAllowed = allowedOrigins.some(allowed => {
       if (!allowed) return false;
       const normalizedAllowed = allowed.replace(/\/$/, '');
       return normalizedOrigin === normalizedAllowed;
     });
 
-    if (isAllowed) {
+    // Aceita qualquer domínio .vercel.app (para deploys de preview)
+    const isVercelDomain = normalizedOrigin.endsWith('.vercel.app');
+
+    if (isAllowed || isVercelDomain) {
       callback(null, true);
     } else {
+      console.log('❌ CORS bloqueado para origem:', origin);
       callback(new Error('CORS não permitido'));
     }
   },

@@ -158,10 +158,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    console.log('🚪 Logout function called');
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
+    console.log('🚪 localStorage cleared, redirecting to /login');
     router.replace('/login');
   };
 

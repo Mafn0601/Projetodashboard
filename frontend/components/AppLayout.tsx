@@ -192,6 +192,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
                     <button
                       onClick={(e) => {
+                        console.log('🔘 Logout button clicked');
                         e.stopPropagation();
                         logout();
                         setUserMenuOpen(false);

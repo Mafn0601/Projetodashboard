@@ -32,6 +32,30 @@ interface CreateParceiroData {
 }
 
 class ParceiroServiceAPI {
+  async findAll(): Promise<ParceiroAPI[]> {
+    try {
+      const headers: Record<string, string> = {};
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
+      const response = await fetch(`${API_URL}/api/parceiros`, { headers });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar parceiros (HTTP ${response.status})`);
+      }
+
+      const data = await response.json();
+      return data.parceiros || [];
+    } catch (error) {
+      console.error('❌ Erro ao buscar parceiros:', error);
+      throw error;
+    }
+  }
+
   async create(parceiro: CreateParceiroData): Promise<ParceiroAPI> {
     try {
       console.log('📤 Criando parceiro via API...', parceiro);

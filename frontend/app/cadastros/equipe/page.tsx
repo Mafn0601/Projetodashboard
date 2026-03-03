@@ -7,6 +7,7 @@ import { Select, SelectOption } from '@/components/ui/Select';
 import { MaskedInput } from '@/components/ui/MaskedInput';
 import { readArray, appendItem } from '@/lib/storage';
 import { equipeServiceAPI } from '@/services/equipeServiceAPI';
+import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
 
 type Parceiro = {
   id: string;
@@ -133,9 +134,10 @@ export default function Page() {
     const carregarDados = async () => {
       try {
         setIsLoading(true);
-        // Carregar parceiros
-        const parceirosData = readArray<Parceiro>('parceiros');
-        setParceiros(parceirosData);
+        
+        // Carregar parceiros da API
+        const parceirosData = await parceiroServiceAPI.findAll();
+        setParceiros(parceirosData as unknown as Parceiro[]);
         setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
 
         // Carregar equipes da API
@@ -144,6 +146,10 @@ export default function Page() {
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         // Fallback para localStorage se a API falhar
+        const parceirosData = readArray<Parceiro>('parceiros');
+        setParceiros(parceirosData);
+        setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
+        
         const equipesData = readArray<Equipe>('equipes');
         setEquipes(equipesData);
       } finally {

@@ -645,10 +645,10 @@ export default function CrudTemplate({
 
       {useModal && isModalOpen && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50"
           onClick={(e) => e.target === e.currentTarget && setIsModalOpen(false)}
         >
-          <div className={cn("bg-white dark:bg-slate-950 rounded-lg shadow-lg max-w-3xl w-full mx-4 overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col", createModalMaxHeightClass)}>
+          <div className={cn("bg-white dark:bg-slate-950 rounded-lg shadow-lg max-w-3xl w-full mx-4 overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col relative", createModalMaxHeightClass)}>
             <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
                 Novo Cadastro
@@ -670,10 +670,10 @@ export default function CrudTemplate({
 
       {editingId && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50"
           onClick={(e) => e.target === e.currentTarget && setEditingId(null)}
         >
-          <div className="bg-white dark:bg-slate-950 rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
+          <div className="bg-white dark:bg-slate-950 rounded-lg shadow-lg max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col relative">
             <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
                 Editar Cadastro

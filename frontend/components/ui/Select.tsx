@@ -144,7 +144,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
           {isOpen && (
             <div 
               className={cn(
-                "absolute left-0 right-0 z-50 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg animate-in fade-in-0 zoom-in-95 max-h-[min(15rem,calc(100vh-8rem))] overflow-auto",
+                "absolute left-0 right-0 z-[9999] w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg animate-in fade-in-0 zoom-in-95 max-h-[min(15rem,calc(100vh-8rem))] overflow-auto",
                 dropdownPosition === 'below' ? 'top-full mt-2' : 'bottom-full mb-2'
               )}
             >

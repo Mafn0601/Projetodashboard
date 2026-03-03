@@ -38,6 +38,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className
           )}
           required={required}
+          autoComplete={props.type === 'password' ? 'new-password' : props.autoComplete}
           {...props}
         />
         {error && (

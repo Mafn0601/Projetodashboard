@@ -99,7 +99,7 @@ export default function Page() {
           options: statusOptions,
           forceAboveInCreate: true
         },
-        { name: "cep", label: "CEP", hideInList: true },
+        { name: "cep", label: "CEP", type: "masked", mask: "cep", hideInList: true },
         { name: "rua", label: "Rua", hideInList: true },
         { name: "numero", label: "Número", hideInList: true },
         { name: "complemento", label: "Complemento", hideInList: true, required: false },

@@ -274,6 +274,26 @@ export default function CrudTemplate({
           );
         }
         if (field.type === "masked" && field.mask) {
+          // Para campos CEP, usar a lógica especial de busca automática
+          if (field.name === "cep") {
+            return (
+              <div key={field.name} className="relative">
+                <MaskedInput
+                  label={field.label}
+                  mask={field.mask}
+                  value={formState[field.name] ?? ""}
+                  onChange={(value) => handleCepChange(value, false)}
+                  error={errors[field.name]}
+                  required={isRequired}
+                />
+                {loadingCep && (
+                  <span className="absolute right-3 top-9 text-xs text-blue-600">
+                    Buscando...
+                  </span>
+                )}
+              </div>
+            );
+          }
           return (
             <MaskedInput
               key={field.name}
@@ -286,27 +306,7 @@ export default function CrudTemplate({
             />
           );
         }
-        // Campo CEP com busca automática
-        if (field.name === "cep") {
-          return (
-            <div key={field.name} className="relative">
-              <Input
-                label={field.label}
-                type={field.type ?? "text"}
-                value={formState[field.name] ?? ""}
-                onChange={(e) => handleCepChange(e.target.value, false)}
-                error={errors[field.name]}
-                required={isRequired}
-                placeholder="00000-000"
-              />
-              {loadingCep && (
-                <span className="absolute right-3 top-9 text-xs text-blue-600">
-                  Buscando...
-                </span>
-              )}
-            </div>
-          );
-        }
+        // Campo CEP com busca automática está tratado na seção masked acima
         return (
           <Input
             key={field.name}
@@ -355,6 +355,26 @@ export default function CrudTemplate({
           );
         }
         if (field.type === "masked" && field.mask) {
+          // Para campos CEP, usar a lógica especial de busca automática
+          if (field.name === "cep") {
+            return (
+              <div key={field.name} className="relative">
+                <MaskedInput
+                  label={field.label}
+                  mask={field.mask}
+                  value={editFormState[field.name] ?? ""}
+                  onChange={(value) => handleCepChange(value, true)}
+                  error={editErrors[field.name]}
+                  required={isRequired}
+                />
+                {loadingCep && (
+                  <span className="absolute right-3 top-9 text-xs text-blue-600">
+                    Buscando...
+                  </span>
+                )}
+              </div>
+            );
+          }
           return (
             <MaskedInput
               key={field.name}
@@ -367,27 +387,7 @@ export default function CrudTemplate({
             />
           );
         }
-        // Campo CEP com busca automática
-        if (field.name === "cep") {
-          return (
-            <div key={field.name} className="relative">
-              <Input
-                label={field.label}
-                type={field.type ?? "text"}
-                value={editFormState[field.name] ?? ""}
-                onChange={(e) => handleCepChange(e.target.value, true)}
-                error={editErrors[field.name]}
-                required={isRequired}
-                placeholder="00000-000"
-              />
-              {loadingCep && (
-                <span className="absolute right-3 top-9 text-xs text-blue-600">
-                  Buscando...
-                </span>
-              )}
-            </div>
-          );
-        }
+        // Campo CEP com busca automática está tratado na seção masked acima
         return (
           <Input
             key={field.name}

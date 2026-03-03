@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export type MaskType = 'phone' | 'plate' | 'cpfCnpj' | 'placaChassi' | 'currency' | 'anoFabMod' | 'none';
+export type MaskType = 'phone' | 'plate' | 'cpfCnpj' | 'placaChassi' | 'currency' | 'anoFabMod' | 'cep' | 'none';
 
 interface MaskedInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
   label?: string;
@@ -79,6 +79,16 @@ function applyAnoFabModMask(value: string): string {
   if (!numbers) return '';
   if (numbers.length <= 4) return numbers;
   return `${numbers.slice(0, 4)}/${numbers.slice(4, 8)}`;
+}
+
+/**
+ * Aplica máscara de CEP: 12345-678
+ */
+function applyCepMask(value: string): string {
+  const numbers = value.replace(/\D/g, '');
+  if (!numbers) return '';
+  if (numbers.length <= 5) return numbers;
+  return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
 }
 
 /**
@@ -158,6 +168,8 @@ export const MaskedInput = React.forwardRef<HTMLInputElement, MaskedInputProps>(
           maskedValue = applyCurrencyMask(value);
         } else if (mask === 'anoFabMod') {
           maskedValue = applyAnoFabModMask(value);
+        } else if (mask === 'cep') {
+          maskedValue = applyCepMask(value);
         }
         setDisplayValue(maskedValue);
       }
@@ -179,6 +191,8 @@ export const MaskedInput = React.forwardRef<HTMLInputElement, MaskedInputProps>(
         newValue = applyCurrencyMask(newValue);
       } else if (mask === 'anoFabMod') {
         newValue = applyAnoFabModMask(newValue);
+      } else if (mask === 'cep') {
+        newValue = applyCepMask(newValue);
       }
 
       setDisplayValue(newValue);

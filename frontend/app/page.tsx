@@ -5,7 +5,9 @@ import { HelpBox } from "@/components/ui/HelpBox";
 export default function Page() {
   const os = listarOS();
   const faturas = listarFaturas();
-  // calcula os totais  const totalOS = os.length;
+
+  // calcula os totais
+  const totalOS = os.length;
   const totalFaturado = faturas.reduce((sum, f) => sum + f.valor, 0);
   const totalPendentes = faturas.filter((f) => f.status === "pendente").length;
   const totalPagas = faturas.filter((f) => f.status === "paga").length;

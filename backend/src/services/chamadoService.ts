@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { UrgenciaChamado, StatusChamado } from '@prisma/client';
+import { AppError } from '../middlewares/errorHandler';
 
 interface CriarChamadoData {
   email: string;
@@ -40,6 +41,12 @@ export const chamadoService = {
   },
 
   async atualizarStatus(id: string, data: AtualizarStatusData) {
+    const chamado = await prisma.chamado.findUnique({ where: { id } });
+
+    if (!chamado) {
+      throw new AppError('Chamado não encontrado', 404);
+    }
+
     return await prisma.chamado.update({
       where: { id },
       data: {
@@ -49,6 +56,12 @@ export const chamadoService = {
   },
 
   async deletar(id: string) {
+    const chamado = await prisma.chamado.findUnique({ where: { id } });
+
+    if (!chamado) {
+      throw new AppError('Chamado não encontrado', 404);
+    }
+
     return await prisma.chamado.delete({
       where: { id },
     });

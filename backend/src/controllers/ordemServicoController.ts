@@ -1,27 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
 import ordemServicoService from '../services/ordemServicoService';
-import { createOrdemServicoSchema, updateOrdemServicoSchema } from '../validators/schemas';
+import {
+  createOrdemServicoSchema,
+  ordemServicoListQuerySchema,
+  ordemServicoParamsSchema,
+  updateOrdemServicoSchema,
+  updateOrdemServicoStatusSchema,
+} from '../validators/schemas';
 import { StatusOS } from '@prisma/client';
 
 export class OrdemServicoController {
   async findAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const { status, clienteId, responsavelId, skip, take, groupByStatus } = req.query;
+      const filters = ordemServicoListQuerySchema.parse(req.query);
       
-      if (groupByStatus === 'true') {
+      if (filters.groupByStatus === true) {
         const result = await ordemServicoService.getByStatus(true);
         return res.json(result);
       }
-      
-      const filters = {
-        status: status as StatusOS,
-        clienteId: clienteId as string,
-        responsavelId: responsavelId as string,
-        skip: skip ? parseInt(skip as string) : undefined,
-        take: take ? parseInt(take as string) : undefined,
+
+      const normalizedFilters = {
+        ...filters,
+        status: filters.status as StatusOS | undefined,
       };
 
-      const result = await ordemServicoService.findAll(filters);
+      const result = await ordemServicoService.findAll(normalizedFilters);
       res.json(result);
     } catch (error) {
       next(error);
@@ -30,7 +33,7 @@ export class OrdemServicoController {
 
   async findById(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = ordemServicoParamsSchema.parse(req.params);
       const ordemServico = await ordemServicoService.findById(id);
       res.json(ordemServico);
     } catch (error) {
@@ -67,7 +70,7 @@ export class OrdemServicoController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = ordemServicoParamsSchema.parse(req.params);
       const validatedData = updateOrdemServicoSchema.parse(req.body);
       
       // Transformar para formato Prisma
@@ -114,8 +117,8 @@ export class OrdemServicoController {
 
   async updateStatus(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
-      const { status, observacao } = req.body;
+      const { id } = ordemServicoParamsSchema.parse(req.params);
+      const { status, observacao } = updateOrdemServicoStatusSchema.parse(req.body);
       
       const ordemServico = await ordemServicoService.updateStatus(id, status as StatusOS, observacao);
       res.json(ordemServico);
@@ -126,7 +129,7 @@ export class OrdemServicoController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = ordemServicoParamsSchema.parse(req.params);
       const result = await ordemServicoService.delete(id);
       res.json(result);
     } catch (error) {

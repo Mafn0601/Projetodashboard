@@ -1,19 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import veiculoService from '../services/veiculoService';
-import { createVeiculoSchema, updateVeiculoSchema } from '../validators/schemas';
+import {
+  createVeiculoSchema,
+  updateVeiculoSchema,
+  veiculoListQuerySchema,
+  veiculoParamsSchema,
+} from '../validators/schemas';
 
 export class VeiculoController {
   async findAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const { clienteId, placa, search, skip, take } = req.query;
-
-      const filters = {
-        clienteId: clienteId as string,
-        placa: placa as string,
-        search: search as string,
-        skip: skip ? parseInt(skip as string) : undefined,
-        take: take ? parseInt(take as string) : undefined,
-      };
+      const filters = veiculoListQuerySchema.parse(req.query);
 
       const result = await veiculoService.findAll(filters);
       res.json(result);
@@ -24,7 +21,7 @@ export class VeiculoController {
 
   async findById(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = veiculoParamsSchema.parse(req.params);
       const veiculo = await veiculoService.findById(id);
       res.json(veiculo);
     } catch (error) {
@@ -57,7 +54,7 @@ export class VeiculoController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = veiculoParamsSchema.parse(req.params);
       const validatedData = updateVeiculoSchema.parse(req.body);
 
       const veiculo = await veiculoService.update(id, validatedData);
@@ -69,7 +66,7 @@ export class VeiculoController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = veiculoParamsSchema.parse(req.params);
       const result = await veiculoService.delete(id);
       res.json(result);
     } catch (error) {

@@ -1,41 +1,40 @@
 import { Request, Response } from 'express';
 import { chamadoService } from '../services/chamadoService';
-import { UrgenciaChamado, StatusChamado } from '@prisma/client';
+import { ZodError } from 'zod';
+import {
+  chamadoParamsSchema,
+  createChamadoSchema,
+  updateChamadoStatusSchema,
+} from '../validators/schemas';
+import { AppError } from '../middlewares/errorHandler';
 
 export const chamadoController = {
   async criar(req: Request, res: Response) {
     try {
-      const { email, assunto, urgencia, descricao } = req.body;
-
-      console.log('📥 Recebendo chamado:', { email, assunto, urgencia });
-
-      // Validação básica
-      if (!email || !assunto || !urgencia || !descricao) {
-        console.log('❌ Validação falhou - campos faltando');
-        return res.status(400).json({
-          error: 'Todos os campos são obrigatórios',
-        });
-      }
-
-      // Validar urgência
-      if (!Object.values(UrgenciaChamado).includes(urgencia)) {
-        console.log('❌ Urgência inválida:', urgencia);
-        return res.status(400).json({
-          error: 'Urgência inválida',
-        });
-      }
+      const validatedData = createChamadoSchema.parse(req.body);
 
       const chamado = await chamadoService.criar({
-        email,
-        assunto,
-        urgencia,
-        descricao,
+        email: validatedData.email,
+        assunto: validatedData.assunto,
+        urgencia: validatedData.urgencia,
+        descricao: validatedData.descricao,
       });
 
-      console.log('✅ Chamado criado com sucesso:', chamado.id);
       return res.status(201).json(chamado);
     } catch (error) {
-      console.error('❌ Erro ao criar chamado:', error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors,
+        });
+      }
+
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       return res.status(500).json({
         error: 'Erro ao criar chamado',
       });
@@ -56,7 +55,7 @@ export const chamadoController = {
 
   async buscarPorId(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+      const { id } = chamadoParamsSchema.parse(req.params);
       const chamado = await chamadoService.buscarPorId(id);
 
       if (!chamado) {
@@ -67,6 +66,13 @@ export const chamadoController = {
 
       return res.json(chamado);
     } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors,
+        });
+      }
+
       console.error('Erro ao buscar chamado:', error);
       return res.status(500).json({
         error: 'Erro ao buscar chamado',
@@ -76,20 +82,25 @@ export const chamadoController = {
 
   async atualizarStatus(req: Request, res: Response) {
     try {
-      const { id } = req.params;
-      const { status } = req.body;
-
-      // Validar status
-      if (!Object.values(StatusChamado).includes(status)) {
-        return res.status(400).json({
-          error: 'Status inválido',
-        });
-      }
+      const { id } = chamadoParamsSchema.parse(req.params);
+      const { status } = updateChamadoStatusSchema.parse(req.body);
 
       const chamado = await chamadoService.atualizarStatus(id, { status });
       return res.json(chamado);
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors,
+        });
+      }
+
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       return res.status(500).json({
         error: 'Erro ao atualizar status',
       });
@@ -98,11 +109,23 @@ export const chamadoController = {
 
   async deletar(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+      const { id } = chamadoParamsSchema.parse(req.params);
       await chamadoService.deletar(id);
       return res.status(204).send();
     } catch (error) {
-      console.error('Erro ao deletar chamado:', error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors,
+        });
+      }
+
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+        });
+      }
+
       return res.status(500).json({
         error: 'Erro ao deletar chamado',
       });

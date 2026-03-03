@@ -12,9 +12,25 @@ export class AgendamentoService {
     skip?: number;
     take?: number;
   }) {
+    const safeSkip =
+      typeof filters?.skip === 'number' && Number.isInteger(filters.skip) && filters.skip >= 0
+        ? filters.skip
+        : 0;
+
+    const safeTake =
+      typeof filters?.take === 'number' && Number.isInteger(filters.take) && filters.take >= 0
+        ? Math.min(filters.take, 100)
+        : 100;
+
     const where: Prisma.AgendamentoWhereInput = {};
 
     if (filters?.status) {
+      const allowedStatus = ['CONFIRMADO', 'EXECUTANDO', 'FINALIZADO', 'CANCELADO'];
+
+      if (!allowedStatus.includes(filters.status)) {
+        throw new AppError('Status de agendamento inválido', 400);
+      }
+
       where.status = filters.status as any;
     }
 
@@ -29,18 +45,30 @@ export class AgendamentoService {
     if (filters?.dataInicio || filters?.dataFim) {
       where.dataAgendamento = {};
       if (filters.dataInicio) {
-        where.dataAgendamento.gte = new Date(filters.dataInicio);
+        const dataInicio = new Date(filters.dataInicio);
+
+        if (Number.isNaN(dataInicio.getTime())) {
+          throw new AppError('Data inicial inválida', 400);
+        }
+
+        where.dataAgendamento.gte = dataInicio;
       }
       if (filters.dataFim) {
-        where.dataAgendamento.lte = new Date(filters.dataFim);
+        const dataFim = new Date(filters.dataFim);
+
+        if (Number.isNaN(dataFim.getTime())) {
+          throw new AppError('Data final inválida', 400);
+        }
+
+        where.dataAgendamento.lte = dataFim;
       }
     }
 
     const [agendamentos, total] = await Promise.all([
       prisma.agendamento.findMany({
         where,
-        skip: filters?.skip || 0,
-        take: filters?.take || 100,
+        skip: safeSkip,
+        take: safeTake,
         orderBy: { dataAgendamento: 'asc' },
         include: {
           cliente: true,

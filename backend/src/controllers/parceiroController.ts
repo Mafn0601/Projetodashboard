@@ -1,18 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import parceiroService from '../services/parceiroService';
-import { createParceiroSchema, updateParceiroSchema } from '../validators/schemas';
+import {
+  createParceiroSchema,
+  parceiroListQuerySchema,
+  parceiroParamsSchema,
+  updateParceiroSchema,
+} from '../validators/schemas';
 
 export class ParceiroController {
   async findAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const { search, ativo, skip, take } = req.query;
-
-      const filters = {
-        search: search as string,
-        ativo: ativo === 'true' ? true : ativo === 'false' ? false : undefined,
-        skip: skip ? parseInt(skip as string) : undefined,
-        take: take ? parseInt(take as string) : undefined,
-      };
+      const filters = parceiroListQuerySchema.parse(req.query);
 
       const result = await parceiroService.findAll(filters);
       res.json(result);
@@ -23,7 +21,7 @@ export class ParceiroController {
 
   async findById(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = parceiroParamsSchema.parse(req.params);
       const parceiro = await parceiroService.findById(id);
       res.json(parceiro);
     } catch (error) {
@@ -43,7 +41,7 @@ export class ParceiroController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = parceiroParamsSchema.parse(req.params);
       const validatedData = updateParceiroSchema.parse(req.body);
       const parceiro = await parceiroService.update(id, validatedData);
       res.json(parceiro);
@@ -54,7 +52,7 @@ export class ParceiroController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = parceiroParamsSchema.parse(req.params);
       const result = await parceiroService.delete(id);
       res.json(result);
     } catch (error) {

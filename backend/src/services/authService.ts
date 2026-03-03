@@ -11,9 +11,12 @@ export class AuthService {
     senha: string;
     role?: 'ADMIN' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO';
   }) {
+    const normalizedEmail = data.email.trim().toLowerCase();
+    const normalizedLogin = data.login.trim().toLowerCase();
+
     // verifica se já tem alguém com esse email
     const emailExists = await prisma.usuario.findUnique({
-      where: { email: data.email },
+      where: { email: normalizedEmail },
     });
 
     if (emailExists) {
@@ -22,7 +25,7 @@ export class AuthService {
 
     // verifica o login também
     const loginExists = await prisma.usuario.findUnique({
-      where: { login: data.login },
+      where: { login: normalizedLogin },
     });
 
     if (loginExists) {
@@ -35,6 +38,8 @@ export class AuthService {
     const usuario = await prisma.usuario.create({
       data: {
         ...data,
+        email: normalizedEmail,
+        login: normalizedLogin,
         senha: senhaHash,
         role: data.role || 'OPERADOR',
       },
@@ -59,8 +64,10 @@ export class AuthService {
   }
 
   async login(email: string, senha: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+
     const usuario = await prisma.usuario.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!usuario) {

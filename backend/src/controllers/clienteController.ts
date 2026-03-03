@@ -1,19 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import clienteService from '../services/clienteService';
-import { createClienteSchema, updateClienteSchema } from '../validators/schemas';
+import {
+  clienteListQuerySchema,
+  clienteParamsSchema,
+  createClienteSchema,
+  updateClienteSchema,
+} from '../validators/schemas';
 
 export class ClienteController {
   // busca todos os clientes (com filtros opcionais)
   async findAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const { search, ativo, skip, take } = req.query;
-      
-      const filters = {
-        search: search as string,
-        ativo: ativo === 'true' ? true : ativo === 'false' ? false : undefined,
-        skip: skip ? parseInt(skip as string) : undefined,
-        take: take ? parseInt(take as string) : undefined,
-      };
+      const filters = clienteListQuerySchema.parse(req.query);
 
       const result = await clienteService.findAll(filters);
       res.json(result);
@@ -24,7 +22,7 @@ export class ClienteController {
 
   async findById(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = clienteParamsSchema.parse(req.params);
       const cliente = await clienteService.findById(id);
       res.json(cliente);
     } catch (error) {
@@ -45,7 +43,7 @@ export class ClienteController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = clienteParamsSchema.parse(req.params);
       const validatedData = updateClienteSchema.parse(req.body);
       const cliente = await clienteService.update(id, validatedData);
       res.json(cliente);
@@ -56,7 +54,7 @@ export class ClienteController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = clienteParamsSchema.parse(req.params);
       const result = await clienteService.delete(id);
       res.json(result);
     } catch (error) {

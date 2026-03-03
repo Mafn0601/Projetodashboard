@@ -12,6 +12,16 @@ export class EquipeService {
     skip?: number;
     take?: number;
   }) {
+    const safeSkip =
+      typeof filters?.skip === 'number' && Number.isInteger(filters.skip) && filters.skip >= 0
+        ? filters.skip
+        : 0;
+
+    const safeTake =
+      typeof filters?.take === 'number' && Number.isInteger(filters.take) && filters.take >= 0
+        ? Math.min(filters.take, 100)
+        : 50;
+
     const where: Prisma.EquipeWhereInput = {};
 
     if (filters?.search) {
@@ -38,8 +48,8 @@ export class EquipeService {
     const [equipes, total] = await Promise.all([
       prisma.equipe.findMany({
         where,
-        skip: filters?.skip || 0,
-        take: filters?.take || 50,
+        skip: safeSkip,
+        take: safeTake,
         include: {
           parceiro: true,
         },

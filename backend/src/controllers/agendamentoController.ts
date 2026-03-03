@@ -1,22 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import agendamentoService from '../services/agendamentoService';
-import { createAgendamentoSchema, updateAgendamentoSchema } from '../validators/schemas';
+import {
+  agendamentoListQuerySchema,
+  agendamentoParamsSchema,
+  createAgendamentoSchema,
+  updateAgendamentoSchema,
+} from '../validators/schemas';
 
 export class AgendamentoController {
   async findAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const { status, clienteId, responsavelId, dataInicio, dataFim, skip, take } = req.query;
-      
-      // monta os filtros
-      const filters = {
-        status: status as string,
-        clienteId: clienteId as string,
-        responsavelId: responsavelId as string,
-        dataInicio: dataInicio as string,
-        dataFim: dataFim as string,
-        skip: skip ? parseInt(skip as string) : undefined,
-        take: take ? parseInt(take as string) : undefined,
-      };
+      const filters = agendamentoListQuerySchema.parse(req.query);
 
       const result = await agendamentoService.findAll(filters);
       res.json(result);
@@ -27,7 +21,7 @@ export class AgendamentoController {
 
   async findById(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = agendamentoParamsSchema.parse(req.params);
       const agendamento = await agendamentoService.findById(id);
       res.json(agendamento);
     } catch (error) {
@@ -61,7 +55,7 @@ export class AgendamentoController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = agendamentoParamsSchema.parse(req.params);
       const validatedData = updateAgendamentoSchema.parse(req.body);
       
       // monta o objeto de update pro Prisma
@@ -101,7 +95,7 @@ export class AgendamentoController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { id } = agendamentoParamsSchema.parse(req.params);
       const result = await agendamentoService.delete(id);
       res.json(result);
     } catch (error) {

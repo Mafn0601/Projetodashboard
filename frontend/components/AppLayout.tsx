@@ -92,8 +92,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
             onMobileMenuClose={() => setMobileMenuOpen(false)}
           />
           
+          {/* Overlay para fechar menu de conta ao clicar fora (mobile) */}
+          {userMenuOpen && (
+            <div 
+              className="md:hidden fixed inset-0 bg-black/50 z-[95]"
+              onClick={() => setUserMenuOpen(false)}
+              aria-hidden="true"
+            />
+          )}
+
           {/* Barra superior mobile com botão da conta e hambúrguer sobreposto */}
-          <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-16 bg-white dark:bg-slate-900 border-b-2 border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-end px-4">
+          <div className="md:hidden fixed top-0 left-0 right-0 z-[98] h-16 bg-white dark:bg-slate-900 border-b-2 border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-end px-4">
             {/* Botão da conta */}
             <div className="relative" ref={userMenuRef}>
               <button
@@ -116,7 +125,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               {/* Dropdown do menu da conta */}
               {userMenuOpen && (
                 <div 
-                  className="absolute right-0 top-full mt-2 w-80 flex flex-col rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden z-[100]"
+                  className="fixed right-4 top-[72px] w-80 flex flex-col rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden z-[100]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Close button */}
@@ -206,18 +215,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <Menu size={24} />
             </button>
           </div>
-
-          {/* Overlay para fechar menu de conta ao clicar fora (mobile) */}
-          {userMenuOpen && (
-            <div 
-              className="md:hidden fixed inset-0 bg-black/50 z-[95]"
-              onClick={(e) => {
-                e.stopPropagation();
-                setUserMenuOpen(false);
-              }}
-              aria-hidden="true"
-            />
-          )}
         </>
       )}
       <main className={cn(

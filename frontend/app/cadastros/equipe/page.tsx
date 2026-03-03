@@ -261,11 +261,11 @@ export default function Page() {
 
       setIsModalOpen(false);
       resetForm();
+      console.log('✅ Equipe salva com sucesso. Lista atualizada.');
     } catch (error) {
       console.error('Erro ao salvar equipe:', error);
       setErrors({ submit: String(error) });
     }
-    resetForm();
   };
 
   const handleEdit = (equipe: Equipe) => {

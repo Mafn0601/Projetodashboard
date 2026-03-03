@@ -60,7 +60,15 @@ class EquipeServiceAPI {
       const queryString = params.toString();
       const url = `${API_URL}/api/equipes${queryString ? `?${queryString}` : ''}`;
 
-      const response = await fetch(url);
+      const headers: Record<string, string> = {};
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
+      const response = await fetch(url, { headers });
 
       if (!response.ok) {
         throw new Error(`Erro ao buscar equipes (HTTP ${response.status})`);
@@ -76,7 +84,15 @@ class EquipeServiceAPI {
 
   async findById(id: string): Promise<EquipeAPI> {
     try {
-      const response = await fetch(`${API_URL}/api/equipes/${id}`);
+      const headers: Record<string, string> = {};
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
+      const response = await fetch(`${API_URL}/api/equipes/${id}`, { headers });
 
       if (!response.ok) {
         throw new Error(`Erro ao buscar equipe (HTTP ${response.status})`);
@@ -94,11 +110,21 @@ class EquipeServiceAPI {
     try {
       console.log('📤 Criando equipe via API...', equipe);
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Adicionar token se disponível
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/equipes`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(equipe),
       });
 
@@ -121,11 +147,20 @@ class EquipeServiceAPI {
     try {
       console.log('📝 Atualizando equipe via API...', id, equipe);
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/equipes/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(equipe),
       });
 
@@ -148,8 +183,17 @@ class EquipeServiceAPI {
     try {
       console.log('🗑️ Deletando equipe via API...', id);
 
+      const headers: Record<string, string> = {};
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/equipes/${id}`, {
         method: 'DELETE',
+        headers,
       });
 
       if (!response.ok) {

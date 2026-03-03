@@ -112,12 +112,6 @@ PATCH  /ordens-servico/:id/status         - Atualizar status
 DELETE /ordens-servico/:id                - Deletar
 ```
 
-## 🔐 Credenciais Padrão (Seed)
-
-```
-Email: admin@oficina.com
-Senha: admin123
-```
 
 ⚠️ **Mude essas credenciais em produção!**
 

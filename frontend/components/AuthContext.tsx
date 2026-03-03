@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { readArray } from '@/lib/storage';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface User {
   id: string;
@@ -10,14 +11,6 @@ interface User {
   email: string;
   role: 'admin' | 'vendedor' | 'tecnico';
 }
-
-type EquipeUser = {
-  id: string;
-  login?: string;
-  senha?: string;
-  email?: string;
-  nome?: string;
-};
 
 interface AuthContextType {
   user: User | null;
@@ -27,34 +20,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// usuários mock pra testes
-const MOCK_USERS = [
-  {
-    id: '1',
-    name: 'Admin',
-    login: 'admin',
-    email: 'admin@exemplo.com',
-    password: 'admin123',
-    role: 'admin' as const
-  },
-  {
-    id: '2',
-    name: 'Vendedor',
-    login: 'vendedor',
-    email: 'vendedor@exemplo.com',
-    password: 'vendedor123',
-    role: 'vendedor' as const
-  },
-  {
-    id: '3',
-    name: 'Técnico',
-    login: 'tecnico',
-    email: 'tecnico@exemplo.com',
-    password: 'tecnico123',
-    role: 'tecnico' as const
-  }
-];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -79,52 +44,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, isLoading, pathname, router]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // simula chamada de API
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, senha: password }),
+      });
 
-    const identifier = email.trim().toLowerCase();
-    const senha = password.trim();
+      if (!response.ok) {
+        console.error('Erro no login:', response.statusText);
+        return false;
+      }
 
-    // busca usuário nas equipes
-    const equipes = readArray<EquipeUser>('equipes');
-    const equipeUser = equipes.find((u) => {
-      const loginValue = String(u.login ?? '').trim().toLowerCase();
-      const emailValue = String(u.email ?? '').trim().toLowerCase();
-      const senhaValue = String(u.senha ?? '');
-      return (loginValue === identifier || emailValue === identifier) && senhaValue === senha;
-    });
+      const data = await response.json();
+      
+      // Salvar token
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
 
-    if (equipeUser) {
-      const userFromEquipe: User = {
-        id: equipeUser.id,
-        name: equipeUser.nome || equipeUser.login || equipeUser.email || 'Usuario',
-        email: equipeUser.email || identifier,
-        role: 'vendedor'
-      };
-      setUser(userFromEquipe);
-      localStorage.setItem('user', JSON.stringify(userFromEquipe));
-      router.replace('/');
-      return true;
+      // Salvar usuário
+      if (data.usuario) {
+        const userData: User = {
+          id: data.usuario.id,
+          name: data.usuario.nome,
+          email: data.usuario.email,
+          role: data.usuario.role || 'vendedor',
+        };
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        router.replace('/');
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      return false;
     }
-
-    const foundUser = MOCK_USERS.find(
-      u => (u.email === identifier || u.login === identifier) && u.password === senha
-    );
-
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      router.replace('/');
-      return true;
-    }
-
-    return false;
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
     router.replace('/login');
   };
 

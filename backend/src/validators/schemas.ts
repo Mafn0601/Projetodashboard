@@ -343,12 +343,15 @@ export const createTipoOSItemSchema = z.object({
 
 export const createEquipeSchema = z.object({
   login: z.string().min(3, 'Login deve ter no mínimo 3 caracteres'),
-  senha: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
-  cpf: z.string().optional(),
-  funcao: z.string().min(2, 'Função inválida'),
-  telefone: z.string().optional(),
-  email: z.string().email('Email inválido').optional(),
+  senha: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').refine(
+    (val) => val.trim().length > 0,
+    'Senha não pode estar vazia'
+  ),
+  cpf: z.string().min(1, 'CPF é obrigatório').regex(/^\d{11}$/, 'CPF deve ter 11 dígitos'),
+  funcao: z.string().min(3, 'Função é inválida'),
+  email: z.string().email('Email inválido'),
   estado: z.string().optional(),
+  telefone: z.string().optional(),
   comissaoAtiva: z.boolean().optional(),
   agencia: z.string().optional(),
   contaCorrente: z.string().optional(),

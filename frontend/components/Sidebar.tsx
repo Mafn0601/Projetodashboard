@@ -429,8 +429,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
     >
       <div className={cn(
         "flex items-center gap-3 transition-all duration-200",
-        // No mobile sempre expandido, no desktop depende de collapsed
-        isMobile ? "justify-between mb-6 px-4" : collapsed ? "mb-3 px-2" : "justify-start mb-6 px-4"
+        // No mobile sempre à esquerda sem botão da conta, no desktop depende de collapsed
+        isMobile ? "justify-start mb-6 px-4" : collapsed ? "mb-3 px-2" : "justify-between mb-6 px-4"
       )}>
         <div 
           className={cn(
@@ -453,15 +453,8 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
             </span>
           )}
         </div>
-        {/* No mobile: mostrar botão da conta; No desktop: mostrar botão de toggle */}
-        {isMobile ? (
-          user && (
-            <div className="relative" ref={userMenuRef}>
-              <UserMenuButton />
-              {userMenuOpen && <UserMenuDropdown />}
-            </div>
-          )
-        ) : (
+        {/* No desktop: mostrar botão de toggle (no mobile não precisa mais pois o botão da conta está na barra superior) */}
+        {!isMobile && (
           <button
             className={cn(
               "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex-shrink-0"
@@ -566,18 +559,6 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
 
   return (
     <>
-      {/* Overlay para fechar menu de conta ao clicar fora (mobile) */}
-      {userMenuOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-[95]"
-          onClick={(e) => {
-            e.stopPropagation();
-            setUserMenuOpen(false);
-          }}
-          aria-hidden="true"
-        />
-      )}
-      
       {/* Overlay para mobile */}
       {mobileMenuOpen && (
         <div 

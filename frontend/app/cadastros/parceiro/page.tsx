@@ -46,19 +46,22 @@ export default function Page() {
 
   const handleBeforeCreateParceiro = async (entity: { [key: string]: unknown }) => {
     const nome = String(entity.nome || '').trim();
-    const cnpj = String(entity.cnpj || '').trim();
     const grupo = String(entity.grupo || '').trim();
     const cidade = String(entity.cidade || '').trim();
     const estado = String(entity.estado || '').trim();
     const status = String(entity.status || 'ativo').trim().toLowerCase();
+    
+    // Limpar CNPJ e CEP removendo caracteres não numéricos antes de salvar
+    const cnpjLimpo = String(entity.cnpj || '').replace(/\D/g, '').trim();
+    const cepLimpo = String(entity.cep || '').replace(/\D/g, '').trim();
 
     const endereco = [grupo, cidade, estado].filter(Boolean).join(' - ');
 
     const parceiroCriado = await parceiroServiceAPI.create({
       nome,
-      cnpj: cnpj || undefined,
+      cnpj: cnpjLimpo || undefined,
       endereco: endereco || undefined,
-      cep: String(entity.cep || '').trim() || undefined,
+      cep: cepLimpo || undefined,
       rua: String(entity.rua || '').trim() || undefined,
       numero: String(entity.numero || '').trim() || undefined,
       complemento: String(entity.complemento || '').trim() || undefined,

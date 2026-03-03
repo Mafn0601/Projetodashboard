@@ -34,12 +34,22 @@ class ClienteServiceAPI {
 
   async findAll(filters: FindAllFilters = {}): Promise<ClienteCompleto[]> {
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Adicionar token se disponível
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const queryString = this.buildQueryParams(filters);
       const response = await fetch(`${API_URL}/api/clientes${queryString}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {
@@ -59,11 +69,21 @@ class ClienteServiceAPI {
 
   async findById(id: string): Promise<ClienteCompleto | null> {
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Adicionar token se disponível
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/clientes/${id}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {
@@ -83,11 +103,21 @@ class ClienteServiceAPI {
     try {
       console.log('📤 Criando cliente:', cliente);
       
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Adicionar token se disponível
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/clientes`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(cliente),
       });
 
@@ -109,11 +139,21 @@ class ClienteServiceAPI {
     try {
       console.log('📤 Atualizando cliente:', id, cliente);
       
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Adicionar token se disponível
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/clientes/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(cliente),
       });
 
@@ -135,11 +175,21 @@ class ClienteServiceAPI {
     try {
       console.log('📤 Deletando cliente:', id);
       
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Adicionar token se disponível
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/clientes/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {

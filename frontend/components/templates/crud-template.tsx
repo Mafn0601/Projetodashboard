@@ -115,7 +115,7 @@ export default function CrudTemplate({
       
       // Usar URL da API do ambiente
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const url = `${apiUrl}/cep/${cleanCep}`;
+      const url = `${apiUrl}/api/cep/${cleanCep}`;
       console.log('🌐 Chamando backend:', url);
       
       const res = await fetch(url, { headers });

@@ -130,7 +130,17 @@ class EquipeServiceAPI {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
-        const message = errorBody?.error || `Erro ao criar equipe (HTTP ${response.status})`;
+        
+        // Se houver detalhes de validação, incluir na mensagem
+        let message = errorBody?.error || `Erro ao criar equipe (HTTP ${response.status})`;
+        if (errorBody?.details && Array.isArray(errorBody.details)) {
+          const detalhes = errorBody.details
+            .map((d: { path?: string[]; message?: string }) => `${d.path?.join('.')} - ${d.message}`)
+            .join('; ');
+          message = `${message}: ${detalhes}`;
+          console.error('📋 Detalhes de validação:', errorBody.details);
+        }
+        
         throw new Error(message);
       }
 

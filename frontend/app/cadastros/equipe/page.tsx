@@ -196,6 +196,7 @@ export default function Page() {
     if (!formData.parceiroId) newErrors.parceiroId = 'Campo obrigatório';
     if (!formData.login) newErrors.login = 'Campo obrigatório';
     if (!editingId && !formData.senha) newErrors.senha = 'Campo obrigatório';
+    if (!editingId && formData.senha && formData.senha.length < 6) newErrors.senha = 'Senha deve ter no mínimo 6 caracteres';
     if (!formData.cpf) newErrors.cpf = 'Campo obrigatório';
     if (!formData.funcao) newErrors.funcao = 'Campo obrigatório';
     if (!formData.email) newErrors.email = 'Campo obrigatório';

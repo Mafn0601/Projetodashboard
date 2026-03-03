@@ -113,7 +113,9 @@ export default function CrudTemplate({
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const url = `/api/cep/${cleanCep}`;
+      // Usar URL da API do ambiente
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const url = `${apiUrl}/cep/${cleanCep}`;
       console.log('🌐 Chamando backend:', url);
       
       const res = await fetch(url, { headers });

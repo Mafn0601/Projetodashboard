@@ -148,7 +148,7 @@ TOTAL:                 ██████████░░ 80%
 
 1. **API_URL**: Certifique-se de que `NEXT_PUBLIC_API_URL` está configurada:
    - Produção: `https://projetodashboard-uebg.onrender.com`
-   - Desenvolvimento: `http://localhost:5000`
+   - Desenvolvimento: `http://localhost:3001`
 
 2. **Tipos de Dados**: Os tipos retornados da API podem diferir do localStorage
    - Verifique `ClienteCompleto`, `Agendamento`, `OrdemServico` interfaces

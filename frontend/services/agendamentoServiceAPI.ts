@@ -3,7 +3,7 @@
  * Comunicação com o backend via HTTP REST API
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface Agendamento {
   id: string;

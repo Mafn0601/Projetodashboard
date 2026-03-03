@@ -120,5 +120,5 @@ NEXT_PUBLIC_API_URL=https://projetodashboard-uebg.onrender.com
 
 Para desenvolvimento local:
 ```
-NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_API_URL=http://localhost:3001
 ```

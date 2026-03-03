@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import * as clienteService from '@/services/clienteService';
 import { clienteServiceAPI } from '@/services/clienteServiceAPI';
+import { equipeServiceAPI } from '@/services/equipeServiceAPI';
+import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
 import { validateForm } from '@/lib/validation';
 import { readArray } from '@/lib/storage';
 import {
@@ -166,27 +168,47 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
   }, [initial]);
 
   /**
-   * Carregar parceiros, equipes e tipos de OS do localStorage (apenas uma vez)
+   * Carregar parceiros, equipes e tipos de OS da API
    */
   useEffect(() => {
-    const parceiros = readArray<Parceiro>('parceiros');
-    const options: SelectOption[] = parceiros.map((p) => ({
-      value: p.id,
-      label: p.nome
-    }));
-    setParceiroOptions(options);
+    const carregarDados = async () => {
+      try {
+        // Carregar parceiros da API
+        const parceirosData = await parceiroServiceAPI.findAll();
+        const options: SelectOption[] = parceirosData.map((p) => ({
+          value: p.id,
+          label: p.nome
+        }));
+        setParceiroOptions(options);
 
-    const equipesData = readArray<Equipe>('equipes');
-    setEquipes(equipesData);
+        // Carregar equipes da API
+        const equipesData = await equipeServiceAPI.findAll();
+        setEquipes(equipesData as unknown as Equipe[]);
 
-    // Carregar Tipos de OS e setar no state
-    const tiposOsData = readArray<TipoOS>('tiposOs');
-    setTiposOs(tiposOsData);
-    const tiposOsOpts: SelectOption[] = tiposOsData.map((t) => ({
-      value: t.id,
-      label: t.nome
-    }));
-    setTiposOsOptions(tiposOsOpts);
+        // Carregar Tipos de OS do localStorage (temporário até ter API)
+        const tiposOsData = readArray<TipoOS>('tiposOs');
+        setTiposOs(tiposOsData);
+        const tiposOsOpts: SelectOption[] = tiposOsData.map((t) => ({
+          value: t.id,
+          label: t.nome
+        }));
+        setTiposOsOptions(tiposOsOpts);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        // Fallback para localStorage se API falhar
+        const parceiros = readArray<Parceiro>('parceiros');
+        setParceiroOptions(parceiros.map((p) => ({ value: p.id, label: p.nome })));
+        
+        const equipesData = readArray<Equipe>('equipes');
+        setEquipes(equipesData);
+        
+        const tiposOsData = readArray<TipoOS>('tiposOs');
+        setTiposOs(tiposOsData);
+        setTiposOsOptions(tiposOsData.map((t) => ({ value: t.id, label: t.nome })));
+      }
+    };
+
+    carregarDados();
   }, []); // Array vazio - executa apenas uma vez
 
   /**

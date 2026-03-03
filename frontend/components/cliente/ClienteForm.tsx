@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/Input';
 import { Select, type SelectOption } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Cliente, save, update } from '@/services/clienteService';
+import { equipeServiceAPI } from '@/services/equipeServiceAPI';
+import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
 import { readArray } from '@/lib/storage';
 
 type Parceiro = {
@@ -40,18 +42,35 @@ export default function ClienteForm({ onSaved, initial }: Props) {
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Carregar parceiros e equipes do localStorage
+  // Carregar parceiros e equipes da API
   useEffect(() => {
-    const parceiros = readArray<Parceiro>('parceiros');
-    const options: SelectOption[] = parceiros.map((p) => ({
-      value: p.id,
-      label: p.nome
-    }));
-    setParceiroOptions(options);
+    const carregarDados = async () => {
+      try {
+        // Carregar parceiros da API
+        const parceirosData = await parceiroServiceAPI.findAll();
+        const options: SelectOption[] = parceirosData.map((p) => ({
+          value: p.id,
+          label: p.nome
+        }));
+        setParceiroOptions(options);
 
-    const equipesData = readArray<Equipe>('equipes');
-    setEquipes(equipesData);
-    atualizarResponsaveis(parceiro, equipesData);
+        // Carregar equipes da API
+        const equipesData = await equipeServiceAPI.findAll();
+        setEquipes(equipesData as unknown as Equipe[]);
+        atualizarResponsaveis(parceiro, equipesData as unknown as Equipe[]);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        // Fallback para localStorage se API falhar
+        const parceiros = readArray<Parceiro>('parceiros');
+        setParceiroOptions(parceiros.map((p) => ({ value: p.id, label: p.nome })));
+        
+        const equipesData = readArray<Equipe>('equipes');
+        setEquipes(equipesData);
+        atualizarResponsaveis(parceiro, equipesData);
+      }
+    };
+
+    carregarDados();
   }, []);
 
   // Quando parceiro mudar, atualizar responsaveis

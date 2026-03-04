@@ -87,8 +87,6 @@ export default function Page() {
   };
 
   const deletarTipo = async (id: string) => {
-    if (!confirm('Tem certeza que deseja deletar este tipo de OS e todos os seus itens?')) return;
-
     try {
       await tipoOSServiceAPI.delete(id);
       await carregarTipos({ forceRefresh: true });
@@ -165,8 +163,6 @@ export default function Page() {
   };
 
   const deletarItem = async (itemId: string) => {
-    if (!confirm('Tem certeza que deseja deletar este item?')) return;
-
     try {
       await tipoOSServiceAPI.deleteItem(itemId);
       await carregarTipos({ forceRefresh: true });

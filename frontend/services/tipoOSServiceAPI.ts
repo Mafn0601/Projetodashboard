@@ -29,6 +29,17 @@ export interface TipoOS {
 }
 
 class TipoOSServiceAPI {
+  private async extractErrorMessage(response: Response, fallback: string): Promise<string> {
+    try {
+      const data = await response.json();
+      if (typeof data?.message === 'string' && data.message.trim()) return data.message;
+      if (typeof data?.error === 'string' && data.error.trim()) return data.error;
+      return fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
   private getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -128,8 +139,8 @@ class TipoOSServiceAPI {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao criar tipo de OS');
+        const message = await this.extractErrorMessage(response, 'Erro ao criar tipo de OS');
+        throw new Error(message);
       }
 
       this.clearCache();
@@ -149,8 +160,8 @@ class TipoOSServiceAPI {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao atualizar tipo de OS');
+        const message = await this.extractErrorMessage(response, 'Erro ao atualizar tipo de OS');
+        throw new Error(message);
       }
 
       this.clearCache();
@@ -169,8 +180,12 @@ class TipoOSServiceAPI {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao deletar tipo de OS');
+        if (response.status === 404) {
+          this.clearCache();
+          return;
+        }
+        const message = await this.extractErrorMessage(response, 'Erro ao deletar tipo de OS');
+        throw new Error(message);
       }
 
       this.clearCache();
@@ -198,8 +213,8 @@ class TipoOSServiceAPI {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao criar item');
+        const message = await this.extractErrorMessage(response, 'Erro ao criar item');
+        throw new Error(message);
       }
 
       this.clearCache();
@@ -228,8 +243,8 @@ class TipoOSServiceAPI {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao atualizar item');
+        const message = await this.extractErrorMessage(response, 'Erro ao atualizar item');
+        throw new Error(message);
       }
 
       this.clearCache();
@@ -248,8 +263,12 @@ class TipoOSServiceAPI {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao deletar item');
+        if (response.status === 404) {
+          this.clearCache();
+          return;
+        }
+        const message = await this.extractErrorMessage(response, 'Erro ao deletar item');
+        throw new Error(message);
       }
 
       this.clearCache();

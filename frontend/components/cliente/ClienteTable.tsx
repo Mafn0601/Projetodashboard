@@ -1,9 +1,9 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ClienteCompleto } from '@/services/clienteService';
 import { Button } from '@/components/ui/Button';
 import ClienteDetailsModal from '@/components/cliente/ClienteDetailsModal';
-import * as authService from '@/services/authService';
+import { useAuth } from '@/components/AuthContext';
 
 type Props = {
   clientes: ClienteCompleto[];
@@ -11,33 +11,17 @@ type Props = {
 };
 
 export default function ClienteTable({ clientes, onDelete }: Props) {
-  const [role, setRole] = useState<'admin' | 'vendedor' | 'tecnico'>('vendedor');
+  const { user } = useAuth();
   const [selectedCliente, setSelectedCliente] = useState<ClienteCompleto | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      const r = window.localStorage.getItem('currentUserRole') as 'admin' | 'vendedor' | 'tecnico' | null;
-      if (r === 'admin' || r === 'vendedor' || r === 'tecnico') {
-        setRole(r);
-        return;
-      }
-      // fallback to authService session if available
-      const session = authService.getUser();
-      if (session?.role) {
-        setRole(session.role as 'admin' | 'vendedor' | 'tecnico');
-        return;
-      }
-    } catch {
-      setRole('vendedor');
-    }
-  }, []);
+  
+  const isAdmin = user?.role === 'admin';
 
   return (
     <>
       <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
         <div className="scrollbar-thin max-h-80 overflow-auto overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[600px]">
+          <table className="w-full text-left text-xs">
           <thead className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 sticky top-0">
             <tr>
               <th className="px-3 py-2 font-medium">Cliente</th>
@@ -65,7 +49,7 @@ export default function ClienteTable({ clientes, onDelete }: Props) {
                   >
                     Mais informações
                   </Button>
-                  {role === 'admin' && (
+                  {isAdmin && (
                     <Button size="sm" variant="danger" onClick={() => onDelete(c.id)}>Deletar</Button>
                   )}
                 </div>

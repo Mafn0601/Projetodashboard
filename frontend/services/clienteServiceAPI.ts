@@ -59,8 +59,8 @@ class ClienteServiceAPI {
       const result = await response.json();
       console.log('✅ Clientes carregados:', result);
       
-      // Se a resposta tem estrutura {data, total}, retorna apenas data
-      return result.data || result;
+      // Backend retorna {clientes, total} ou pode retornar {data, total} ou array direto
+      return result.clientes || result.data || result;
     } catch (error) {
       console.error('❌ Erro ao buscar clientes:', error);
       return [];

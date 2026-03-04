@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CrudTemplate from "@/components/templates/crud-template";
 import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
@@ -43,6 +44,67 @@ const estadosBrasil = [
 
 export default function Page() {
   const router = useRouter();
+  const [crudVersion, setCrudVersion] = useState(0);
+  const [isHydrating, setIsHydrating] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const hydrateParceirosLocalStorage = async () => {
+      try {
+        const localRaw = typeof window !== 'undefined' ? localStorage.getItem('parceiros') : null;
+        const localParceiros = localRaw ? JSON.parse(localRaw) : [];
+
+        if (Array.isArray(localParceiros) && localParceiros.length > 0) {
+          return;
+        }
+
+        const parceirosAPI = await parceiroServiceAPI.findAll({ preferCache: true, forceRefresh: true });
+        if (!Array.isArray(parceirosAPI) || parceirosAPI.length === 0) {
+          return;
+        }
+
+        const parceirosParaCrud = parceirosAPI.map((p) => {
+          const enderecoPartes = String(p.endereco || '').split(' - ').map((parte) => parte.trim());
+          const grupo = enderecoPartes[0] || '';
+          const cidade = enderecoPartes[1] || '';
+          const estado = enderecoPartes[2] || '';
+
+          return {
+            id: p.id,
+            cnpj: p.cnpj || '',
+            nome: p.nome || '',
+            grupo,
+            cidade,
+            estado,
+            status: p.ativo ? 'ativo' : 'inativo',
+            cep: p.cep || '',
+            rua: p.rua || '',
+            numero: p.numero || '',
+            complemento: p.complemento || '',
+            bairro: p.bairro || '',
+          };
+        });
+
+        localStorage.setItem('parceiros', JSON.stringify(parceirosParaCrud));
+        if (mounted) {
+          setCrudVersion((prev) => prev + 1);
+        }
+      } catch (error) {
+        console.error('Erro ao sincronizar parceiros para localStorage:', error);
+      } finally {
+        if (mounted) {
+          setIsHydrating(false);
+        }
+      }
+    };
+
+    hydrateParceirosLocalStorage();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleBeforeCreateParceiro = async (entity: { [key: string]: unknown }) => {
     const nome = String(entity.nome || '').trim();
@@ -81,7 +143,18 @@ export default function Page() {
   };
 
   return (
+    isHydrating ? (
+      <div className="space-y-6">
+        <header className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Cadastro de Parceiros</h1>
+            <p className="text-xs text-slate-700 dark:text-slate-400">Sincronizando dados...</p>
+          </div>
+        </header>
+      </div>
+    ) : (
     <CrudTemplate
+      key={crudVersion}
       title="Cadastro de Parceiros"
       entityKey="parceiros"
       useModal={true}
@@ -109,6 +182,7 @@ export default function Page() {
         { name: "bairro", label: "Bairro", hideInList: true }
       ]}
     />
+    )
   );
 }
 

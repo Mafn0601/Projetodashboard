@@ -57,9 +57,16 @@ export default function Page() {
 
   // Callback para deletar cliente
   const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja deletar este cliente? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
     const sucesso = await clienteServiceAPI.delete(id);
     if (sucesso) {
       setClientes(prev => prev.filter(c => c.id !== id));
+      alert('Cliente deletado com sucesso!');
+    } else {
+      alert('Erro ao deletar cliente. Tente novamente.');
     }
   };
 

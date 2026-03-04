@@ -11,25 +11,25 @@ type Props = {
 };
 
 export default function ClienteTable({ clientes, onDelete }: Props) {
-  const [role, setRole] = useState<'admin' | 'user'>('user');
+  const [role, setRole] = useState<'admin' | 'vendedor' | 'tecnico'>('vendedor');
   const [selectedCliente, setSelectedCliente] = useState<ClienteCompleto | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   useEffect(() => {
     try {
-      const r = window.localStorage.getItem('currentUserRole') as 'admin' | 'user' | null;
-      if (r === 'admin' || r === 'user') {
+      const r = window.localStorage.getItem('currentUserRole') as 'admin' | 'vendedor' | 'tecnico' | null;
+      if (r === 'admin' || r === 'vendedor' || r === 'tecnico') {
         setRole(r);
         return;
       }
       // fallback to authService session if available
       const session = authService.getUser();
-      if (session && (session.role === 'admin' || session.role === 'user')) {
-        setRole(session.role);
+      if (session?.role) {
+        setRole(session.role as 'admin' | 'vendedor' | 'tecnico');
         return;
       }
     } catch {
-      setRole('user');
+      setRole('vendedor');
     }
   }, []);
 

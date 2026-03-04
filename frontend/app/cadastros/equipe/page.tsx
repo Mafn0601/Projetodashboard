@@ -130,14 +130,19 @@ export default function Page() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const carregarDados = async () => {
+  const carregarDados = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
+    const silent = options?.silent ?? false;
+    const forceRefresh = options?.forceRefresh ?? false;
+
     try {
-      setIsLoading(true);
+      if (!silent) {
+        setIsLoading(true);
+      }
       
       // Carregar da API em paralelo
       const [parceirosData, equipesData] = await Promise.all([
-        parceiroServiceAPI.findAll(),
-        equipeServiceAPI.findAll()
+        parceiroServiceAPI.findAll({ preferCache: !forceRefresh, forceRefresh }),
+        equipeServiceAPI.findAll(undefined, undefined, { preferCache: !forceRefresh, forceRefresh })
       ]);
       
       setParceiros(parceirosData as unknown as Parceiro[]);
@@ -156,20 +161,33 @@ export default function Page() {
         console.error('Erro ao carregar dados do localStorage:', storageError);
       }
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    carregarDados();
+    const cachedParceiros = parceiroServiceAPI.getCached();
+    const cachedEquipes = equipeServiceAPI.getCached();
+
+    if (cachedParceiros.length > 0 || cachedEquipes.length > 0) {
+      setParceiros(cachedParceiros as unknown as Parceiro[]);
+      setParceiroOptions(cachedParceiros.map(p => ({ value: p.id, label: p.nome })));
+      setEquipes(cachedEquipes as unknown as Equipe[]);
+      setIsLoading(false);
+      carregarDados({ silent: true, forceRefresh: true });
+      return;
+    }
+
+    carregarDados({ forceRefresh: true });
   }, []);
 
   // Recarregar dados quando a página ganha foco (volta de outra página)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('ℹ️ Página ganhou foco, recarregando parceiros e equipes...');
-        carregarDados();
+        carregarDados({ silent: true, forceRefresh: true });
       }
     };
 
@@ -552,8 +570,8 @@ export default function Page() {
             })}
           </tbody>
         </table>
-        )}
       </div>
+      )}
 
       {/* Modal */}
       {isModalOpen && (

@@ -1,4 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const EQUIPES_CACHE_KEY = 'cache_api_equipes_v1';
 
 export interface EquipeAPI {
   id: string;
@@ -51,8 +52,56 @@ interface UpdateEquipeData extends Partial<CreateEquipeData> {
 }
 
 class EquipeServiceAPI {
-  async findAll(parceiroId?: string, funcao?: string): Promise<EquipeAPI[]> {
+  private getAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    return headers;
+  }
+
+  private setCachedEquipes(data: EquipeAPI[]): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(EQUIPES_CACHE_KEY, JSON.stringify(data));
+  }
+
+  private clearCache(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(EQUIPES_CACHE_KEY);
+  }
+
+  getCached(): EquipeAPI[] {
+    if (typeof window === 'undefined') return [];
     try {
+      const raw = localStorage.getItem(EQUIPES_CACHE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async findAll(
+    parceiroId?: string,
+    funcao?: string,
+    options?: { preferCache?: boolean; forceRefresh?: boolean }
+  ): Promise<EquipeAPI[]> {
+    const preferCache = options?.preferCache ?? true;
+    const forceRefresh = options?.forceRefresh ?? false;
+
+    try {
+      const canUseSharedCache = !parceiroId && !funcao;
+      if (canUseSharedCache && preferCache && !forceRefresh) {
+        const cached = this.getCached();
+        if (cached.length > 0) {
+          return cached;
+        }
+      }
+
       const params = new URLSearchParams();
       if (parceiroId) params.append('parceiroId', parceiroId);
       if (funcao) params.append('funcao', funcao);
@@ -60,23 +109,25 @@ class EquipeServiceAPI {
       const queryString = params.toString();
       const url = `${API_URL}/api/equipes${queryString ? `?${queryString}` : ''}`;
 
-      const headers: Record<string, string> = {};
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-      }
-
-      const response = await fetch(url, { headers });
+      const response = await fetch(url, { headers: this.getAuthHeaders() });
 
       if (!response.ok) {
         throw new Error(`Erro ao buscar equipes (HTTP ${response.status})`);
       }
 
       const data = await response.json();
-      return data.equipes || [];
+      const equipes = data.equipes || [];
+      if (!parceiroId && !funcao) {
+        this.setCachedEquipes(equipes);
+      }
+      return equipes;
     } catch (error) {
+      if (!parceiroId && !funcao) {
+        const cached = this.getCached();
+        if (cached.length > 0) {
+          return cached;
+        }
+      }
       console.error('❌ Erro ao buscar equipes:', error);
       throw error;
     }
@@ -145,6 +196,7 @@ class EquipeServiceAPI {
       }
 
       const novaEquipe = await response.json();
+      this.clearCache();
       console.log('✅ Equipe criada no Supabase:', novaEquipe);
       return novaEquipe;
     } catch (error) {
@@ -181,6 +233,7 @@ class EquipeServiceAPI {
       }
 
       const equipeAtualizada = await response.json();
+      this.clearCache();
       console.log('✅ Equipe atualizada:', equipeAtualizada);
       return equipeAtualizada;
     } catch (error) {
@@ -211,6 +264,7 @@ class EquipeServiceAPI {
       }
 
       const result = await response.json();
+      this.clearCache();
       console.log('✅ Equipe deletada:', result);
       return result;
     } catch (error) {

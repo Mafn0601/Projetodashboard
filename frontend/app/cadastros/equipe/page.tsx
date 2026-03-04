@@ -133,16 +133,21 @@ export default function Page() {
   const carregarDados = async () => {
     try {
       setIsLoading(true);
+      console.time('⏱️ Carregamento total de equipes');
       
       // Carregar parceiros e equipes em paralelo
+      console.time('⏱️ API call - parceiros + equipes');
       const [parceirosData, equipesData] = await Promise.all([
         parceiroServiceAPI.findAll(),
         equipeServiceAPI.findAll()
       ]);
+      console.timeEnd('⏱️ API call - parceiros + equipes');
 
+      console.time('⏱️ Processamento de dados (setState)');
       setParceiros(parceirosData as unknown as Parceiro[]);
       setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
       setEquipes(equipesData as unknown as Equipe[]);
+      console.timeEnd('⏱️ Processamento de dados (setState)');
     } catch (error) {
       console.warn('Erro ao carregar dados da API, usando localStorage:', error);
       try {
@@ -157,6 +162,7 @@ export default function Page() {
       }
     } finally {
       setIsLoading(false);
+      console.timeEnd('⏱️ Carregamento total de equipes');
     }
   };
 

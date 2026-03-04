@@ -34,6 +34,8 @@ interface CreateParceiroData {
 class ParceiroServiceAPI {
   async findAll(): Promise<ParceiroAPI[]> {
     try {
+      console.time('⏱️ Fetch parceiros da API');
+      
       const headers: Record<string, string> = {};
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -49,6 +51,9 @@ class ParceiroServiceAPI {
       }
 
       const data = await response.json();
+      console.timeEnd('⏱️ Fetch parceiros da API');
+      console.log(`✅ Parceiros carregados: ${(data.parceiros || []).length}`);
+      
       return data.parceiros || [];
     } catch (error) {
       console.error('❌ Erro ao buscar parceiros:', error);

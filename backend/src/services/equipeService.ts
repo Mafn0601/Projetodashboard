@@ -12,6 +12,8 @@ export class EquipeService {
     skip?: number;
     take?: number;
   }) {
+    console.time('⏱️ Query Equipe - findMany + count');
+    
     const safeSkip =
       typeof filters?.skip === 'number' && Number.isInteger(filters.skip) && filters.skip >= 0
         ? filters.skip
@@ -57,6 +59,9 @@ export class EquipeService {
       }),
       prisma.equipe.count({ where }),
     ]);
+
+    console.timeEnd('⏱️ Query Equipe - findMany + count');
+    console.log(`📊 Equipes encontradas: ${equipes.length} (total: ${total})`);
 
     return { equipes, total };
   }

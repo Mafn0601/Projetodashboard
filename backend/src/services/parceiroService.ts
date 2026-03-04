@@ -9,6 +9,8 @@ export class ParceiroService {
     skip?: number;
     take?: number;
   }) {
+    console.time('⏱️ Query Parceiro - findMany + count');
+    
     const safeSkip =
       typeof filters?.skip === 'number' && Number.isInteger(filters.skip) && filters.skip >= 0
         ? filters.skip
@@ -43,6 +45,9 @@ export class ParceiroService {
       }),
       prisma.parceiro.count({ where }),
     ]);
+
+    console.timeEnd('⏱️ Query Parceiro - findMany + count');
+    console.log(`📊 Parceiros encontrados: ${parceiros.length} (total: ${total})`);
 
     return { parceiros, total };
   }

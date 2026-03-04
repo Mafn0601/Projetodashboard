@@ -47,7 +47,8 @@ type Produto = {
   nome: string;
   quantidade: number;
   precoUnitario: number;
-  desconto: number;
+  descontoMaximo: number;  // Limite de desconto permitido
+  descontoAplicado: number; // Desconto efetivamente aplicado
   subtotal: number;
   duracaoMin: number;
 };
@@ -56,7 +57,7 @@ type TipoOSItem = {
   id: string;
   nome: string;
   preco: number;
-  desconto: number;
+  descontoMaximo: number;  // Limite de desconto permitido
   tipo: 'servico' | 'produto';
   duracao: number;
 };
@@ -197,8 +198,18 @@ export default function Page() {
   // Carregar dados do localStorage e mockFabricantes
   useEffect(() => {
     const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
-    setTiposOs(tiposOsCadastrados);
-    setTipoOptions(tiposOsCadastrados.map(t => ({ value: t.id, label: t.nome })));
+    
+    // Migrar dados antigos: mapper desconto -> descontoMaximo
+    const tiposOsMigrados = tiposOsCadastrados.map(tipo => ({
+      ...tipo,
+      itens: tipo.itens.map((item: any) => ({
+        ...item,
+        descontoMaximo: item.descontoMaximo ?? item.desconto ?? 0,
+      }))
+    }));
+    
+    setTiposOs(tiposOsMigrados);
+    setTipoOptions(tiposOsMigrados.map(t => ({ value: t.id, label: t.nome })));
 
     const parceirosCadastrados = readArray<Parceiro>('parceiros');
     setParceiros(parceirosCadastrados);
@@ -242,7 +253,8 @@ export default function Page() {
     if (item) {
       setNovoNomeProduto(item.nome);
       setNovoPreco(numberToCurrency(item.preco));
-      setNovoDesconto(numberToCurrency(item.desconto ?? 0));
+      // Desconto inicia zerado, mas pode aplicar até o limite
+      setNovoDesconto('R$ 0,00');
       setNovaDuracaoMin(String(item.duracao));
     } else {
       setNovoNomeProduto('');
@@ -267,16 +279,29 @@ export default function Page() {
 
     const quantidade = Number(novaQuantidade);
     const preco = currencyToNumber(novoPreco);
-    const desconto = currencyToNumber(novoDesconto) || 0;
+    const descontoAplicado = currencyToNumber(novoDesconto) || 0;
     const duracaoMin = Number(novaDuracaoMin);
-    const subtotal = (quantidade * preco) - desconto;
+    
+    // Buscar limite de desconto do item selecionado
+    const tipoSelecionado = tiposOs.find(t => t.id === tipo);
+    const item = tipoSelecionado?.itens?.find(i => i.id === itemSelecionado);
+    const descontoMaximo = item?.descontoMaximo ?? 0;
+    
+    // Validar se desconto aplicado não excede o limite
+    if (descontoAplicado > descontoMaximo) {
+      alert(`Desconto não pode exceder R$ ${descontoMaximo.toFixed(2)}`);
+      return;
+    }
+    
+    const subtotal = (quantidade * preco) - descontoAplicado;
 
     const novoProduto: Produto = {
       id: `prod_${Date.now()}`,
       nome: novoNomeProduto,
       quantidade,
       precoUnitario: preco,
-      desconto,
+      descontoMaximo,
+      descontoAplicado,
       subtotal,
       duracaoMin
     };
@@ -296,7 +321,7 @@ export default function Page() {
   // Calcular totais
   useEffect(() => {
     const preco = produtos.reduce((sum, p) => sum + (p.quantidade * p.precoUnitario), 0);
-    const desconto = produtos.reduce((sum, p) => sum + p.desconto, 0);
+    const desconto = produtos.reduce((sum, p) => sum + p.descontoAplicado, 0);
     setPrecoTotal(preco);
     setDescontoTotal(desconto);
   }, [produtos]);
@@ -748,7 +773,7 @@ export default function Page() {
                     <td className="border border-slate-400 px-3 py-2 text-center">
                       {`${Math.floor(produto.duracaoMin / 60).toString().padStart(2, '0')}:${(produto.duracaoMin % 60).toString().padStart(2, '0')}`}
                     </td>
-                    <td className="border border-slate-400 px-3 py-2 text-right">R$ {produto.desconto.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="border border-slate-400 px-3 py-2 text-right">R$ {produto.descontoAplicado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td className="border border-slate-400 px-3 py-2 text-right font-bold">R$ {produto.subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   </tr>
                 ))}
@@ -1003,12 +1028,11 @@ export default function Page() {
             disabled
           />
           <MaskedInput
-            label="Desconto"
+            label="Desconto (opcional)"
             mask="currency"
             placeholder="R$ 0,00"
             value={novoDesconto}
             onChange={setNovoDesconto}
-            disabled
           />
           <div className="flex items-end">
             <Button onClick={handleAdicionarProduto} className="w-full">
@@ -1044,7 +1068,12 @@ export default function Page() {
                       {`${Math.floor(produto.duracaoMin / 60).toString().padStart(2, '0')}:${(produto.duracaoMin % 60).toString().padStart(2, '0')}`}
                     </td>
                     <td className="px-4 py-2 text-right text-slate-900 dark:text-slate-100">
-                      R$ {produto.desconto.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      R$ {produto.descontoAplicado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {produto.descontoMaximo > 0 && (
+                        <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                          (máx: R$ {produto.descontoMaximo.toFixed(2)})
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2 text-right text-slate-900 dark:text-slate-100 font-semibold">
                       R$ {produto.subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

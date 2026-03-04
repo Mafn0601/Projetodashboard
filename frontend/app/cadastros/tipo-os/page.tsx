@@ -13,7 +13,7 @@ type ServicoProduto = {
   nome: string;
   descricao?: string;
   preco: number;
-  desconto: number;
+  descontoMaximo: number;  // Limite máximo de desconto permitido
   tipo: 'servico' | 'produto';
   duracao: number; // em minutos
 };
@@ -103,7 +103,7 @@ export default function Page() {
       nome: novoItemNome,
       descricao: novoItemDescricao,
       preco: currencyToNumber(novoItemPreco),
-      desconto: currencyToNumber(novoItemDesconto) || 0,
+      descontoMaximo: currencyToNumber(novoItemDesconto) || 0,
       tipo: novoItemTipo,
       duracao: Number(novoItemDuracao)
     };
@@ -127,7 +127,7 @@ export default function Page() {
     setEditItemNome(item.nome);
     setEditItemDescricao(item.descricao || '');
     setEditItemPreco(numberToCurrency(item.preco));
-    setEditItemDesconto(numberToCurrency(item.desconto || 0));
+    setEditItemDesconto(numberToCurrency(item.descontoMaximo || 0));
     setEditItemTipo(item.tipo);
     setEditItemDuracao(String(item.duracao));
     setIsModalItemOpen(true);
@@ -150,7 +150,7 @@ export default function Page() {
       nome: editItemNome,
       descricao: editItemDescricao,
       preco: currencyToNumber(editItemPreco),
-      desconto: currencyToNumber(editItemDesconto) || 0,
+      descontoMaximo: currencyToNumber(editItemDesconto) || 0,
       tipo: editItemTipo,
       duracao: Number(editItemDuracao)
     };
@@ -339,7 +339,7 @@ export default function Page() {
                                           )}
                                           <div className="flex items-center gap-3 mt-2 text-xs text-slate-700 dark:text-slate-400">
                                             <span>R$ {item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            <span>• Desconto R$ {(item.desconto ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                            <span>• Desconto Máx. R$ {(item.descontoMaximo ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             <span>• ⏱️ {Math.floor(item.duracao / 60)}h {item.duracao % 60 > 0 ? `${item.duracao % 60}min` : ''}</span>
                                           </div>
                                         </div>
@@ -457,7 +457,7 @@ export default function Page() {
                     onChange={setNovoItemPreco}
                   />
                   <MaskedInput
-                    label="Desconto (R$)"
+                    label="Desconto Máx. (R$)"
                     mask="currency"
                     placeholder="R$ 0,00"
                     value={novoItemDesconto}
@@ -531,7 +531,7 @@ export default function Page() {
                             </p>
                           )}
                           <p className="text-xs text-slate-700 dark:text-slate-400 mt-2">
-                            R$ {item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • Desconto R$ {(item.desconto ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • ⏱️ {Math.floor(item.duracao / 60)}h {item.duracao % 60 > 0 ? `${item.duracao % 60}min` : ''}
+                            R$ {item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • Desconto Máx. R$ {(item.descontoMaximo ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • ⏱️ {Math.floor(item.duracao / 60)}h {item.duracao % 60 > 0 ? `${item.duracao % 60}min` : ''}
                           </p>
                         </div>
                       </div>

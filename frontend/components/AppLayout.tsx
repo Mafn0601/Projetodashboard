@@ -191,13 +191,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     </button>
 
                     <button
-                      onClick={(e) => {
-                        console.log('🔘 Logout button clicked');
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         logout();
                         setUserMenuOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors text-sm font-semibold"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors text-sm font-semibold cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Sair</span>

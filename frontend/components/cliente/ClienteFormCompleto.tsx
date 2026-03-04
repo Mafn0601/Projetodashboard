@@ -5,10 +5,14 @@ import { MaskedInput } from '@/components/ui/MaskedInput';
 import { Select, type SelectOption } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/components/AuthContext';
 import * as clienteService from '@/services/clienteService';
 import { clienteServiceAPI } from '@/services/clienteServiceAPI';
 import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
+import { veiculoServiceAPI } from '@/services/veiculoServiceAPI';
+import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
+import { addAgendamento } from '@/services/agendaService';
 import { validateForm } from '@/lib/validation';
 import { readArray } from '@/lib/storage';
 import {
@@ -67,6 +71,7 @@ function getLocalDateInputValue(date: Date): string {
 }
 
 export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormProps) {
+  const { user } = useAuth();
   // Form State
   const [formData, setFormData] = useState({
     responsavel: initial?.responsavel || '',
@@ -112,6 +117,36 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const minDate = getLocalDateInputValue(new Date());
+
+  const isUuid = (value?: string): boolean => {
+    if (!value) return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  };
+
+  const normalizeHorario = (horario: string): string => {
+    if (!horario) return '';
+    const match = horario.match(/hora_(\d+)/);
+    if (match && match[1]) {
+      const hora = String(parseInt(match[1], 10)).padStart(2, '0');
+      return `${hora}:00`;
+    }
+    const hhmm = horario.match(/^\d{2}:\d{2}$/);
+    if (hhmm) return horario;
+    return '';
+  };
+
+  const parsePlacaChassi = (placaChassi: string): { placa?: string; chassi?: string } => {
+    const raw = placaChassi.trim().toUpperCase();
+    const clean = raw.replace(/[^A-Z0-9]/g, '');
+    const isChassi = clean.length >= 15;
+
+    if (isChassi) {
+      return { chassi: clean };
+    }
+
+    const placa = raw.includes('-') ? raw : clean;
+    return { placa };
+  };
 
   useEffect(() => {
     if (initial) {
@@ -392,8 +427,72 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       }
 
       if (resultado) {
+        const clienteId = resultado.id;
+        const horarioNormalizado = normalizeHorario(formData.horarioAgendamento);
+
+        const { placa, chassi } = parsePlacaChassi(formData.placaChassi);
+        if (clienteId && placa) {
+          const veiculosExistentes = await veiculoServiceAPI.findAll({ clienteId, take: 1 });
+          const payloadVeiculo = {
+            clienteId,
+            placa,
+            chassi,
+            marca: formData.fabricante || 'NÃO INFORMADO',
+            modelo: formData.modelo || 'NÃO INFORMADO',
+            fabricante: formData.fabricante || undefined,
+            cor: formData.cor || undefined,
+          };
+
+          if (veiculosExistentes.length > 0) {
+            await veiculoServiceAPI.update(veiculosExistentes[0].id, payloadVeiculo);
+          } else {
+            await veiculoServiceAPI.create(payloadVeiculo);
+          }
+        }
+
+        if (clienteId && formData.dataAgendamento && horarioNormalizado && formData.tipoAgendamento) {
+          const responsavelId = isUuid(user?.id) ? user?.id : (isUuid(formData.responsavel) ? formData.responsavel : undefined);
+          const parceiroId = isUuid(formData.parceiro) ? formData.parceiro : undefined;
+
+          if (responsavelId) {
+            const dataAgendamentoISO = `${formData.dataAgendamento}T${horarioNormalizado}:00.000Z`;
+            await agendamentoServiceAPI.create({
+              clienteId,
+              responsavelId,
+              parceiroId,
+              dataAgendamento: dataAgendamentoISO,
+              horarioAgendamento: horarioNormalizado,
+              tipoAgendamento: formData.tipoAgendamento,
+              descricaoServico: formData.descricaoServico || undefined,
+              status: 'CONFIRMADO',
+            });
+          }
+
+          addAgendamento({
+            titulo: `${String(new Date().getFullYear()).slice(-2)} ${formData.fabricante || 'VEÍCULO'} - ${formData.modelo || 'MODELO'}`,
+            placa: placa || 'SEM-PLACA',
+            responsavel: formData.responsavel || user?.name || 'Responsável',
+            cliente: formData.nomeCliente || formData.nome || 'Cliente',
+            telefone: formData.telefone || '',
+            tipo: formData.tipo || formData.tipoAgendamento,
+            tag: formData.origemPedido,
+            horario: horarioNormalizado,
+            data: formData.dataAgendamento.split('-').reverse().slice(0, 2).join('/'),
+            clienteId,
+            formaPagamento: formData.formaPagamento || undefined,
+            meioPagamento: formData.meioPagamento || undefined,
+          });
+        }
+
+        const clienteComDados: clienteService.ClienteCompleto = {
+          ...resultado,
+          ...formData,
+          nome: formData.nomeCliente,
+          email: formData.emailCliente,
+        };
+
         console.log('✅ Cliente salvo com sucesso:', resultado);
-        onSaved(resultado);
+        onSaved(clienteComDados);
       } else {
         throw new Error('Erro ao salvar cliente - resposta vazia');
       }

@@ -16,6 +16,7 @@ export default function Page() {
   const [currentRole, setCurrentRole] = useState<'admin' | 'user' | null>(null);
   const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   const carregarClientes = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
     const silent = options?.silent ?? false;
@@ -83,24 +84,44 @@ export default function Page() {
 
   // Callback para deletar cliente
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja deletar este cliente? Esta ação não pode ser desfeita.')) {
+    if (deletingIds.has(id)) {
       return;
     }
 
+    setDeletingIds(prev => new Set(prev).add(id));
+
+    // Atualização otimista para feedback imediato
+    setClientes(prev => prev.filter(cliente => cliente.id !== id));
+
     const sucesso = await clienteServiceAPI.delete(id);
-    if (sucesso) {
-      // Forçar recarregamento após deletar
+
+    setDeletingIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+
+    if (!sucesso) {
+      // Recarregar para restaurar estado caso a exclusão falhe
       await carregarClientes({ forceRefresh: true });
-      alert('Cliente deletado com sucesso!');
-    } else {
-      alert('Erro ao deletar cliente. Tente novamente.');
+      return;
     }
+
+    // Revalidação silenciosa para garantir consistência com backend
+    void carregarClientes({ silent: true, forceRefresh: true });
   };
 
   // Recarregar liste após salvar
   const handleSaved = async (cliente?: ClienteCompleto) => {
     if (cliente) {
-      await carregarClientes({ forceRefresh: true });
+      setClientes((prev) => {
+        const index = prev.findIndex((c) => c.id === cliente.id);
+        if (index === -1) return [cliente, ...prev];
+        const next = [...prev];
+        next[index] = { ...next[index], ...cliente };
+        return next;
+      });
+      void carregarClientes({ silent: true, forceRefresh: true });
     }
     setIsModalOpen(false);
     setEditingCompleto(undefined);

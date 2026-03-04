@@ -5,6 +5,7 @@ import { ClienteCompleto } from '@/services/clienteService';
 import { Button } from '@/components/ui/Button';
 import { readArray } from '@/lib/storage';
 import AgendaQuickModal from '@/components/agenda/AgendaQuickModal';
+import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import {
   mockFabricantes,
   mockModelos,
@@ -97,6 +98,7 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [tiposOs, setTiposOs] = useState<TipoOS[]>([]);
   const [isAgendaQuickOpen, setIsAgendaQuickOpen] = useState(false);
+  const [ultimoAgendamento, setUltimoAgendamento] = useState<any | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -109,19 +111,31 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
 
         const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
         setTiposOs(tiposOsCadastrados);
+
+        if (cliente?.id) {
+          agendamentoServiceAPI.findAll({ clienteId: cliente.id, take: 1 }).then((agendamentos) => {
+            setUltimoAgendamento(agendamentos?.[0] || null);
+          });
+        }
       } catch (e) {
         console.error('Erro ao carregar dados do cliente:', e);
       }
     }
-  }, [isOpen]);
+  }, [isOpen, cliente?.id]);
 
   const obterLabelParceiro = (parcId: string | undefined): string => {
+    if (!parcId && ultimoAgendamento?.parceiro?.nome) {
+      return ultimoAgendamento.parceiro.nome;
+    }
     if (!parcId) return '-';
     const parceiro = parceiros.find(p => p.id === parcId);
     return parceiro ? parceiro.nome : parcId;
   };
 
   const obterLabelResponsavel = (respId: string | undefined): string => {
+    if (!respId && ultimoAgendamento?.responsavel?.nome) {
+      return ultimoAgendamento.responsavel.nome;
+    }
     if (!respId) return '-';
     const equipe = equipes.find(e => e.id === respId);
     if (equipe) return equipe.nome || equipe.login;
@@ -143,6 +157,8 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
   };
 
   if (!isOpen || !cliente) return null;
+
+  const veiculoPrincipal = cliente.veiculos?.[0];
 
   return (
     <>
@@ -204,19 +220,19 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Fabricante</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{obterLabelFabricante(cliente.fabricante)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{obterLabelFabricante(cliente.fabricante || veiculoPrincipal?.fabricante || veiculoPrincipal?.marca)}</p>
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Modelo</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelModelo(cliente.fabricante, cliente.modelo)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelModelo(cliente.fabricante || veiculoPrincipal?.fabricante || veiculoPrincipal?.marca, cliente.modelo || veiculoPrincipal?.modelo)}</p>
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Placa/Chassi</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100 font-mono">{cliente.placaChassi || cliente.placa || cliente.chassi || '-'}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100 font-mono">{cliente.placaChassi || cliente.placa || veiculoPrincipal?.placa || cliente.chassi || veiculoPrincipal?.chassi || '-'}</p>
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Cor</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{cliente.cor || '-'}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{cliente.cor || veiculoPrincipal?.cor || '-'}</p>
               </div>
             </div>
           </div>

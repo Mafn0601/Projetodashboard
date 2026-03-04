@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getNext7ValidDays, toDdMmFromISODate } from "@/lib/dateUtils";
 import {
-  getAgendamentosPorData,
+  getAgendamentos,
   AgendaItem,
 } from "@/services/agendaService";
 import { addStatusCardFromAgendamento } from "@/services/statusService";
@@ -35,6 +35,23 @@ export default function Page() {
 
     loadAgendamentos();
   }, [updateKey]);
+
+  useEffect(() => {
+    const handleNovoAgendamento = () => setUpdateKey((prev) => prev + 1);
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'agendamento:novo' || event.key === 'agendamentos') {
+        setUpdateKey((prev) => prev + 1);
+      }
+    };
+
+    window.addEventListener('agendamento:novo', handleNovoAgendamento);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('agendamento:novo', handleNovoAgendamento);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   // Converter dados da API para formato AgendaItem
   const mapAgendamentoToAgendaItem = (agendamento: Agendamento): AgendaItem => {
@@ -71,8 +88,20 @@ export default function Page() {
 
   // Memoize agendamentos convertidos
   const allAgendamentos = useMemo(() => {
-    return apiAgendamentos.map(mapAgendamentoToAgendaItem);
-  }, [apiAgendamentos]);
+    const fromApi = apiAgendamentos.map(mapAgendamentoToAgendaItem);
+    const fromLocal = getAgendamentos();
+    const all = [...fromApi, ...fromLocal];
+
+    const unique = new Map<string, AgendaItem>();
+    all.forEach((item) => {
+      const dedupeKey = `${item.clienteId || item.cliente}|${item.data}|${item.horario}|${item.tipo}`;
+      if (!unique.has(dedupeKey)) {
+        unique.set(dedupeKey, item);
+      }
+    });
+
+    return Array.from(unique.values());
+  }, [apiAgendamentos, updateKey]);
 
   // Gera os 7 dias válidos (sem domingo) a partir de hoje
   const validDays = useMemo(() => getNext7ValidDays(), []);

@@ -288,15 +288,12 @@ export default function Page() {
                                           <p className="font-medium text-slate-900 dark:text-slate-100">
                                             {item.nome}
                                           </p>
-                                          {item.descricao && (
-                                            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1">
-                                              {item.descricao}
-                                            </p>
-                                          )}
                                           <div className="flex items-center gap-3 mt-2 text-xs text-slate-700 dark:text-slate-400">
                                             <span>R$ {item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            <span>• Desconto Máx. R$ {(item.descontoMaximo ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            <span>• ⏱️ {Math.floor(item.duracao / 60)}h {item.duracao % 60 > 0 ? `${item.duracao % 60}min` : ''}</span>
+                                            <span>• Desconto Máx. R$ {(item.desconto ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                            {item.duracao && (
+                                              <span>• ⏱️ {Math.floor(item.duracao / 60)}h {item.duracao % 60 > 0 ? `${item.duracao % 60}min` : ''}</span>
+                                            )}
                                           </div>
                                         </div>
                                       </div>

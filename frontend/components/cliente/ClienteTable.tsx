@@ -49,8 +49,8 @@ export default function ClienteTable({ clientes, onDelete }: Props) {
           <tbody>
           {clientes.map((c) => (
             <tr key={c.id} className="border-t border-slate-200 dark:border-slate-800 odd:bg-slate-50 even:bg-slate-100 dark:odd:bg-slate-950/60 dark:even:bg-slate-900/40">
-              <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{c.nomeCliente}</td>
-              <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{c.emailCliente || '-'}</td>
+              <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{c.nome || c.nomeCliente || '-'}</td>
+              <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{c.email || c.emailCliente || '-'}</td>
               <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{c.telefone || '-'}</td>
               <td className="px-3 py-2 text-slate-900 dark:text-slate-100">
                 <div className="flex gap-2">

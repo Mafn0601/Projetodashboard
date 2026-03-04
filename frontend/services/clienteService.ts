@@ -26,34 +26,63 @@ export type Cliente = {
 };
 
 /**
- * Tipo expandido de Cliente com todos os campos do novo formulário
+ * Tipo expandido de Cliente - reflete o schema do banco de dados
+ * Campos retornados pela API do backend
  */
 export type ClienteCompleto = {
   id: string;
-  responsavel: string;
-  parceiro: string;
   nome: string;
-  nomeCliente?: string;
   email?: string;
-  emailCliente?: string;
-  cpfCnpj?: string;
   telefone: string;
-  placaChassi: string;
+  cpfCnpj?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  ativo?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  
+  // Relações do Prisma
+  veiculos?: Array<{
+    id: string;
+    placa: string;
+    chassi?: string;
+    marca: string;
+    modelo: string;
+    fabricante?: string;
+    anoFabricacao?: string;
+    anoModelo?: string;
+    cor?: string;
+    combustivel?: string;
+    [key: string]: unknown;
+  }>;
+  _count?: {
+    agendamentos?: number;
+    ordensServico?: number;
+  };
+  
+  // Campos legados (deprecados - manter para compatibilidade)
+  nomeCliente?: string;
+  emailCliente?: string;
+  responsavel?: string;
+  parceiro?: string;
+  placaChassi?: string;
   placa?: string;
   chassi?: string;
-  tipoAgendamento: string;
-  tipo: string;
-  fabricante: string;
-  modelo: string;
+  tipoAgendamento?: string;
+  tipo?: string;
+  fabricante?: string;
+  modelo?: string;
   cor?: string;
-  dataAgendamento: string;
+  dataAgendamento?: string;
   horarioAgendamento?: string;
   descricaoServico?: string;
   formaPagamento?: string;
   meioPagamento?: string;
   origemPedido?: 'INTERNO' | 'EXTERNO';
-  dataCriacao: string;
-  dataAtualizacao: string;
+  dataCriacao?: string;
+  dataAtualizacao?: string;
 };
 
 const KEY = 'clientes';

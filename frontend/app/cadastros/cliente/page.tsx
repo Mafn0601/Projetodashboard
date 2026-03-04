@@ -17,22 +17,36 @@ export default function Page() {
   const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Carregar clientes da API ao montar
-  useEffect(() => {
-    const loadClientes = async () => {
-      try {
+  const carregarClientes = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
+    const silent = options?.silent ?? false;
+    const forceRefresh = options?.forceRefresh ?? false;
+
+    try {
+      if (!silent) {
         setLoading(true);
-        const resultado = await clienteServiceAPI.findAll();
-        setClientes(resultado || []);
-      } catch (error) {
-        console.error('Erro ao carregar clientes:', error);
-        setClientes([]);
-      } finally {
+      }
+      const resultado = await clienteServiceAPI.findAll({}, { preferCache: !forceRefresh, forceRefresh });
+      setClientes(resultado || []);
+    } catch (error) {
+      console.error('Erro ao carregar clientes:', error);
+      setClientes([]);
+    } finally {
+      if (!silent) {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    loadClientes();
+  // Carregar clientes da API ao montar
+  useEffect(() => {
+    const cached = clienteServiceAPI.getCached();
+    if (cached.length > 0) {
+      setClientes(cached);
+      setLoading(false);
+      carregarClientes({ silent: true, forceRefresh: true });
+    } else {
+      carregarClientes({ forceRefresh: true });
+    }
 
     try {
       const s = authService.getUser();
@@ -44,14 +58,26 @@ export default function Page() {
     } catch {}
   }, []);
 
+  // Recarregar dados quando a página ganha foco (detecta mudanças externas)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        carregarClientes({ silent: true, forceRefresh: true });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   // Filtrar clientes pela busca
   const clientesFiltrados = clientes.filter(c => {
     const termo = busca.toLowerCase();
     return (
-      c.nomeCliente?.toLowerCase().includes(termo) ||
-      c.emailCliente?.toLowerCase().includes(termo) ||
-      c.telefone?.toLowerCase().includes(termo) ||
-      c.placaChassi?.toLowerCase().includes(termo)
+      (c.nome || c.nomeCliente || '').toLowerCase().includes(termo) ||
+      (c.email || c.emailCliente || '').toLowerCase().includes(termo) ||
+      (c.telefone || '').toLowerCase().includes(termo) ||
+      (c.cpfCnpj || '').toLowerCase().includes(termo)
     );
   });
 
@@ -63,7 +89,8 @@ export default function Page() {
 
     const sucesso = await clienteServiceAPI.delete(id);
     if (sucesso) {
-      setClientes(prev => prev.filter(c => c.id !== id));
+      // Forçar recarregamento após deletar
+      await carregarClientes({ forceRefresh: true });
       alert('Cliente deletado com sucesso!');
     } else {
       alert('Erro ao deletar cliente. Tente novamente.');
@@ -73,8 +100,7 @@ export default function Page() {
   // Recarregar liste após salvar
   const handleSaved = async (cliente?: ClienteCompleto) => {
     if (cliente) {
-      const resultado = await clienteServiceAPI.findAll();
-      setClientes(resultado || []);
+      await carregarClientes({ forceRefresh: true });
     }
     setIsModalOpen(false);
     setEditingCompleto(undefined);

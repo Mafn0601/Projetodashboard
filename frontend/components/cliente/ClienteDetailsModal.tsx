@@ -154,7 +154,7 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
         {/* Header */}
         <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
-            Detalhes do Cliente: {cliente.nomeCliente}
+            Detalhes do Cliente: {cliente.nome || cliente.nomeCliente || 'Sem nome'}
           </h2>
           <button
             onClick={onClose}
@@ -173,11 +173,11 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Nome</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{cliente.nomeCliente}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{cliente.nome || cliente.nomeCliente || '-'}</p>
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Email</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{cliente.emailCliente || '-'}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{cliente.email || cliente.emailCliente || '-'}</p>
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Telefone</p>
@@ -227,13 +227,19 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
               <div>
                 <p className="text-slate-700 dark:text-slate-400 mb-1">Criado em</p>
                 <p className="text-slate-600 dark:text-slate-300">
-                  {new Date(cliente.dataCriacao).toLocaleDateString('pt-BR')}
+                  {cliente.createdAt || cliente.dataCriacao 
+                    ? new Date(cliente.createdAt || cliente.dataCriacao!).toLocaleDateString('pt-BR')
+                    : '-'
+                  }
                 </p>
               </div>
               <div>
                  <p className="text-slate-700 dark:text-slate-400 mb-1">Atualizado em</p>
                 <p className="text-slate-600 dark:text-slate-300">
-                  {new Date(cliente.dataAtualizacao).toLocaleDateString('pt-BR')}
+                  {cliente.updatedAt || cliente.dataAtualizacao 
+                    ? new Date(cliente.updatedAt || cliente.dataAtualizacao!).toLocaleDateString('pt-BR')
+                    : '-'
+                  }
                 </p>
               </div>
             </div>

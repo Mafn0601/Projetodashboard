@@ -172,29 +172,18 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
    */
   const carregarDados = async () => {
     try {
-      // Carregar parceiros da API (sempre tentar API primeiro)
-      try {
-        const parceirosData = await parceiroServiceAPI.findAll();
-        const options: SelectOption[] = parceirosData.map((p) => ({
-          value: p.id,
-          label: p.nome
-        }));
-        setParceiroOptions(options);
-      } catch (apiError) {
-        console.warn('Erro ao carregar parceiros da API, usando localStorage:', apiError);
-        const parceiros = readArray<Parceiro>('parceiros');
-        setParceiroOptions(parceiros.map((p) => ({ value: p.id, label: p.nome })));
-      }
+      // Carregar parceiros e equipes em paralelo
+      const [parceirosData, equipesData] = await Promise.all([
+        parceiroServiceAPI.findAll(),
+        equipeServiceAPI.findAll()
+      ]);
 
-      // Carregar equipes da API
-      try {
-        const equipesData = await equipeServiceAPI.findAll();
-        setEquipes(equipesData as unknown as Equipe[]);
-      } catch (apiError) {
-        console.warn('Erro ao carregar equipes da API, usando localStorage:', apiError);
-        const equipesData = readArray<Equipe>('equipes');
-        setEquipes(equipesData);
-      }
+      const options: SelectOption[] = parceirosData.map((p) => ({
+        value: p.id,
+        label: p.nome
+      }));
+      setParceiroOptions(options);
+      setEquipes(equipesData as unknown as Equipe[]);
 
       // Carregar Tipos de OS do localStorage (temporário até ter API)
       const tiposOsData = readArray<TipoOS>('tiposOs');
@@ -205,7 +194,21 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       }));
       setTiposOsOptions(tiposOsOpts);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.warn('Erro ao carregar dados da API, usando localStorage:', error);
+      try {
+        // Fallback para localStorage se API falhar
+        const parceiros = readArray<Parceiro>('parceiros');
+        setParceiroOptions(parceiros.map((p) => ({ value: p.id, label: p.nome })));
+        
+        const equipesData = readArray<Equipe>('equipes');
+        setEquipes(equipesData);
+        
+        const tiposOsData = readArray<TipoOS>('tiposOs');
+        setTiposOs(tiposOsData);
+        setTiposOsOptions(tiposOsData.map((t) => ({ value: t.id, label: t.nome })));
+      } catch (storageError) {
+        console.error('Erro ao carregar dados do localStorage:', storageError);
+      }
     }
   };
 

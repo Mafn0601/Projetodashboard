@@ -134,26 +134,26 @@ export default function Page() {
     try {
       setIsLoading(true);
       
-      // Carregar parceiros da API (sempre tentar API primeiro)
+      // Carregar parceiros e equipes em paralelo
+      const [parceirosData, equipesData] = await Promise.all([
+        parceiroServiceAPI.findAll(),
+        equipeServiceAPI.findAll()
+      ]);
+
+      setParceiros(parceirosData as unknown as Parceiro[]);
+      setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
+      setEquipes(equipesData as unknown as Equipe[]);
+    } catch (error) {
+      console.warn('Erro ao carregar dados da API, usando localStorage:', error);
       try {
-        const parceirosData = await parceiroServiceAPI.findAll();
-        setParceiros(parceirosData as unknown as Parceiro[]);
-        setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
-      } catch (apiError) {
-        console.warn('Erro ao carregar parceiros da API, usando localStorage:', apiError);
         const parceirosData = readArray<Parceiro>('parceiros');
         setParceiros(parceirosData);
         setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
-      }
-
-      // Carregar equipes da API
-      try {
-        const equipesData = await equipeServiceAPI.findAll();
-        setEquipes(equipesData as unknown as Equipe[]);
-      } catch (apiError) {
-        console.warn('Erro ao carregar equipes da API, usando localStorage:', apiError);
+        
         const equipesData = readArray<Equipe>('equipes');
         setEquipes(equipesData);
+      } catch (storageError) {
+        console.error('Erro ao carregar dados do localStorage:', storageError);
       }
     } finally {
       setIsLoading(false);

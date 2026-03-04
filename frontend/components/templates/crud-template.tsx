@@ -534,7 +534,7 @@ export default function CrudTemplate({
             ) : (
               <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
                 <div className="scrollbar-thin max-h-80 overflow-auto overflow-x-auto">
-                  <table className="w-full text-left text-xs min-w-[600px]">
+                  <table className="w-full text-left text-xs">
                     <thead className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 sticky top-0">
                       <tr>
                         {fieldsWithOptions.map((field) => {

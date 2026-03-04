@@ -9,6 +9,7 @@ import { useAuth } from '@/components/AuthContext';
 import { getBoxes, getBoxesDisponiveis, getTipoBoxPreferidoPorServico, addOcupacao } from '@/services/boxService';
 import { ClienteCompleto } from '@/services/clienteService';
 import { addAgendamento, getAgendamentos } from '@/services/agendaService';
+import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { readArray } from '@/lib/storage';
 import { mockFabricantes, getModelosPorFabricante } from '@/lib/mockFormData';
 import { getBrasiliaYear, getBrasiliaTodayISO, getBrasiliaNow, getBusinessTimeOptions, isPastBrasiliaISODate, isSundayISODate, isWithinBusinessHours, timeToMinutes, toDdMmFromISODate, toDdMmYyyyFromISODate } from '@/lib/dateUtils';
@@ -320,7 +321,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     validarDisponibilidade();
   }, [isOpen, dataIso, horario, duracao, tipoOs, item, boxId, tiposOsList]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     traceAgendar('quick-modal:submit-start', {
       tipoOs,
@@ -362,7 +363,31 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     const ano = String(getBrasiliaYear()).slice(-2);
     const titulo = `${ano} ${fabricanteNome} - ${modeloNome}`;
 
-    // Criar agendamento
+    try {
+      // Salvar agendamento na API
+      const dataAgendamentoISO = new Date(dataIso + 'T' + horario + ':00.000Z').toISOString();
+      
+      const novoAgendamentoAPI = await agendamentoServiceAPI.create({
+        clienteId: cliente.id,
+        responsavelId: responsavel || undefined,
+        dataAgendamento: dataAgendamentoISO,
+        horarioAgendamento: horario,
+        tipoAgendamento: itemSelecionado?.nome || tipoSelecionado?.nome || 'Serviço',
+        descricaoServico: `${titulo} - ${cliente.placaChassi || cliente.placa || 'SEM PLACA'}`,
+        status: 'CONFIRMADO' as const,
+      });
+
+      if (novoAgendamentoAPI) {
+        traceAgendar('quick-modal:api-success', { id: novoAgendamentoAPI.id });
+      }
+    } catch (error) {
+      console.error('Erro ao salvar agendamento na API:', error);
+      traceAgendar('quick-modal:api-error', {
+        message: error instanceof Error ? error.message : 'erro desconhecido',
+      });
+    }
+
+    // Também salvar no localStorage para compatibilidade
     const novoAgendamento = addAgendamento({
       titulo,
       placa: cliente.placaChassi || cliente.placa || 'SEM-PLACA',

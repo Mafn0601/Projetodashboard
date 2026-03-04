@@ -50,12 +50,22 @@ class AgendamentoServiceAPI {
 
   async findAll(filters: FindAllFilters = {}): Promise<Agendamento[]> {
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Adicionar token se disponível
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const queryString = this.buildQueryParams(filters);
       const response = await fetch(`${API_URL}/api/agendamentos${queryString}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {
@@ -65,7 +75,8 @@ class AgendamentoServiceAPI {
       const result = await response.json();
       console.log('✅ Agendamentos carregados:', result);
       
-      return result.data || result;
+      // Backend retorna {agendamentos, total} ou {data, total}
+      return result.agendamentos || result.data || result;
     } catch (error) {
       console.error('❌ Erro ao buscar agendamentos:', error);
       return [];
@@ -74,11 +85,20 @@ class AgendamentoServiceAPI {
 
   async findById(id: string): Promise<Agendamento | null> {
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/agendamentos/${id}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {
@@ -98,11 +118,20 @@ class AgendamentoServiceAPI {
     try {
       console.log('📤 Criando agendamento:', agendamento);
       
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/agendamentos`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(agendamento),
       });
 
@@ -124,11 +153,20 @@ class AgendamentoServiceAPI {
     try {
       console.log('📤 Atualizando agendamento:', id, agendamento);
       
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/agendamentos/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(agendamento),
       });
 
@@ -150,11 +188,20 @@ class AgendamentoServiceAPI {
     try {
       console.log('📤 Deletando agendamento:', id);
       
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/agendamentos/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {

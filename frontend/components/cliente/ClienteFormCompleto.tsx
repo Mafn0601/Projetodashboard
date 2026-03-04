@@ -459,12 +459,11 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
             await agendamentoServiceAPI.create({
               clienteId,
               responsavelId,
-              parceiroId,
+              parceiroId: parceiroId || undefined,
               dataAgendamento: dataAgendamentoISO,
               horarioAgendamento: horarioNormalizado,
               tipoAgendamento: formData.tipoAgendamento,
               descricaoServico: formData.descricaoServico || undefined,
-              status: 'CONFIRMADO',
             });
           }
 

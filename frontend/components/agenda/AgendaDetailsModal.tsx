@@ -37,24 +37,33 @@ function formatarData(data: string): string {
 }
 
 export default function AgendaDetailsModal({ isOpen, agendamento, onClose, onDelete, onChegou }: Props) {
-  const [nomeResponsavel, setNomeResponsavel] = useState(agendamento?.responsavel || '-');
+  const [nomeResponsavel, setNomeResponsavel] = useState(agendamento?.responsavel as string || '-');
 
   useEffect(() => {
-    if (!agendamento || !agendamento.responsavel) {
+    if (!agendamento) {
       setNomeResponsavel('-');
       return;
     }
     
     try {
-      const equipes = readArray<Equipe>('equipes');
-      const equipe = equipes.find(e => e.id === agendamento.responsavel);
-      if (equipe) {
-        setNomeResponsavel(equipe.nome || equipe.login);
-      } else {
-        setNomeResponsavel(agendamento.responsavel);
+      // Se responsavel é um objeto com nome, usar diretamente
+      if (typeof agendamento.responsavel === 'object' && agendamento.responsavel && 'nome' in agendamento.responsavel) {
+        setNomeResponsavel((agendamento.responsavel as any).nome);
+        return;
+      }
+      
+      // Se responsavel é string ID, buscar no localStorage
+      if (typeof agendamento.responsavel === 'string') {
+        const equipes = readArray<Equipe>('equipes');
+        const equipe = equipes.find(e => e.id === agendamento.responsavel);
+        if (equipe) {
+          setNomeResponsavel(equipe.nome || equipe.login);
+        } else {
+          setNomeResponsavel(agendamento.responsavel);
+        }
       }
     } catch {
-      setNomeResponsavel(agendamento.responsavel || '-');
+      setNomeResponsavel(typeof agendamento.responsavel === 'string' ? agendamento.responsavel : '-');
     }
   }, [agendamento]);
 

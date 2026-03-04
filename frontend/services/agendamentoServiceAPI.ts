@@ -8,12 +8,26 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export interface Agendamento {
   id: string;
   clienteId: string;
+  cliente?: any;
   veiculoId?: string;
+  veiculo?: any;
   responsavelId: string;
+  responsavel?: {
+    id: string;
+    nome: string;
+    email?: string;
+  };
   parceiroId?: string;
+  parceiro?: {
+    id: string;
+    nome: string;
+  };
   dataAgendamento: string; // ISO date
   horarioAgendamento?: string;
   tipoAgendamento: string;
+  tipoOSId?: string;
+  itemOSId?: string;
+  duracao?: number;
   status: 'CONFIRMADO' | 'EXECUTANDO' | 'FINALIZADO' | 'CANCELADO';
   descricaoServico?: string;
   observacoes?: string;

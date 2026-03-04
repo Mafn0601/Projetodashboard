@@ -196,11 +196,14 @@ export default function AgendaOrcamentoModal({
         clienteId: dadosOrcamento.clienteId,
         veiculoId: dadosOrcamento.veiculoId, // Vincular veículo se disponível
         responsavelId: dadosOrcamento.responsavelId,
+        tipoOSId: dadosOrcamento.tipoOsId,
+        itemOSId: dadosOrcamento.itemId,
         dataAgendamento: dataIso, // ISO date string
         horarioAgendamento: horario,
         tipoAgendamento: dadosOrcamento.tipoOsNome,
         descricaoServico: `${dadosOrcamento.veiculo} - ${dadosOrcamento.nomeCliente}`,
         observacoes: `Box: ${boxSelecionado?.nome || ''} | Placa: ${dadosOrcamento.placa} | Duração: ${dadosOrcamento.duracao}min`,
+        duracao: dadosOrcamento.duracao,
       });
 
       if (!novoAgendamento) {

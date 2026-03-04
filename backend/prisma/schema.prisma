@@ -172,6 +172,12 @@ model Agendamento {
   parceiroId          String?
   parceiro            Parceiro?       @relation(fields: [parceiroId], references: [id])
   
+  tipoOSId            String?
+  tipoOS              TipoOS?         @relation(fields: [tipoOSId], references: [id])
+  
+  itemOSId            String?
+  itemOS              TipoOSItem?     @relation(fields: [itemOSId], references: [id])
+  
   dataAgendamento     DateTime
   horarioAgendamento  String?
   
@@ -181,6 +187,7 @@ model Agendamento {
   descricaoServico    String?
   observacoes         String?
   quilometragem       String?
+  duracao             Int?            // Em minutos
   
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
@@ -365,6 +372,7 @@ model TipoOS {
   
   // Relações
   itens       TipoOSItem[]
+  agendamentos Agendamento[]
   
   @@map("tipos_os")
 }
@@ -386,6 +394,7 @@ model TipoOSItem {
   
   // Relações
   itensOS     ItemOS[]
+  agendamentos Agendamento[]
   
   @@map("tipos_os_itens")
 }

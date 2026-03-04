@@ -124,21 +124,34 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
   }, [isOpen, cliente?.id]);
 
   const obterLabelParceiro = (parcId: string | undefined): string => {
-    if (!parcId && ultimoAgendamento?.parceiro?.nome) {
+    if (!parcId) {
+      if (ultimoAgendamento?.parceiro?.nome) {
+        return ultimoAgendamento.parceiro.nome;
+      }
+      return '-';
+    }
+    const parceiro = parceiros.find(p => p.id === parcId);
+    if (parceiro) return parceiro.nome;
+    // Se não encontrar em parceiros, buscar no último agendamento
+    if (ultimoAgendamento?.parceiro?.nome) {
       return ultimoAgendamento.parceiro.nome;
     }
-    if (!parcId) return '-';
-    const parceiro = parceiros.find(p => p.id === parcId);
-    return parceiro ? parceiro.nome : parcId;
+    return parcId;
   };
 
   const obterLabelResponsavel = (respId: string | undefined): string => {
-    if (!respId && ultimoAgendamento?.responsavel?.nome) {
-      return ultimoAgendamento.responsavel.nome;
+    if (!respId) {
+      if (ultimoAgendamento?.responsavel?.nome) {
+        return ultimoAgendamento.responsavel.nome;
+      }
+      return '-';
     }
-    if (!respId) return '-';
     const equipe = equipes.find(e => e.id === respId);
     if (equipe) return equipe.nome || equipe.login;
+    // Se não encontrar em equipes, buscar no último agendamento
+    if (ultimoAgendamento?.responsavel?.nome) {
+      return ultimoAgendamento.responsavel.nome;
+    }
     return respId;
   };
 

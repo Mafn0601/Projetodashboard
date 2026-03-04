@@ -39,12 +39,15 @@ export class AgendamentoController {
         veiculo: validatedData.veiculoId ? { connect: { id: validatedData.veiculoId } } : undefined,
         responsavel: { connect: { id: validatedData.responsavelId } },
         parceiro: validatedData.parceiroId ? { connect: { id: validatedData.parceiroId } } : undefined,
+        tipoOS: validatedData.tipoOSId ? { connect: { id: validatedData.tipoOSId } } : undefined,
+        itemOS: validatedData.itemOSId ? { connect: { id: validatedData.itemOSId } } : undefined,
         dataAgendamento: new Date(validatedData.dataAgendamento),
         horarioAgendamento: validatedData.horarioAgendamento,
         tipoAgendamento: validatedData.tipoAgendamento,
         descricaoServico: validatedData.descricaoServico,
         observacoes: validatedData.observacoes,
         quilometragem: validatedData.quilometragem,
+        duracao: validatedData.duracao,
       });
       
       res.status(201).json(agendamento);

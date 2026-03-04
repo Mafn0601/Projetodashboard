@@ -189,12 +189,15 @@ export const createAgendamentoSchema = z.object({
   veiculoId: z.string().uuid('Veículo ID inválido').optional(),
   responsavelId: z.string().uuid('Responsável ID inválido'),
   parceiroId: z.string().uuid('Parceiro ID inválido').optional(),
+  tipoOSId: z.string().uuid('Tipo OS ID inválido').optional(),
+  itemOSId: z.string().uuid('Item OS ID inválido').optional(),
   dataAgendamento: z.string().datetime('Data inválida'),
   horarioAgendamento: z.string().optional(),
   tipoAgendamento: z.string().min(3, 'Tipo de agendamento inválido'),
   descricaoServico: z.string().optional(),
   observacoes: z.string().optional(),
   quilometragem: z.string().optional(),
+  duracao: z.number().int().positive().optional(),
 });
 
 export const updateAgendamentoSchema = createAgendamentoSchema.partial().extend({

@@ -374,7 +374,6 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
         horarioAgendamento: horario,
         tipoAgendamento: itemSelecionado?.nome || tipoSelecionado?.nome || 'Serviço',
         descricaoServico: `${titulo} - ${cliente.placaChassi || cliente.placa || 'SEM PLACA'}`,
-        status: 'CONFIRMADO' as const,
       });
 
       if (novoAgendamentoAPI) {

@@ -53,8 +53,6 @@ interface UpdateEquipeData extends Partial<CreateEquipeData> {
 class EquipeServiceAPI {
   async findAll(parceiroId?: string, funcao?: string): Promise<EquipeAPI[]> {
     try {
-      console.time('⏱️ Fetch equipes da API');
-      
       const params = new URLSearchParams();
       if (parceiroId) params.append('parceiroId', parceiroId);
       if (funcao) params.append('funcao', funcao);
@@ -77,9 +75,6 @@ class EquipeServiceAPI {
       }
 
       const data = await response.json();
-      console.timeEnd('⏱️ Fetch equipes da API');
-      console.log(`✅ Equipes carregadas: ${(data.equipes || []).length}`);
-      
       return data.equipes || [];
     } catch (error) {
       console.error('❌ Erro ao buscar equipes:', error);

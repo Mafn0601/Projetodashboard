@@ -460,8 +460,19 @@ export default function Page() {
         </div>
       </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-8">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 dark:border-slate-100"></div>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Carregando equipes...</p>
+            </div>
+          </div>
+        )}
+
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
+        {!isLoading && (
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
           <thead className="bg-slate-50 dark:bg-slate-900">
             <tr>
@@ -541,6 +552,7 @@ export default function Page() {
             })}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* Modal */}

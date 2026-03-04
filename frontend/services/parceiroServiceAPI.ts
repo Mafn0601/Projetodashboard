@@ -34,8 +34,6 @@ interface CreateParceiroData {
 class ParceiroServiceAPI {
   async findAll(): Promise<ParceiroAPI[]> {
     try {
-      console.time('⏱️ Fetch parceiros da API');
-      
       const headers: Record<string, string> = {};
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -51,9 +49,6 @@ class ParceiroServiceAPI {
       }
 
       const data = await response.json();
-      console.timeEnd('⏱️ Fetch parceiros da API');
-      console.log(`✅ Parceiros carregados: ${(data.parceiros || []).length}`);
-      
       return data.parceiros || [];
     } catch (error) {
       console.error('❌ Erro ao buscar parceiros:', error);
@@ -63,8 +58,6 @@ class ParceiroServiceAPI {
 
   async create(parceiro: CreateParceiroData): Promise<ParceiroAPI> {
     try {
-      console.log('📤 Criando parceiro via API...', parceiro);
-
       const response = await fetch(`${API_URL}/api/parceiros`, {
         method: 'POST',
         headers: {
@@ -80,7 +73,6 @@ class ParceiroServiceAPI {
       }
 
       const novoParceiro = await response.json();
-      console.log('✅ Parceiro criado no Supabase:', novoParceiro);
       return novoParceiro;
     } catch (error) {
       console.error('❌ Erro ao criar parceiro:', error);

@@ -40,10 +40,8 @@ export default function ClienteCompletoPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja deletar este cliente?')) {
-      const remaining = clienteService.removeCompleto(id);
-      setClientes(remaining);
-    }
+    const remaining = clienteService.removeCompleto(id);
+    setClientes(remaining);
   };
 
   const handleOpenModal = () => {

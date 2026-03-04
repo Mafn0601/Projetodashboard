@@ -9,19 +9,6 @@ import { readArray, appendItem } from '@/lib/storage';
 import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
 
-// Cache em memória para reduzir chamadas à API
-let dataCache: {
-  parceiros: any[] | null;
-  equipes: any[] | null;
-  timestamp: number;
-} = {
-  parceiros: null,
-  equipes: null,
-  timestamp: 0
-};
-
-const CACHE_TTL = 30000; // 30 segundos
-
 type Parceiro = {
   id: string;
   nome: string;
@@ -143,48 +130,19 @@ export default function Page() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const carregarDados = async (forceRefresh = false) => {
+  const carregarDados = async () => {
     try {
       setIsLoading(true);
-      console.time('⏱️ Carregamento total de equipes');
       
-      const now = Date.now();
-      const cacheValido = !forceRefresh && 
-                         dataCache.parceiros && 
-                         dataCache.equipes && 
-                         (now - dataCache.timestamp) < CACHE_TTL;
-
-      if (cacheValido) {
-        console.log('✨ Usando dados do cache (evitou 2 chamadas à API)');
-        setParceiros(dataCache.parceiros as unknown as Parceiro[]);
-        setParceiroOptions(dataCache.parceiros!.map(p => ({ value: p.id, label: p.nome })));
-        setEquipes(dataCache.equipes as unknown as Equipe[]);
-        console.timeEnd('⏱️ Carregamento total de equipes');
-        setIsLoading(false);
-        return;
-      }
-
-      // Carregar da API e armazenar em cache
-      console.time('⏱️ API call - parceiros + equipes');
+      // Carregar da API em paralelo
       const [parceirosData, equipesData] = await Promise.all([
         parceiroServiceAPI.findAll(),
         equipeServiceAPI.findAll()
       ]);
-      console.timeEnd('⏱️ API call - parceiros + equipes');
-
-      console.time('⏱️ Processamento de dados (setState)');
-      
-      // Atualizar cache
-      dataCache = {
-        parceiros: parceirosData,
-        equipes: equipesData,
-        timestamp: Date.now()
-      };
       
       setParceiros(parceirosData as unknown as Parceiro[]);
       setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
       setEquipes(equipesData as unknown as Equipe[]);
-      console.timeEnd('⏱️ Processamento de dados (setState)');
     } catch (error) {
       console.warn('Erro ao carregar dados da API, usando localStorage:', error);
       try {
@@ -199,7 +157,6 @@ export default function Page() {
       }
     } finally {
       setIsLoading(false);
-      console.timeEnd('⏱️ Carregamento total de equipes');
     }
   };
 
@@ -301,8 +258,6 @@ export default function Page() {
         };
         const equipeAtualizada = await equipeServiceAPI.update(editingId, dataToUpdate);
         setEquipes(prev => prev.map(e => e.id === editingId ? equipeAtualizada as unknown as Equipe : e));
-        // Invalidar cache
-        dataCache.equipes = null;
       } else {
         // Criar - parceiroId é obrigatório
         const dataToCreate = {
@@ -326,8 +281,6 @@ export default function Page() {
         };
         const novaEquipe = await equipeServiceAPI.create(dataToCreate);
         setEquipes(prev => [...prev, novaEquipe as unknown as Equipe]);
-        // Invalidar cache
-        dataCache.equipes = null;
       }
 
       setIsModalOpen(false);
@@ -352,9 +305,6 @@ export default function Page() {
       const equipeRemovida = equipes.find(e => e.id === editingId);
       await equipeServiceAPI.delete(editingId);
       setEquipes(prev => prev.filter(e => e.id !== editingId));
-      
-      // Invalidar cache
-      dataCache.equipes = null;
 
       if (equipeRemovida) {
         const rawUser = localStorage.getItem('user');

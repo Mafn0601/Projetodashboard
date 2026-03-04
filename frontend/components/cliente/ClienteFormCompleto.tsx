@@ -44,7 +44,8 @@ type Equipe = {
   id: string;
   nome: string;
   login: string;
-  parceiroId: string;
+  parceiroId?: string;
+  parceiro?: string; // Compatibilidade com dados antigos do localStorage
   [key: string]: unknown;
 };
 
@@ -276,10 +277,13 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
     console.log('🔍 Filtrando responsáveis:', {
       parceiroSelecionado: parceiroId,
       totalEquipes: equipesData.length,
-      equipes: equipesData.map(e => ({ id: e.id, nome: e.nome, parceiroId: e.parceiroId }))
+      equipes: equipesData.map(e => ({ id: e.id, nome: e.nome, parceiroId: e.parceiroId || e.parceiro }))
     });
     
-    const equipasFiltradas = equipesData.filter(e => e.parceiroId === parceiroId);
+    // Compatibilidade: aceita tanto parceiroId (API) quanto parceiro (localStorage antigo)
+    const equipasFiltradas = equipesData.filter(e => 
+      (e.parceiroId === parceiroId) || (e.parceiro === parceiroId)
+    );
     
     console.log('✅ Responsáveis filtrados:', equipasFiltradas.length);
     

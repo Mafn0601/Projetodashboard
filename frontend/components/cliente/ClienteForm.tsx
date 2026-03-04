@@ -18,7 +18,8 @@ type Equipe = {
   id: string;
   nome: string;
   login: string;
-  parceiro: string;
+  parceiroId?: string;
+  parceiro?: string; // Compatibilidade com dados antigos
   [key: string]: unknown;
 };
 
@@ -79,7 +80,10 @@ export default function ClienteForm({ onSaved, initial }: Props) {
   }, [parceiro, equipes]);
 
   const atualizarResponsaveis = (parceiroId: string, equipesData: Equipe[]) => {
-    const equipasFiltradas = equipesData.filter(e => e.parceiro === parceiroId);
+    // Compatibilidade: aceita tanto parceiroId (API) quanto parceiro (localStorage antigo)
+    const equipasFiltradas = equipesData.filter(e => 
+      (e.parceiroId === parceiroId) || (e.parceiro === parceiroId)
+    );
     const options: SelectOption[] = equipasFiltradas.map((e) => ({
       value: e.id,
       label: e.login

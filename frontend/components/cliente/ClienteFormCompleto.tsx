@@ -44,7 +44,7 @@ type Equipe = {
   id: string;
   nome: string;
   login: string;
-  parceiro: string;
+  parceiroId: string;
   [key: string]: unknown;
 };
 
@@ -172,11 +172,18 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
    */
   const carregarDados = async () => {
     try {
+      console.log('🔄 Carregando parceiros e equipes da API...');
+      
       // Carregar parceiros e equipes em paralelo
       const [parceirosData, equipesData] = await Promise.all([
         parceiroServiceAPI.findAll(),
         equipeServiceAPI.findAll()
       ]);
+
+      console.log('✅ Dados carregados:', {
+        parceiros: parceirosData.length,
+        equipes: equipesData.length
+      });
 
       const options: SelectOption[] = parceirosData.map((p) => ({
         value: p.id,
@@ -194,7 +201,8 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       }));
       setTiposOsOptions(tiposOsOpts);
     } catch (error) {
-      console.warn('Erro ao carregar dados da API, usando localStorage:', error);
+      console.error('❌ Erro ao carregar dados da API:', error);
+      console.warn('⚠️ Tentando fallback para localStorage...');
       try {
         // Fallback para localStorage se API falhar
         const parceiros = readArray<Parceiro>('parceiros');
@@ -206,8 +214,13 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         const tiposOsData = readArray<TipoOS>('tiposOs');
         setTiposOs(tiposOsData);
         setTiposOsOptions(tiposOsData.map((t) => ({ value: t.id, label: t.nome })));
+        
+        console.log('📦 Dados carregados do localStorage:', {
+          parceiros: parceiros.length,
+          equipes: equipesData.length
+        });
       } catch (storageError) {
-        console.error('Erro ao carregar dados do localStorage:', storageError);
+        console.error('❌ Erro ao carregar dados do localStorage:', storageError);
       }
     }
   };
@@ -260,7 +273,16 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
   }, [formData.tipoAgendamento, tiposOs]);
 
   const atualizarResponsaveis = (parceiroId: string, equipesData: Equipe[]) => {
-    const equipasFiltradas = equipesData.filter(e => e.parceiro === parceiroId);
+    console.log('🔍 Filtrando responsáveis:', {
+      parceiroSelecionado: parceiroId,
+      totalEquipes: equipesData.length,
+      equipes: equipesData.map(e => ({ id: e.id, nome: e.nome, parceiroId: e.parceiroId }))
+    });
+    
+    const equipasFiltradas = equipesData.filter(e => e.parceiroId === parceiroId);
+    
+    console.log('✅ Responsáveis filtrados:', equipasFiltradas.length);
+    
     const options: SelectOption[] = equipasFiltradas.map((e) => ({
       value: e.id,
       label: e.nome || e.login

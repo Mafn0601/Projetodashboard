@@ -26,6 +26,24 @@ export function authenticate(
       throw new AppError('Token inválido', 401);
     }
 
+    // Suporte para tokens MOCK (desenvolvimento)
+    if (token.startsWith('mock-token-')) {
+      console.log('⚠️ Usando token MOCK para desenvolvimento');
+      
+      // Determinar role baseado no token
+      const isMockAdmin = token.includes('admin');
+      const isMockVendedor = token.includes('vendedor');
+      
+      req.user = {
+        userId: isMockAdmin ? 'mock-user-admin' : 'mock-user-vendedor',
+        email: isMockAdmin ? 'admin@exemplo.com' : 'vendedor@exemplo.com',
+        role: isMockAdmin ? 'ADMIN' : 'VENDEDOR'
+      };
+      
+      return next();
+    }
+
+    // Token JWT real
     const payload = verifyToken(token);
     req.user = payload;
 

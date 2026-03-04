@@ -392,28 +392,12 @@ export default function Page() {
     // Encontrar o nome do tipo de OS
     const tipoSelecionado = tiposOs.find(t => t.id === tipo);
     
+    // Criar cliente com apenas os campos válidos do modelo Cliente
     const novoCliente: Partial<ClienteCompleto> = {
-      responsavel: responsavel,
-      parceiro: parceiro,
       nome: nomeCliente,
-      nomeCliente: nomeCliente,
-      email: emailCliente,
-      emailCliente: emailCliente,
-      cpfCnpj: cpfCnpj,
+      email: emailCliente || undefined,
       telefone: telCelular,
-      placaChassi: chassis_placa,
-      placa: chassis_placa,
-      chassi: chassis_placa,
-      tipoAgendamento: tipo,
-      tipo: tipoSelecionado?.nome || tipo,
-      fabricante: fabricanteSel,
-      modelo: modeloSel,
-      cor: '',
-      dataAgendamento: agora,
-      horarioAgendamento: '',
-      descricaoServico: observacoes,
-      dataCriacao: agora,
-      dataAtualizacao: agora,
+      cpfCnpj: cpfCnpj || undefined,
     };
 
     console.log('📤 Salvando cliente via API...');

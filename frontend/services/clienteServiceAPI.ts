@@ -6,6 +6,7 @@
 import { ClienteCompleto } from './clienteService';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const CLIENTES_CACHE_KEY = 'cache_api_clientes_v1';
 
 interface FindAllFilters {
   search?: string;
@@ -20,6 +21,41 @@ interface FindAllResponse {
 }
 
 class ClienteServiceAPI {
+  private getAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    return headers;
+  }
+
+  private setCachedClientes(data: ClienteCompleto[]): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(CLIENTES_CACHE_KEY, JSON.stringify(data));
+  }
+
+  private clearCache(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(CLIENTES_CACHE_KEY);
+  }
+
+  getCached(): ClienteCompleto[] {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(CLIENTES_CACHE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
   private buildQueryParams(filters: FindAllFilters): string {
     const params = new URLSearchParams();
     
@@ -32,24 +68,23 @@ class ClienteServiceAPI {
     return queryString ? `?${queryString}` : '';
   }
 
-  async findAll(filters: FindAllFilters = {}): Promise<ClienteCompleto[]> {
-    try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
+  async findAll(filters: FindAllFilters = {}, options?: { preferCache?: boolean; forceRefresh?: boolean }): Promise<ClienteCompleto[]> {
+    const preferCache = options?.preferCache ?? true;
+    const forceRefresh = options?.forceRefresh ?? false;
 
-      // Adicionar token se disponível
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
+    try {
+      const canUseSharedCache = !filters.search && filters.ativo === undefined;
+      if (canUseSharedCache && preferCache && !forceRefresh) {
+        const cached = this.getCached();
+        if (cached.length > 0) {
+          return cached;
         }
       }
 
       const queryString = this.buildQueryParams(filters);
       const response = await fetch(`${API_URL}/api/clientes${queryString}`, {
         method: 'GET',
-        headers,
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -60,10 +95,22 @@ class ClienteServiceAPI {
       console.log('✅ Clientes carregados:', result);
       
       // Backend retorna {clientes, total} ou pode retornar {data, total} ou array direto
-      return result.clientes || result.data || result;
+      const clientes = result.clientes || result.data || result;
+      
+      if (!filters.search && filters.ativo === undefined) {
+        this.setCachedClientes(clientes);
+      }
+      
+      return clientes;
     } catch (error) {
+      if (!filters.search && filters.ativo === undefined) {
+        const cached = this.getCached();
+        if (cached.length > 0) {
+          return cached;
+        }
+      }
       console.error('❌ Erro ao buscar clientes:', error);
-      return [];
+      throw error;
     }
   }
 
@@ -128,6 +175,7 @@ class ClienteServiceAPI {
 
       const novoCliente = await response.json();
       console.log('✅ Cliente criado:', novoCliente);
+      this.clearCache();
       return novoCliente;
     } catch (error) {
       console.error('❌ Erro ao criar cliente:', error);
@@ -164,6 +212,7 @@ class ClienteServiceAPI {
 
       const clienteAtualizado = await response.json();
       console.log('✅ Cliente atualizado:', clienteAtualizado);
+      this.clearCache();
       return clienteAtualizado;
     } catch (error) {
       console.error('❌ Erro ao atualizar cliente:', error);
@@ -198,6 +247,7 @@ class ClienteServiceAPI {
       }
 
       console.log('✅ Cliente deletado');
+      this.clearCache();
       return true;
     } catch (error) {
       console.error('❌ Erro ao deletar cliente:', error);

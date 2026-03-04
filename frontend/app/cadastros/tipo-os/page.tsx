@@ -282,7 +282,7 @@ export default function Page() {
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="flex items-start gap-2 flex-1">
                                         <span className="text-lg mt-0.5">
-                                          {item.tipo === 'servico' ? '🔧' : '📦'}
+                                          {item.tipo === 'SERVICO' ? '🔧' : '📦'}
                                         </span>
                                         <div className="flex-1">
                                           <p className="font-medium text-slate-900 dark:text-slate-100">

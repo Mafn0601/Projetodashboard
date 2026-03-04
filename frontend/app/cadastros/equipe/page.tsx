@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Fragment, useRef } from 'react';
+import { useState, useEffect, Fragment, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select, SelectOption } from '@/components/ui/Select';
@@ -338,49 +338,56 @@ export default function Page() {
     return funcao ? funcao.label : funcaoValue;
   };
 
-  const filteredEquipes = equipes.filter(equipe => {
-    const term = searchTerm.toLowerCase();
-    const parceiroNome = obterLabelParceiro(equipe.parceiroId || '').toLowerCase();
-    const funcaoLabel = obterLabelFuncao(equipe.funcao).toLowerCase();
-    
-    return (
-      equipe.login.toLowerCase().includes(term) ||
-      (equipe.cpf && equipe.cpf.includes(term)) ||
-      parceiroNome.includes(term) ||
-      funcaoLabel.includes(term)
-    );
-  });
+  const filteredEquipes = useMemo(() => {
+    return equipes.filter(equipe => {
+      const term = searchTerm.toLowerCase();
+      const parceiroNome = obterLabelParceiro(equipe.parceiroId || '').toLowerCase();
+      const funcaoLabel = obterLabelFuncao(equipe.funcao).toLowerCase();
+      
+      return (
+        equipe.login.toLowerCase().includes(term) ||
+        (equipe.cpf && equipe.cpf.includes(term)) ||
+        parceiroNome.includes(term) ||
+        funcaoLabel.includes(term)
+      );
+    });
+  }, [equipes, searchTerm, parceiros]);
 
   // Mapa de hierarquia das funções (menor número = maior hierarquia)
-  const hierarquiaFuncoes: Record<string, number> = {
+  const hierarquiaFuncoes: Record<string, number> = useMemo(() => ({
     'gerente_comercial': 1,
     'auxiliar_administrativo': 2,
     'tecnico': 3,
     'gerente_vendas': 4,
     'consultor_vendas': 5,
     'operador': 6
-  };
+  }), []);
 
   // Função para obter o nível de hierarquia
   const obterNivelHierarquia = (funcao: string): number => {
     return hierarquiaFuncoes[funcao] ?? 999; // 999 para funções desconhecidas
   };
 
-  const groupedEquipes = filteredEquipes.reduce<Record<string, Equipe[]>>((acc, equipe) => {
-    const key = equipe.parceiroId || 'sem_parceiro';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(equipe);
-    return acc;
-  }, {});
+  // Agrupar e ordenar equipes (otimizado com useMemo)
+  const groupedEquipes = useMemo(() => {
+    const grouped = filteredEquipes.reduce<Record<string, Equipe[]>>((acc, equipe) => {
+      const key = equipe.parceiroId || 'sem_parceiro';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(equipe);
+      return acc;
+    }, {});
 
-  // Ordenar membros de cada grupo por hierarquia
-  Object.keys(groupedEquipes).forEach((parceiroId) => {
-    groupedEquipes[parceiroId].sort((a, b) => {
-      return obterNivelHierarquia(a.funcao) - obterNivelHierarquia(b.funcao);
+    // Ordenar membros de cada grupo por hierarquia
+    Object.keys(grouped).forEach((parceiroId) => {
+      grouped[parceiroId].sort((a, b) => {
+        return obterNivelHierarquia(a.funcao) - obterNivelHierarquia(b.funcao);
+      });
     });
-  });
 
-  const partnerIds = Object.keys(groupedEquipes);
+    return grouped;
+  }, [filteredEquipes, hierarquiaFuncoes]);
+
+  const partnerIds = useMemo(() => Object.keys(groupedEquipes), [groupedEquipes]);
 
   useEffect(() => {
     if (!didInitExpand.current && partnerIds.length > 0) {

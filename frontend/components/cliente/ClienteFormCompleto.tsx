@@ -170,46 +170,59 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
   /**
    * Carregar parceiros, equipes e tipos de OS da API
    */
+  const carregarDados = async () => {
+    try {
+      // Carregar parceiros da API
+      const parceirosData = await parceiroServiceAPI.findAll();
+      const options: SelectOption[] = parceirosData.map((p) => ({
+        value: p.id,
+        label: p.nome
+      }));
+      setParceiroOptions(options);
+
+      // Carregar equipes da API
+      const equipesData = await equipeServiceAPI.findAll();
+      setEquipes(equipesData as unknown as Equipe[]);
+
+      // Carregar Tipos de OS do localStorage (temporário até ter API)
+      const tiposOsData = readArray<TipoOS>('tiposOs');
+      setTiposOs(tiposOsData);
+      const tiposOsOpts: SelectOption[] = tiposOsData.map((t) => ({
+        value: t.id,
+        label: t.nome
+      }));
+      setTiposOsOptions(tiposOsOpts);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      // Fallback para localStorage se API falhar
+      const parceiros = readArray<Parceiro>('parceiros');
+      setParceiroOptions(parceiros.map((p) => ({ value: p.id, label: p.nome })));
+      
+      const equipesData = readArray<Equipe>('equipes');
+      setEquipes(equipesData);
+      
+      const tiposOsData = readArray<TipoOS>('tiposOs');
+      setTiposOs(tiposOsData);
+      setTiposOsOptions(tiposOsData.map((t) => ({ value: t.id, label: t.nome })));
+    }
+  };
+
   useEffect(() => {
-    const carregarDados = async () => {
-      try {
-        // Carregar parceiros da API
-        const parceirosData = await parceiroServiceAPI.findAll();
-        const options: SelectOption[] = parceirosData.map((p) => ({
-          value: p.id,
-          label: p.nome
-        }));
-        setParceiroOptions(options);
+    carregarDados();
+  }, []);
 
-        // Carregar equipes da API
-        const equipesData = await equipeServiceAPI.findAll();
-        setEquipes(equipesData as unknown as Equipe[]);
-
-        // Carregar Tipos de OS do localStorage (temporário até ter API)
-        const tiposOsData = readArray<TipoOS>('tiposOs');
-        setTiposOs(tiposOsData);
-        const tiposOsOpts: SelectOption[] = tiposOsData.map((t) => ({
-          value: t.id,
-          label: t.nome
-        }));
-        setTiposOsOptions(tiposOsOpts);
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        // Fallback para localStorage se API falhar
-        const parceiros = readArray<Parceiro>('parceiros');
-        setParceiroOptions(parceiros.map((p) => ({ value: p.id, label: p.nome })));
-        
-        const equipesData = readArray<Equipe>('equipes');
-        setEquipes(equipesData);
-        
-        const tiposOsData = readArray<TipoOS>('tiposOs');
-        setTiposOs(tiposOsData);
-        setTiposOsOptions(tiposOsData.map((t) => ({ value: t.id, label: t.nome })));
+  // Recarregar dados quando a página ganha foco (volta de outra página)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('ℹ️ Página ganhou foco, recarregando parceiros e equipes...');
+        carregarDados();
       }
     };
 
-    carregarDados();
-  }, []); // Array vazio - executa apenas uma vez
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   /**
    * Atualizar responsáveis quando parceiro mudar

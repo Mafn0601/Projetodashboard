@@ -130,34 +130,47 @@ export default function Page() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const carregarDados = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Carregar parceiros da API
-        const parceirosData = await parceiroServiceAPI.findAll();
-        setParceiros(parceirosData as unknown as Parceiro[]);
-        setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
+  const carregarDados = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Carregar parceiros da API
+      const parceirosData = await parceiroServiceAPI.findAll();
+      setParceiros(parceirosData as unknown as Parceiro[]);
+      setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
 
-        // Carregar equipes da API
-        const equipesData = await equipeServiceAPI.findAll();
-        setEquipes(equipesData as unknown as Equipe[]);
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        // Fallback para localStorage se a API falhar
-        const parceirosData = readArray<Parceiro>('parceiros');
-        setParceiros(parceirosData);
-        setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
-        
-        const equipesData = readArray<Equipe>('equipes');
-        setEquipes(equipesData);
-      } finally {
-        setIsLoading(false);
+      // Carregar equipes da API
+      const equipesData = await equipeServiceAPI.findAll();
+      setEquipes(equipesData as unknown as Equipe[]);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      // Fallback para localStorage se a API falhar
+      const parceirosData = readArray<Parceiro>('parceiros');
+      setParceiros(parceirosData);
+      setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
+      
+      const equipesData = readArray<Equipe>('equipes');
+      setEquipes(equipesData);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
+  // Recarregar dados quando a página ganha foco (volta de outra página)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('ℹ️ Página ganhou foco, recarregando parceiros e equipes...');
+        carregarDados();
       }
     };
 
-    carregarDados();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   const resetForm = () => {

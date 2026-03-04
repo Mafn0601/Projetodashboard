@@ -6,81 +6,57 @@ import { Input } from '@/components/ui/Input';
 import { MaskedInput, currencyToNumber, numberToCurrency } from '@/components/ui/MaskedInput';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
-import { readArray, writeArray } from '@/lib/storage';
-
-type ServicoProduto = {
-  id: string;
-  nome: string;
-  descricao?: string;
-  preco: number;
-  descontoMaximo: number;  // Limite máximo de desconto permitido
-  tipo: 'servico' | 'produto';
-  duracao: number; // em minutos
-};
-
-type TipoOS = {
-  id: string;
-  nome: string;
-  descricao: string;
-  itens: ServicoProduto[];
-};
+import tipoOSServiceAPI, { TipoOS, TipoOSItem } from '@/services/tipoOSServiceAPI';
 
 export default function Page() {
   const [tiposOS, setTiposOS] = useState<TipoOS[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalItemOpen, setIsModalItemOpen] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [tipoEditandoId, setTipoEditandoId] = useState<string | null>(null);
+  const [tipoSelecionadoId, setTipoSelecionadoId] = useState<string | null>(null);
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [itens, setItens] = useState<ServicoProduto[]>([]);
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
 
-  // Form para adicionar itens
-  const [novoItemNome, setNovoItemNome] = useState('');
-  const [novoItemDescricao, setNovoItemDescricao] = useState('');
-  const [novoItemPreco, setNovoItemPreco] = useState('');
-  const [novoItemDesconto, setNovoItemDesconto] = useState('');
-  const [novoItemTipo, setNovoItemTipo] = useState<'servico' | 'produto'>('servico');
-  const [novoItemDuracao, setNovoItemDuracao] = useState('45');
-  
-  // Edição individual de item
-  const [itemEditando, setItemEditando] = useState<ServicoProduto | null>(null);
-  const [editItemNome, setEditItemNome] = useState('');
-  const [editItemDescricao, setEditItemDescricao] = useState('');
-  const [editItemPreco, setEditItemPreco] = useState('');
-  const [editItemDesconto, setEditItemDesconto] = useState('');
-  const [editItemTipo, setEditItemTipo] = useState<'servico' | 'produto'>('servico');
-  const [editItemDuracao, setEditItemDuracao] = useState('30');
+  // Form para adicionar/editar item
+  const [itemEditando, setItemEditando] = useState<TipoOSItem | null>(null);
+  const [itemNome, setItemNome] = useState('');
+  const [itemPreco, setItemPreco] = useState('');
+  const [itemDesconto, setItemDesconto] = useState('');
+  const [itemTipo, setItemTipo] = useState<'SERVICO' | 'PRODUTO'>('SERVICO');
+  const [itemDuracao, setItemDuracao] = useState('45');
 
-  // Carregar dados
+  // Carregar dados com cache
+  const carregarTipos = async (options?: { forceRefresh?: boolean }) => {
+    try {
+      setLoading(true);
+      const dados = await tipoOSServiceAPI.findAll({ preferCache: true, forceRefresh: options?.forceRefresh });
+      setTiposOS(dados);
+    } catch (error) {
+      console.error('Erro ao carregar tipos de OS:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const dados = readArray<TipoOS>('tiposOs');
-    setTiposOS(dados);
+    carregarTipos();
   }, []);
 
-  // Salvar dados
   const abrirModal = (id?: string) => {
     if (id) {
       const tipo = tiposOS.find(t => t.id === id);
       if (tipo) {
         setEditandoId(id);
         setNome(tipo.nome);
-        setDescricao(tipo.descricao);
-        setItens(tipo.itens);
+        setDescricao(tipo.descricao || '');
       }
     } else {
       setEditandoId(null);
       setNome('');
       setDescricao('');
-      setItens([]);
     }
-    setNovoItemNome('');
-    setNovoItemDescricao('');
-    setNovoItemPreco('');
-    setNovoItemDesconto('');
-    setNovoItemTipo('servico');
-    setNovoItemDuracao('45');
     setIsModalOpen(true);
   };
 
@@ -89,147 +65,129 @@ export default function Page() {
     setEditandoId(null);
     setNome('');
     setDescricao('');
-    setItens([]);
   };
 
-  const adicionarItem = () => {
-    if (!novoItemNome || !novoItemPreco || !novoItemDuracao) {
-      alert('Preencha todos os campos do item');
+  const salvarTipo = async () => {
+    if (!nome) {
+      alert('Preencha o nome do tipo de OS');
       return;
     }
 
-    const novoItem: ServicoProduto = {
-      id: `item_${Date.now()}`,
-      nome: novoItemNome,
-      descricao: novoItemDescricao,
-      preco: currencyToNumber(novoItemPreco),
-      descontoMaximo: currencyToNumber(novoItemDesconto) || 0,
-      tipo: novoItemTipo,
-      duracao: Number(novoItemDuracao)
-    };
-    setItens([...itens, novoItem]);
-    
-    setNovoItemNome('');
-    setNovoItemDescricao('');
-    setNovoItemPreco('');
-    setNovoItemDesconto('');
-    setNovoItemDuracao('45');
+    try {
+      if (editandoId) {
+        await tipoOSServiceAPI.update(editandoId, { nome, descricao });
+      } else {
+        await tipoOSServiceAPI.create({ nome, descricao });
+      }
+      await carregarTipos({ forceRefresh: true });
+      fecharModal();
+    } catch (error: any) {
+      alert(error.message || 'Erro ao salvar tipo de OS');
+    }
   };
 
-  const removerItem = (itemId: string) => {
-    setItens(itens.filter(i => i.id !== itemId));
+  const deletarTipo = async (id: string) => {
+    if (!confirm('Tem certeza que deseja deletar este tipo de OS e todos os seus itens?')) return;
+
+    try {
+      await tipoOSServiceAPI.delete(id);
+      await carregarTipos({ forceRefresh: true });
+    } catch (error: any) {
+      alert(error.message || 'Erro ao deletar tipo de OS');
+    }
   };
 
-  // Funções para edição individual de item
-  const abrirModalEditarItem = (tipoId: string, item: ServicoProduto) => {
-    setTipoEditandoId(tipoId);
-    setItemEditando(item);
-    setEditItemNome(item.nome);
-    setEditItemDescricao(item.descricao || '');
-    setEditItemPreco(numberToCurrency(item.preco));
-    setEditItemDesconto(numberToCurrency(item.descontoMaximo || 0));
-    setEditItemTipo(item.tipo);
-    setEditItemDuracao(String(item.duracao));
+  // Funções para itens
+  const abrirModalItem = (tipoId: string, item?: TipoOSItem) => {
+    setTipoSelecionadoId(tipoId);
+    if (item) {
+      setItemEditando(item);
+      setItemNome(item.nome);
+      setItemPreco(numberToCurrency(item.preco));
+      setItemDesconto(numberToCurrency(item.desconto || 0));
+      setItemTipo(item.tipo);
+      setItemDuracao(String(item.duracao || 45));
+    } else {
+      setItemEditando(null);
+      setItemNome('');
+      setItemPreco('');
+      setItemDesconto('');
+      setItemTipo('SERVICO');
+      setItemDuracao('45');
+    }
     setIsModalItemOpen(true);
   };
 
   const fecharModalItem = () => {
     setIsModalItemOpen(false);
     setItemEditando(null);
-    setTipoEditandoId(null);
+    setTipoSelecionadoId(null);
+    setItemNome('');
+    setItemPreco('');
+    setItemDesconto('');
+    setItemTipo('SERVICO');
+    setItemDuracao('45');
   };
 
-  const salvarItemEditado = () => {
-    if (!editItemNome || !editItemPreco || !editItemDuracao || !itemEditando || !tipoEditandoId) {
-      alert('Preencha todos os campos do item');
+  const salvarItem = async () => {
+    if (!itemNome || !itemPreco || !itemDuracao || !tipoSelecionadoId) {
+      alert('Preencha todos os campos obrigatórios');
       return;
     }
 
-    const itemAtualizado: ServicoProduto = {
-      ...itemEditando,
-      nome: editItemNome,
-      descricao: editItemDescricao,
-      preco: currencyToNumber(editItemPreco),
-      descontoMaximo: currencyToNumber(editItemDesconto) || 0,
-      tipo: editItemTipo,
-      duracao: Number(editItemDuracao)
-    };
+    try {
+      const data = {
+        tipoOSId: tipoSelecionadoId,
+        nome: itemNome,
+        tipo: itemTipo,
+        preco: currencyToNumber(itemPreco),
+        desconto: currencyToNumber(itemDesconto) || 0,
+        duracao: Number(itemDuracao),
+      };
 
-    const novosTipos = tiposOS.map(tipo => {
-      if (tipo.id === tipoEditandoId) {
-        return {
-          ...tipo,
-          itens: tipo.itens.map(item => 
-            item.id === itemEditando.id ? itemAtualizado : item
-          )
-        };
+      if (itemEditando) {
+        await tipoOSServiceAPI.updateItem(itemEditando.id, {
+          nome: data.nome,
+          tipo: data.tipo,
+          preco: data.preco,
+          desconto: data.desconto,
+          duracao: data.duracao,
+        });
+      } else {
+        await tipoOSServiceAPI.createItem(data);
       }
-      return tipo;
-    });
 
-    writeArray('tiposOs', novosTipos);
-    setTiposOS(novosTipos);
-    fecharModalItem();
+      await carregarTipos({ forceRefresh: true });
+      fecharModalItem();
+    } catch (error: any) {
+      alert(error.message || 'Erro ao salvar item');
+    }
   };
 
-  const deletarItemExpandido = (tipoId: string, itemId: string) => {
+  const deletarItem = async (itemId: string) => {
     if (!confirm('Tem certeza que deseja deletar este item?')) return;
 
-    const novosTipos = tiposOS.map(tipo => {
-      if (tipo.id === tipoId) {
-        return {
-          ...tipo,
-          itens: tipo.itens.filter(item => item.id !== itemId)
-        };
-      }
-      return tipo;
-    });
-
-    writeArray('tiposOs', novosTipos);
-    setTiposOS(novosTipos);
-  };
-
-  const salvar = () => {
-    if (!nome) {
-      alert('Preencha o nome do tipo de OS');
-      return;
-    }
-
-    let novosTipos: TipoOS[];
-
-    if (editandoId) {
-      novosTipos = tiposOS.map(t =>
-        t.id === editandoId ? { id: editandoId, nome, descricao, itens } : t
-      );
-    } else {
-      const novoTipo: TipoOS = {
-        id: `tipo_${Date.now()}`,
-        nome,
-        descricao,
-        itens
-      };
-      novosTipos = [...tiposOS, novoTipo];
-    }
-
-    writeArray('tiposOs', novosTipos);
-    setTiposOS(novosTipos);
-    fecharModal();
-  };
-
-  const deletar = (id: string) => {
-    if (confirm('Tem certeza que deseja deletar?')) {
-      const novosTipos = tiposOS.filter(t => t.id !== id);
-      writeArray('tiposOs', novosTipos);
-      setTiposOS(novosTipos);
+    try {
+      await tipoOSServiceAPI.deleteItem(itemId);
+      await carregarTipos({ forceRefresh: true });
+    } catch (error: any) {
+      alert(error.message || 'Erro ao deletar item');
     }
   };
 
   const alternarExpansao = (id: string) => {
-    setExpandedIds((prev) => (
+    setExpandedIds((prev) =>
       prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
-    ));
+    );
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-slate-700 dark:text-slate-400">Carregando...</p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -242,9 +200,7 @@ export default function Page() {
             Gerencie tipos de Ordens de Serviço com seus serviços e produtos
           </p>
         </div>
-        <Button onClick={() => abrirModal()}>
-          + Novo Tipo
-        </Button>
+        <Button onClick={() => abrirModal()}>+ Novo Tipo</Button>
       </div>
 
       {/* Tabela */}
@@ -302,7 +258,7 @@ export default function Page() {
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              deletar(tipo.id);
+                              deletarTipo(tipo.id);
                             }}
                             variant="danger"
                             size="sm"
@@ -348,7 +304,7 @@ export default function Page() {
                                         <Button
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            abrirModalEditarItem(tipo.id, item);
+                                            abrirModalItem(tipo.id, item);
                                           }}
                                           variant="outline"
                                           size="sm"
@@ -358,7 +314,7 @@ export default function Page() {
                                         <Button
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            deletarItemExpandido(tipo.id, item.id);
+                                            deletarItem(item.id);
                                           }}
                                           variant="danger"
                                           size="sm"
@@ -430,151 +386,112 @@ export default function Page() {
           {/* Divisor */}
           <div className="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent dark:via-slate-600" />
 
-          {/* Serviços e Produtos */}
-          <div>
-            <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
-              Serviços & Produtos
-            </p>
-
-            {/* Formulário para adicionar item - apenas ao criar novo tipo */}
-            {!editandoId && (
-              <div className="rounded-lg bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 p-4 mb-4">
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">
-                  <div className="lg:col-span-2">
-                    <Input
-                      label="Nome"
-                      placeholder="Nome do serviço/produto"
-                      value={novoItemNome}
-                      onChange={(e) => setNovoItemNome(e.target.value)}
-                    />
-                  </div>
-                  <MaskedInput
-                    label="Preço (R$)"
-                    mask="currency"
-                    placeholder="R$ 0,00"
-                    value={novoItemPreco}
-                    onChange={setNovoItemPreco}
-                  />
-                  <MaskedInput
-                    label="Desconto Máx. (R$)"
-                    mask="currency"
-                    placeholder="R$ 0,00"
-                    value={novoItemDesconto}
-                    onChange={setNovoItemDesconto}
-                  />
-                  <Select
-                    label="Duração"
-                    value={novoItemDuracao}
-                    onChange={setNovoItemDuracao}
-                    options={[
-                      { value: '45', label: '⏱️ 45 min' },
-                      { value: '60', label: '⏱️ 01h' },
-                      { value: '75', label: '⏱️ 01h 15min' },
-                      { value: '90', label: '⏱️ 01h 30min' },
-                      { value: '105', label: '⏱️ 01h 45min' },
-                      { value: '120', label: '⏱️ 02h' }
-                    ]}
-                  />
-                  <Select
-                    label="Tipo"
-                    value={novoItemTipo}
-                    onChange={(value) => setNovoItemTipo(value as 'servico' | 'produto')}
-                    options={[
-                      { value: 'servico', label: '🔧 Serviço' },
-                      { value: 'produto', label: '📦 Produto' }
-                    ]}
-                  />
-                </div>
-                <Input
-                  label="Descrição (opcional)"
-                  placeholder="Descrição detalhada do item"
-                  value={novoItemDescricao}
-                  onChange={(e) => setNovoItemDescricao(e.target.value)}
-                />
-                <Button onClick={adicionarItem} className="w-full">
+          {/* Serviços e Produtos - apenas quando editando */}
+          {editandoId && (
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                  Serviços & Produtos
+                </p>
+                <Button
+                  onClick={() => abrirModalItem(editandoId)}
+                  size="sm"
+                >
                   + Adicionar Item
                 </Button>
               </div>
-            </div>
-            )}
 
-            {/* Mensagem quando estiver editando */}
-            {editandoId && (
-              <div className="mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  ℹ️ Para editar ou adicionar novos itens, expanda a linha deste tipo na tabela principal e clique no ícone ✏️ de cada item.
-                </p>
-              </div>
-            )}
-
-            {/* Lista de itens */}
-            {itens.length > 0 ? (
-              <div className="space-y-3">
-                {itens.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 hover:shadow-sm transition-shadow"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <span className="text-lg flex-shrink-0 mt-1">
-                          {item.tipo === 'servico' ? '🔧' : '📦'}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-900 dark:text-slate-100 break-words">
-                            {item.nome}
-                          </p>
-                          {item.descricao && (
-                            <p className="text-xs text-slate-700 dark:text-slate-400 mt-1">
-                              {item.descricao}
+              {/* Lista de itens */}
+              {(() => {
+                const tipoAtual = tiposOS.find(t => t.id === editandoId);
+                const itensDoTipo = tipoAtual?.itens || [];
+                
+                return itensDoTipo.length > 0 ? (
+                  <div className="space-y-3">
+                    {itensDoTipo.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3"
+                      >
+                        <div className="flex items-start gap-2 flex-1">
+                          <span className="text-lg mt-0.5">
+                            {item.tipo === 'SERVICO' ? '🔧' : '📦'}
+                          </span>
+                          <div className="flex-1">
+                            <p className="font-medium text-slate-900 dark:text-slate-100">
+                              {item.nome}
                             </p>
-                          )}
-                          <p className="text-xs text-slate-700 dark:text-slate-400 mt-2">
-                            R$ {item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • Desconto Máx. R$ {(item.descontoMaximo ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • ⏱️ {Math.floor(item.duracao / 60)}h {item.duracao % 60 > 0 ? `${item.duracao % 60}min` : ''}
-                          </p>
+                            <div className="flex items-center gap-3 mt-2 text-xs text-slate-700 dark:text-slate-400">
+                              <span>
+                                R${' '}
+                                {item.preco.toLocaleString('pt-BR', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                              <span>
+                                • Desconto Máx. R${' '}
+                                {(item.desconto ?? 0).toLocaleString('pt-BR', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                              {item.duracao && (
+                                <span>
+                                  • ⏱️ {Math.floor(item.duracao / 60)}h{' '}
+                                  {item.duracao % 60 > 0 ? `${item.duracao % 60}min` : ''}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <Button
+                            onClick={() => abrirModalItem(editandoId, item)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            ✏️
+                          </Button>
+                          <Button
+                            onClick={() => deletarItem(item.id)}
+                            variant="danger"
+                            size="sm"
+                          >
+                            ✕
+                          </Button>
                         </div>
                       </div>
-                      <Button
-                        onClick={() => removerItem(item.id)}
-                        variant="danger"
-                        size="sm"
-                        className="flex-shrink-0"
-                      >
-                        ✕
-                      </Button>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 px-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-dashed border-slate-300 dark:border-slate-700">
-                <p className="text-sm text-slate-700 dark:text-slate-400">
-                  {editandoId 
-                    ? 'Nenhum item cadastrado para este tipo.' 
-                    : 'Nenhum item adicionado. Adicione serviços ou produtos acima!'}
-                </p>
-              </div>
-            )}
-          </div>
+                ) : (
+                  <div className="text-center py-8 px-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-dashed border-slate-300 dark:border-slate-700">
+                    <p className="text-sm text-slate-700 dark:text-slate-400">
+                      Nenhum item cadastrado. Clique em "+ Adicionar Item" acima.
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
 
           {/* Botões de ação */}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={fecharModal} size="sm" className="min-w-[120px]">
               Cancelar
             </Button>
-            <Button onClick={salvar} size="sm" className="min-w-[120px]">
+            <Button onClick={salvarTipo} size="sm" className="min-w-[120px]">
               {editandoId ? 'Atualizar' : 'Criar'}
             </Button>
           </div>
         </div>
       </Modal>
 
-      {/* Modal de Edição Individual de Item */}
+      {/* Modal de Item */}
       <Modal
         open={isModalItemOpen}
         onClose={fecharModalItem}
-        title="Editar Item"
+        title={itemEditando ? 'Editar Item' : 'Novo Item'}
         className="max-w-2xl"
         showFooter={false}
       >
@@ -583,63 +500,54 @@ export default function Page() {
             <Input
               label="Nome *"
               placeholder="Nome do serviço/produto"
-              value={editItemNome}
-              onChange={(e) => setEditItemNome(e.target.value)}
+              value={itemNome}
+              onChange={(e) => setItemNome(e.target.value)}
             />
             <Select
               label="Tipo"
-              value={editItemTipo}
-              onChange={(value) => setEditItemTipo(value as 'servico' | 'produto')}
+              value={itemTipo}
+              onChange={(value) => setItemTipo(value as 'SERVICO' | 'PRODUTO')}
               options={[
-                { value: 'servico', label: '🔧 Serviço' },
-                { value: 'produto', label: '📦 Produto' }
+                { value: 'SERVICO', label: '🔧 Serviço' },
+                { value: 'PRODUTO', label: '📦 Produto' },
               ]}
             />
           </div>
-
-          <Input
-            label="Descrição (opcional)"
-            placeholder="Descrição detalhada do item"
-            value={editItemDescricao}
-            onChange={(e) => setEditItemDescricao(e.target.value)}
-          />
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <MaskedInput
               label="Preço (R$) *"
               mask="currency"
               placeholder="R$ 0,00"
-              value={editItemPreco}
-              onChange={setEditItemPreco}
+              value={itemPreco}
+              onChange={setItemPreco}
             />
             <MaskedInput
-              label="Desconto (R$)"
+              label="Desconto Máx. (R$)"
               mask="currency"
               placeholder="R$ 0,00"
-              value={editItemDesconto}
-              onChange={setEditItemDesconto}
+              value={itemDesconto}
+              onChange={setItemDesconto}
             />
             <Select
               label="Duração *"
-              value={editItemDuracao}
-              onChange={setEditItemDuracao}
+              value={itemDuracao}
+              onChange={setItemDuracao}
               options={[
                 { value: '45', label: '⏱️ 45 min' },
                 { value: '60', label: '⏱️ 01h' },
                 { value: '75', label: '⏱️ 01h 15min' },
                 { value: '90', label: '⏱️ 01h 30min' },
                 { value: '105', label: '⏱️ 01h 45min' },
-                { value: '120', label: '⏱️ 02h' }
+                { value: '120', label: '⏱️ 02h' },
               ]}
             />
           </div>
-
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="secondary" onClick={fecharModalItem}>
               Cancelar
             </Button>
-            <Button onClick={salvarItemEditado}>
-              Salvar Alterações
+            <Button onClick={salvarItem}>
+              {itemEditando ? 'Salvar Alterações' : 'Adicionar Item'}
             </Button>
           </div>
         </div>

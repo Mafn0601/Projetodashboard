@@ -161,23 +161,32 @@ export default function Page() {
 
   const handleChegou = useCallback(async (agendamento: AgendaItem) => {
     try {
-      console.log('📤 Marcando agendamento como chegado...');
+      console.log('📤 Marcando agendamento como chegado...', agendamento);
       
       // Atualizar status para EXECUTANDO
       await agendamentoServiceAPI.update(agendamento.id, {
         status: 'EXECUTANDO'
       });
 
+      console.log('✅ Status atualizado para EXECUTANDO');
+
       // Criar card de status
-      addStatusCardFromAgendamento(agendamento);
+      const card = addStatusCardFromAgendamento(agendamento);
+      console.log('✅ Card criado:', card);
       
-      console.log('✅ Agendamento marcado como chegado');
-      setUpdateKey((prev) => prev + 1);
+      // Fechar modal e limpar seleção ANTES de navegar
       setIsModalOpen(false);
       setSelectedAgendamento(null);
-      router.push("/operacional/status");
-    } catch (error) {
+      
+      // Pequeno delay para garantir que o localStorage foi atualizado
+      setTimeout(() => {
+        console.log('🔄 Navegando para página de status...');
+        router.push("/operacional/status");
+      }, 100);
+      
+    } catch (error: any) {
       console.error('❌ Erro ao marcar agendamento como chegado:', error);
+      alert(`Erro ao marcar como chegado: ${error.message || 'Erro desconhecido'}`);
     }
   }, [router]);
 

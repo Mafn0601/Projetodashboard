@@ -8,6 +8,7 @@ import agendamentoRoutes from './agendamentoRoutes';
 import ordemServicoRoutes from './ordemServicoRoutes';
 import chamadoRoutes from './chamadoRoutes';
 import viaCepRoutes from './viaCepRoutes';
+import tipoOSRoutes from './tipoOSRoutes';
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use('/veiculos', veiculoRoutes);
 router.use('/agendamentos', agendamentoRoutes);
 router.use('/ordens-servico', ordemServicoRoutes);
 router.use('/chamados', chamadoRoutes);
+router.use('/tipos-os', tipoOSRoutes);
 
 export default router;

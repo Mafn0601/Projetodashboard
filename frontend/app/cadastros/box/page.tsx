@@ -44,7 +44,7 @@ const coresDisponiveis = [
 ];
 
 export default function BoxPage() {
-  console.log('🔄 Box Page - Versão 2026-03-05 08:30 - Modal sem botão Cancelar');
+  console.log('🔄 Box Page Build: 2026-03-05-09:00 - showFooter=false CONFIRMADO');
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -352,7 +352,7 @@ export default function BoxPage() {
         </div>
       )}
 
-      {/* Modal de Cadastro/Edição - Atualizado 2026-03-05 */}
+      {/* Modal de Cadastro/Edição [REBUILD 2026-03-05 09:00] showFooter=FALSE */}
       <Modal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}

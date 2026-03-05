@@ -231,11 +231,11 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Responsável</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelResponsavel(cliente.responsavelId || cliente.responsavel || (cliente as any).responsavel)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelResponsavel(cliente.responsavel)}</p>
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Parceiro</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelParceiro(cliente.parceiroId || cliente.parceiro || (cliente as any).parceiro)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelParceiro(cliente.parceiro)}</p>
               </div>
             </div>
           </div>

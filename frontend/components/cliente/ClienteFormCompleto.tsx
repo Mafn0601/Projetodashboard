@@ -13,9 +13,18 @@ import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
 import tipoOSServiceAPI from '@/services/tipoOSServiceAPI';
 import { veiculoServiceAPI } from '@/services/veiculoServiceAPI';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
-import { addAgendamento } from '@/services/agendaService';
+import { addAgendamento, getAgendamentos } from '@/services/agendaService';
+import { getBoxesDisponiveis, getTipoBoxPreferidoPorServico } from '@/services/boxService';
 import { validateForm } from '@/lib/validation';
 import { readArray } from '@/lib/storage';
+import {
+  timeToMinutes,
+  toDdMmFromISODate,
+  toDdMmYyyyFromISODate,
+  isWithinBusinessHours,
+  isPastBrasiliaISODate,
+  isSundayISODate,
+} from '@/lib/dateUtils';
 import {
   mockFabricantes,
   getModelosPorFabricante,
@@ -551,6 +560,84 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
           const parceiroId = isUuid(formData.parceiro) ? formData.parceiro : undefined;
 
           if (responsavelId) {
+            // Validar disponibilidade do horário antes de criar agendamentos
+            const dataISO = formData.dataAgendamento; // formato YYYY-MM-DD
+            
+            // Validações de data
+            if (isPastBrasiliaISODate(dataISO)) {
+              setErrors({ ...errors, dataAgendamento: 'Não é permitido agendar em dias passados.' });
+              setIsSubmitting(false);
+              return;
+            }
+
+            if (isSundayISODate(dataISO)) {
+              setErrors({ ...errors, dataAgendamento: 'Domingo é uma data inválida para agendamento.' });
+              setIsSubmitting(false);
+              return;
+            }
+
+            // Validar cada agendamento antes de criar
+            for (const itemSelecionado of paresAgendamento) {
+              const duracao = itemSelecionado.duracao || 60;
+
+              // Verificar horário comercial
+              if (!isWithinBusinessHours(horarioNormalizado, duracao)) {
+                setErrors({ ...errors, horarioAgendamento: 'Horário inválido. Atendemos de 08:00 às 18:00 e fechamos para almoço de 12:00 às 13:30.' });
+                setIsSubmitting(false);
+                return;
+              }
+
+              // Verificar conflitos de horário
+              const dataCurta = toDdMmFromISODate(dataISO);
+              const inicioMinutos = timeToMinutes(horarioNormalizado);
+              const fimMinutos = inicioMinutos + duracao;
+
+              const isConflitoHorario = (inicioA: number, fimA: number, inicioB: number, fimB: number): boolean => {
+                return inicioA < fimB && fimA > inicioB;
+              };
+
+              const agendamentosConflitantes = getAgendamentos().filter((agendamentoAtual) => {
+                if (agendamentoAtual.data !== dataCurta) return false;
+                const inicioAg = timeToMinutes(agendamentoAtual.horario);
+                const fimAg = inicioAg + (agendamentoAtual.duracaoEstimada || 60);
+                return isConflitoHorario(inicioMinutos, fimMinutos, inicioAg, fimAg);
+              });
+
+              // Verificar boxes disponíveis
+              const dataCompleta = toDdMmYyyyFromISODate(dataISO);
+              const calcularHoraFim = (horaInicio: string, duracaoMinutos: number): string => {
+                const [horas, minutos] = horaInicio.split(':').map(Number);
+                const totalMinutos = horas * 60 + minutos + duracaoMinutos;
+                const horasFim = Math.floor(totalMinutos / 60);
+                const minutosFim = totalMinutos % 60;
+                return `${String(horasFim).padStart(2, '0')}:${String(minutosFim).padStart(2, '0')}`;
+              };
+              const horaFim = calcularHoraFim(horarioNormalizado, duracao);
+              const tipoBoxPreferido = getTipoBoxPreferidoPorServico(itemSelecionado.tipoNome);
+              const boxesLivres = getBoxesDisponiveis(
+                dataCompleta,
+                horarioNormalizado,
+                dataCompleta,
+                horaFim,
+                tipoBoxPreferido
+              );
+
+              if (boxesLivres.length === 0) {
+                setErrors({ ...errors, horarioAgendamento: `Não há boxes disponíveis para ${itemSelecionado.tipoNome} às ${horarioNormalizado}.` });
+                setIsSubmitting(false);
+                return;
+              }
+
+              // Verificar se há capacidade (considerando agendamentos conflitantes)
+              const boxesCompativeis = boxesLivres;
+              if (agendamentosConflitantes.length >= boxesCompativeis.length) {
+                setErrors({ ...errors, horarioAgendamento: `Sem vagas disponíveis para ${itemSelecionado.tipoNome} às ${horarioNormalizado} (${agendamentosConflitantes.length} agendamentos já confirmados).` });
+                setIsSubmitting(false);
+                return;
+              }
+            }
+
+            // Se passou todas as validações, criar os agendamentos
             const dataAgendamentoISO = `${formData.dataAgendamento}T${horarioNormalizado}:00.000Z`;
 
             for (const itemSelecionado of paresAgendamento) {

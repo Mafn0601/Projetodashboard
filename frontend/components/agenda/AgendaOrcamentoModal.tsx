@@ -13,6 +13,7 @@ import {
   addOcupacao,
 } from '@/services/boxService';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
+import { getAgendamentos } from '@/services/agendaService';
 import {
   getBrasiliaTodayISO,
   getBrasiliaNow,
@@ -86,6 +87,11 @@ export default function AgendaOrcamentoModal({
     setTiposOsList(tipos);
   }, [isOpen]);
 
+  // Função auxiliar para verificar conflitos de horário
+  const isConflitoHorario = (inicioA: number, fimA: number, inicioB: number, fimB: number): boolean => {
+    return inicioA < fimB && fimA > inicioB;
+  };
+
   // Função auxiliar para calcular hora fim
   const calcularHoraFim = (horaInicio: string, duracaoMinutos: number): string => {
     const [horas, minutos] = horaInicio.split(':').map(Number);
@@ -126,7 +132,28 @@ export default function AgendaOrcamentoModal({
 
     if (fimMinutos > 18 * 60) return false;
 
+    // Verificar conflitos de horário com agendamentos existentes
+    const dataCurta = toDdMmFromISODate(dataEscolhida);
     const tipoBoxPreferido = getTipoBoxPreferidoPorServico(dadosOrcamento.tipoOsNome);
+    const boxesCompativeis = todosBoxes.filter(
+      (box) => box.ativo && (!tipoBoxPreferido || box.tipo === tipoBoxPreferido)
+    );
+    const capacidade = boxesCompativeis.length;
+    
+    if (capacidade === 0) return false;
+
+    const agendamentosConflitantes = getAgendamentos().filter((agendamentoAtual) => {
+      if (agendamentoAtual.data !== dataCurta) return false;
+      const inicioAg = timeToMinutes(agendamentoAtual.horario);
+      const fimAg = inicioAg + (agendamentoAtual.duracaoEstimada || 60);
+      return isConflitoHorario(inicioMinutos, fimMinutos, inicioAg, fimAg);
+    });
+
+    // Se há conflitos com todos os boxes disponíveis, não permitir
+    if (agendamentosConflitantes.length >= capacidade) {
+      return false;
+    }
+
     const horaFim = calcularHoraFim(horaInicio, duracaoMin);
     const dataCompleta = toDdMmYyyyFromISODate(dataEscolhida);
     const boxesLivres = getBoxesDisponiveis(

@@ -371,7 +371,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
     if (!formData.tipoAgendamento || !formData.tipo) {
       setErrors((prev) => ({
         ...prev,
-        tipoAgendamento: !formData.tipoAgendamento ? 'Selecione o tipo de agendamento' : prev.tipoAgendamento,
+        tipoAgendamento: !formData.tipoAgendamento ? 'Selecione o tipo de OS' : prev.tipoAgendamento,
         tipo: !formData.tipo ? 'Selecione o item' : prev.tipo,
       }));
       return;
@@ -458,7 +458,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
-      // Se mudou o tipo de agendamento, limpar o campo tipo
+      // Se mudou o tipo de OS, limpar o campo item
       if (field === 'tipoAgendamento') {
         newData.tipo = '';
       }
@@ -768,12 +768,12 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         </div>
       </div>
 
-      {/* Seção 3: Tipo de Agendamento */}
+      {/* Seção 3: Tipo de OS */}
       <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Tipo de Agendamento</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Serviços/Produtos</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
-            label="Tipo Agendamento"
+            label="Tipo de OS"
             options={tiposOsOptions}
             value={formData.tipoAgendamento}
             onChange={(value) => handleFieldChange('tipoAgendamento', value)}
@@ -783,12 +783,12 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
           />
 
           <Select
-            label="Tipo"
+            label="Item"
             options={tipoItemOptions}
             value={formData.tipo}
             onChange={(value) => handleFieldChange('tipo', value)}
             error={errors.tipo || undefined}
-            placeholder={formData.tipoAgendamento ? "Selecione o item" : "Selecione o Tipo Agendamento primeiro"}
+            placeholder={formData.tipoAgendamento ? "Selecione o item" : "Selecione um Tipo de OS primeiro"}
             disabled={!formData.tipoAgendamento || tipoItemOptions.length === 0}
             required
           />
@@ -800,36 +800,53 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
               onClick={adicionarTipoItemSelecionado}
               disabled={!formData.tipoAgendamento || !formData.tipo}
             >
-              + Adicionar Tipo/Item
+              ➕ Adicionar Tipo/Item
             </Button>
           </div>
 
-          <div className="md:col-span-2 space-y-2">
-            {agendamentosSelecionados.length > 0 ? (
-              agendamentosSelecionados.map((item) => (
-                <div
-                  key={`${item.tipoOSId}_${item.itemOSId}`}
-                  className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2"
-                >
-                  <span className="text-sm text-slate-900 dark:text-slate-100">
-                    {item.tipoNome} • {item.itemNome} ({item.itemTipo})
-                  </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="danger"
-                    onClick={() => removerTipoItemSelecionado(item.tipoOSId, item.itemOSId)}
+          {agendamentosSelecionados.length > 0 && (
+            <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">Tipos/Itens Selecionados</h4>
+              <div className="space-y-2">
+                {agendamentosSelecionados.map((item) => (
+                  <div
+                    key={`${item.tipoOSId}_${item.itemOSId}`}
+                    className="flex items-center justify-between rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3"
                   >
-                    Remover
-                  </Button>
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-slate-700 dark:text-slate-400">
-                Selecione e adicione 1 ou mais combinações de Tipo de Agendamento e Item.
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {item.tipoNome} - {item.itemNome}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        {item.itemTipo}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="danger"
+                      onClick={() => removerTipoItemSelecionado(item.tipoOSId, item.itemOSId)}
+                    >
+                      ✕ Remover
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Total de Itens: <span className="text-blue-600 dark:text-blue-400">{agendamentosSelecionados.length}</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {agendamentosSelecionados.length === 0 && (
+            <div className="md:col-span-2">
+              <p className="text-xs text-slate-700 dark:text-slate-400 text-center py-4">
+                Selecione e adicione 1 ou mais combinações de Tipo de OS e Item.
               </p>
-            )}
-          </div>
+            </div>
+          )}
 
           <Select
             label="Origem do Pedido"

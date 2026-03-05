@@ -304,48 +304,13 @@ export default function BoxPage() {
                       <TimelineHeader />
                     </div>
                     {boxesDoParceiro.map(box => (
-                      <div key={box.id} className="group">
-                        <div className="flex items-stretch gap-2">
-                          <div className="flex-1 overflow-x-auto pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
-                            <BoxTimeline
-                              box={box}
-                              ocupacoes={getOcupacoesParaData(box.id)}
-                              data={dataSelecionada}
-                            />
-                          </div>
-                          {/* Botões de ação no lado */}
-                          <div className="hidden md:flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => abrirModalEdicao(box)}
-                              className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
-                              title="Editar box"
-                            >
-                              <Pencil className="h-4 w-4 text-slate-700 dark:text-slate-400" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(box.id)}
-                              className="p-1.5 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/40 rounded transition-colors"
-                              title="Excluir box"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
-                            </button>
-                          </div>
-                        </div>
-                        <div className="flex md:hidden gap-2 mt-2">
-                          <button
-                            onClick={() => abrirModalEdicao(box)}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-medium transition-colors"
-                          >
-                            <Pencil className="h-3.5 w-3.5 text-slate-700 dark:text-slate-300" />
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handleDelete(box.id)}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/40 rounded text-xs font-medium text-red-700 dark:text-red-300 transition-colors"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Excluir
-                          </button>
+                      <div key={box.id}>
+                        <div className="overflow-x-auto pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
+                          <BoxTimeline
+                            box={box}
+                            ocupacoes={getOcupacoesParaData(box.id)}
+                            data={dataSelecionada}
+                          />
                         </div>
                       </div>
                     ))}

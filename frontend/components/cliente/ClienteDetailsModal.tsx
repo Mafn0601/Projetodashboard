@@ -137,7 +137,11 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
     if (nome) return nome;
     if (id) {
       const parceiro = parceiros.find(p => p.id === id);
-      if (parceiro) return parceiro.nome;
+      if (parceiro) return parceiro.nome || parceiro.id;
+    }
+    // Se for uma string simples (pode ser o nome do parceiro)
+    if (typeof parceiroValor === 'string' && parceiroValor !== '-') {
+      return parceiroValor;
     }
     if (ultimoAgendamento?.parceiro?.nome) {
       return ultimoAgendamento.parceiro.nome;
@@ -150,7 +154,14 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
     if (nome) return nome;
     if (id) {
       const equipe = equipes.find(e => e.id === id);
-      if (equipe) return equipe.login;
+      if (equipe) {
+        // Tenta usar nome primeiro, depois login
+        return equipe.nome || equipe.login || id;
+      }
+    }
+    // Se for uma string simples (pode ser o login ou nome do responsável)
+    if (typeof responsavelValor === 'string' && responsavelValor !== '-') {
+      return responsavelValor;
     }
     if (ultimoAgendamento?.responsavel?.nome) {
       return ultimoAgendamento.responsavel.nome;
@@ -221,11 +232,11 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Responsável</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelResponsavel((cliente as any).responsavelId ?? cliente.responsavel)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelResponsavel(cliente.responsavelId || cliente.responsavel || (cliente as any).responsavel)}</p>
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Parceiro</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelParceiro((cliente as any).parceiroId ?? cliente.parceiro)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelParceiro(cliente.parceiroId || cliente.parceiro || (cliente as any).parceiro)}</p>
               </div>
             </div>
           </div>

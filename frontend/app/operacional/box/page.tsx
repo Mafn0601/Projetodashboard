@@ -567,6 +567,31 @@ function BoxCardAccordion({
             Parceiro: {box.parceiro}
           </p>
         </div>
+        
+        {/* Botões de Editar e Deletar */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(box);
+            }}
+            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+            title="Editar box"
+          >
+            <Pencil className="h-4 w-4 text-slate-700 dark:text-slate-400" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(box.id);
+            }}
+            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+            title="Excluir box"
+          >
+            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+          </button>
+        </div>
+        
         <ChevronDown 
           className={`h-5 w-5 text-slate-700 dark:text-slate-400 flex-shrink-0 transition-transform ${
             isExpanded ? "rotate-180" : ""
@@ -615,20 +640,6 @@ function BoxCardAccordion({
             >
               <Calendar className="h-3.5 w-3.5" />
               Ver Ocupações
-            </button>
-            <button
-              onClick={() => onEdit(box)}
-              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Editar
-            </button>
-            <button
-              onClick={() => onDelete(box.id)}
-              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Excluir
             </button>
           </div>
         </div>

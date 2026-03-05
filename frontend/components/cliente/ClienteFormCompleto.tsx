@@ -771,83 +771,161 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       {/* Seção 3: Tipo de OS */}
       <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Serviços/Produtos</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="Tipo de OS"
-            options={tiposOsOptions}
-            value={formData.tipoAgendamento}
-            onChange={(value) => handleFieldChange('tipoAgendamento', value)}
-            error={errors.tipoAgendamento || undefined}
-            placeholder="Selecione o tipo"
-            required
-          />
+        <div className="space-y-4">
+          {/* Tipo de OS e Item */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              label="Tipo de OS"
+              options={tiposOsOptions}
+              value={formData.tipoAgendamento}
+              onChange={(value) => handleFieldChange('tipoAgendamento', value)}
+              error={errors.tipoAgendamento || undefined}
+              placeholder="Selecione o tipo"
+              required
+            />
 
-          <Select
-            label="Item"
-            options={tipoItemOptions}
-            value={formData.tipo}
-            onChange={(value) => handleFieldChange('tipo', value)}
-            error={errors.tipo || undefined}
-            placeholder={formData.tipoAgendamento ? "Selecione o item" : "Selecione um Tipo de OS primeiro"}
-            disabled={!formData.tipoAgendamento || tipoItemOptions.length === 0}
-            required
-          />
-
-          <div className="md:col-span-2 flex justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={adicionarTipoItemSelecionado}
-              disabled={!formData.tipoAgendamento || !formData.tipo}
-            >
-              ➕ Adicionar Tipo/Item
-            </Button>
+            <Select
+              label="Item"
+              options={tipoItemOptions}
+              value={formData.tipo}
+              onChange={(value) => handleFieldChange('tipo', value)}
+              error={errors.tipo || undefined}
+              placeholder={formData.tipoAgendamento ? "Selecione o item" : "Selecione um Tipo de OS primeiro"}
+              disabled={!formData.tipoAgendamento || tipoItemOptions.length === 0}
+              required
+            />
           </div>
 
-          {agendamentosSelecionados.length > 0 && (
-            <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-              <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">Tipos/Itens Selecionados</h4>
-              <div className="space-y-2">
-                {agendamentosSelecionados.map((item) => (
-                  <div
-                    key={`${item.tipoOSId}_${item.itemOSId}`}
-                    className="flex items-center justify-between rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {item.tipoNome} - {item.itemNome}
-                      </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
-                        {item.itemTipo}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="danger"
-                      onClick={() => removerTipoItemSelecionado(item.tipoOSId, item.itemOSId)}
-                    >
-                      ✕ Remover
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Total de Itens: <span className="text-blue-600 dark:text-blue-400">{agendamentosSelecionados.length}</span>
-                </p>
-              </div>
-            </div>
-          )}
+          {/* Botão Adicionar */}
+          <Button
+            type="button"
+            className="w-full"
+            onClick={adicionarTipoItemSelecionado}
+            disabled={!formData.tipoAgendamento || !formData.tipo}
+          >
+            ➕ Adicionar Tipo/Item
+          </Button>
 
+          {/* Validação - Aviso */}
           {agendamentosSelecionados.length === 0 && (
-            <div className="md:col-span-2">
-              <p className="text-xs text-slate-700 dark:text-slate-400 text-center py-4">
-                Selecione e adicione 1 ou mais combinações de Tipo de OS e Item.
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex items-start gap-2">
+              <span className="text-amber-600 dark:text-amber-400 font-bold text-lg flex-shrink-0">⚠</span>
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                Selecione pelo menos um tipo/item para continuar
               </p>
             </div>
           )}
 
+          {/* Lista de Tipos/Itens Selecionados */}
+          {agendamentosSelecionados.length > 0 && (
+            <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2">
+              {agendamentosSelecionados.map((item) => (
+                <div
+                  key={`${item.tipoOSId}_${item.itemOSId}`}
+                  className="flex items-center justify-between rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {item.tipoNome} - {item.itemNome}
+                    </p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      {item.itemTipo}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="danger"
+                    onClick={() => removerTipoItemSelecionado(item.tipoOSId, item.itemOSId)}
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Box */}
+          <Select
+            label="Box"
+            options={[]}
+            value=""
+            onChange={() => {}}
+            placeholder="Selecione..."
+            disabled
+          />
+
+          {/* Data, Horário, Duração em linha */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Input
+              label="Data"
+              type="date"
+              min={minDate}
+              value={formData.dataAgendamento}
+              onChange={(e) => handleFieldChange('dataAgendamento', e.target.value)}
+              error={errors.dataAgendamento || undefined}
+              required
+            />
+
+            <Select
+              label="Horário"
+              options={horariosDisponiveis}
+              value={formData.horarioAgendamento}
+              onChange={(value) => handleFieldChange('horarioAgendamento', value)}
+              error={errors.horarioAgendamento || undefined}
+              placeholder="Selecione..."
+              disabled={!formData.dataAgendamento}
+              required
+            />
+
+            <Input
+              label="Duração (min)"
+              type="number"
+              min="30"
+              max="480"
+              value="60"
+              onChange={() => {}}
+              disabled
+            />
+          </div>
+
+          {/* Meio de Pagamento e Forma de Pagamento */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              label="Meio de Pagamento"
+              options={[
+                { value: 'TRANSFERENCIA_TED', label: 'TRANSFERENCIA/TED' },
+                { value: 'PIX', label: 'PIX' },
+                { value: 'DINHEIRO', label: 'DINHEIRO' },
+                { value: 'CHEQUE', label: 'CHEQUE' },
+                { value: 'A_COMBINAR', label: 'A COMBINAR' },
+                { value: 'CARTAO_DEBITO', label: 'CARTÃO DEBITO' },
+                { value: 'CARTAO_CREDITO', label: 'CARTÃO CRÉDITO' },
+                { value: 'GARANTIA', label: 'GARANTIA' },
+                { value: 'PERMUTA', label: 'PERMUTA' },
+              ]}
+              value={formData.meioPagamento}
+              onChange={(value) => handleFieldChange('meioPagamento', value)}
+              placeholder="Selecione..."
+            />
+
+            <Select
+              label="Forma de Pagamento"
+              options={[
+                { value: 'A_VISTA', label: 'A VISTA' },
+                { value: '2_VEZES', label: '2 VEZES' },
+                { value: '3_VEZES', label: '3 VEZES' },
+                { value: '4_VEZES', label: '4 VEZES' },
+                { value: '5_VEZES', label: '5 VEZES' },
+                { value: '6_VEZES', label: '6 VEZES' },
+              ]}
+              value={formData.formaPagamento}
+              onChange={(value) => handleFieldChange('formaPagamento', value)}
+              placeholder="Selecione..."
+            />
+          </div>
+
+          {/* Origem do Pedido */}
           <Select
             label="Origem do Pedido"
             options={[
@@ -857,7 +935,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
             value={formData.origemPedido}
             onChange={(value) => handleFieldChange('origemPedido', value)}
             error={errors.origemPedido || undefined}
-            placeholder="Selecione a origem"
+            placeholder="Selecione..."
             required
           />
         </div>
@@ -909,33 +987,6 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         </div>
       </div>
 
-      {/* Seção 5: Agendamento */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Data e Horário</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Data Agendamento"
-            type="date"
-            min={minDate}
-            value={formData.dataAgendamento}
-            onChange={(e) => handleFieldChange('dataAgendamento', e.target.value)}
-            error={errors.dataAgendamento || undefined}
-            required
-          />
-
-          <Select
-            label="Horário Agendamento"
-            options={horariosDisponiveis}
-            value={formData.horarioAgendamento}
-            onChange={(value) => handleFieldChange('horarioAgendamento', value)}
-            error={errors.horarioAgendamento || undefined}
-            placeholder={formData.dataAgendamento ? "Selecione um horário" : "Selecione a data de agendamento para carregar os horários"}
-            disabled={!formData.dataAgendamento}
-            required
-          />
-        </div>
-      </div>
-
       {/* Seção 6: Descrição */}
       <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Detalhes</h3>
@@ -948,45 +999,6 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
             onChange={(e) => handleFieldChange('descricaoServico', e.target.value)}
             placeholder="Descreva o serviço a ser realizado"
             className="w-full h-24 px-3 py-2 border-2 border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-          />
-        </div>
-      </div>
-
-      {/* Seção 7: Pagamento */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações de Pagamento</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="Meio de Pagamento"
-            options={[
-              { value: 'TRANSFERENCIA_TED', label: 'TRANSFERENCIA/TED' },
-              { value: 'PIX', label: 'PIX' },
-              { value: 'DINHEIRO', label: 'DINHEIRO' },
-              { value: 'CHEQUE', label: 'CHEQUE' },
-              { value: 'A_COMBINAR', label: 'A COMBINAR' },
-              { value: 'CARTAO_DEBITO', label: 'CARTÃO DEBITO' },
-              { value: 'CARTAO_CREDITO', label: 'CARTÃO CRÉDITO' },
-              { value: 'GARANTIA', label: 'GARANTIA' },
-              { value: 'PERMUTA', label: 'PERMUTA' },
-            ]}
-            value={formData.meioPagamento}
-            onChange={(value) => handleFieldChange('meioPagamento', value)}
-            placeholder="Selecione o meio de pagamento"
-          />
-
-          <Select
-            label="Forma de Pagamento"
-            options={[
-              { value: 'A_VISTA', label: 'A VISTA' },
-              { value: '2_VEZES', label: '2 VEZES' },
-              { value: '3_VEZES', label: '3 VEZES' },
-              { value: '4_VEZES', label: '4 VEZES' },
-              { value: '5_VEZES', label: '5 VEZES' },
-              { value: '6_VEZES', label: '6 VEZES' },
-            ]}
-            value={formData.formaPagamento}
-            onChange={(value) => handleFieldChange('formaPagamento', value)}
-            placeholder="Selecione a forma de pagamento"
           />
         </div>
       </div>

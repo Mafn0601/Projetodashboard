@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma';
+import { supabase } from '../lib/supabase';
 import { AppError } from '../middlewares/errorHandler';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -254,6 +255,14 @@ export class EquipeService {
     }
 
     await prisma.equipe.delete({ where: { id } });
+
+    // Deletar também do Supabase
+    try {
+      await supabase.from('equipes').delete().eq('id', id);
+    } catch (error) {
+      console.error('Erro ao deletar Equipe do Supabase:', error);
+      // Não lança erro se falhar no Supabase
+    }
 
     return { message: 'Equipe deletada com sucesso' };
   }

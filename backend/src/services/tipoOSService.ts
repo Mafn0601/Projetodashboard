@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma';
+import { supabase } from '../lib/supabase';
 import { AppError } from '../middlewares/errorHandler';
 import { Prisma } from '@prisma/client';
 
@@ -69,6 +70,14 @@ export class TipoOSService {
 
     await prisma.tipoOS.delete({ where: { id } });
 
+    // Deletar também do Supabase
+    try {
+      await supabase.from('tiposOs').delete().eq('id', id);
+    } catch (error) {
+      console.error('Erro ao deletar TipoOS do Supabase:', error);
+      // Não lança erro se falhar no Supabase
+    }
+
     return { message: 'Tipo de OS deletado com sucesso' };
   }
 
@@ -105,6 +114,14 @@ export class TipoOSService {
     }
 
     await prisma.tipoOSItem.delete({ where: { id } });
+
+    // Deletar também do Supabase
+    try {
+      await supabase.from('tipoOSItems').delete().eq('id', id);
+    } catch (error) {
+      console.error('Erro ao deletar TipoOSItem do Supabase:', error);
+      // Não lança erro se falhar no Supabase
+    }
 
     return { message: 'Item deletado com sucesso' };
   }

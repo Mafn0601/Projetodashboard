@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma';
+import { supabase } from '../lib/supabase';
 import { AppError } from '../middlewares/errorHandler';
 import { Prisma, StatusOS } from '@prisma/client';
 
@@ -244,6 +245,14 @@ export class OrdemServicoService {
     }
 
     await prisma.ordemServico.delete({ where: { id } });
+
+    // Deletar também do Supabase
+    try {
+      await supabase.from('ordensServico').delete().eq('id', id);
+    } catch (error) {
+      console.error('Erro ao deletar Ordem de Serviço do Supabase:', error);
+      // Não lança erro se falhar no Supabase
+    }
 
     return { message: 'Ordem de Serviço deletada com sucesso' };
   }

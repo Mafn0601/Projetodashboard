@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma';
+import { supabase } from '../lib/supabase';
 import { AppError } from '../middlewares/errorHandler';
 import { Prisma } from '@prisma/client';
 
@@ -158,6 +159,14 @@ export class ParceiroService {
     }
 
     await prisma.parceiro.delete({ where: { id } });
+
+    // Deletar também do Supabase
+    try {
+      await supabase.from('parceiros').delete().eq('id', id);
+    } catch (error) {
+      console.error('Erro ao deletar Parceiro do Supabase:', error);
+      // Não lança erro se falhar no Supabase
+    }
 
     return { message: 'Parceiro deletado com sucesso' };
   }

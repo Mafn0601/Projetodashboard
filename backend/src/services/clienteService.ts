@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma';
 import { AppError } from '../middlewares/errorHandler';
 import { Prisma } from '@prisma/client';
+import { supabase } from '../lib/supabase';
 
 export class ClienteService {
   async findAll(filters?: {
@@ -146,6 +147,13 @@ export class ClienteService {
       where: { id },
       data: { ativo: false },
     });
+
+    // Deletar do Supabase também
+    try {
+      await supabase.from('clientes').delete().eq('id', id);
+    } catch (error) {
+      console.error('Erro ao deletar cliente do Supabase:', error);
+    }
 
     return { message: 'Cliente desativado com sucesso' };
   }

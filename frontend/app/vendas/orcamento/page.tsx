@@ -12,6 +12,8 @@ import { clienteServiceAPI } from '@/services/clienteServiceAPI';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { ordemServicoServiceAPI } from '@/services/ordemServicoServiceAPI';
 import { veiculoServiceAPI } from '@/services/veiculoServiceAPI';
+import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
+import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 import { addStatusCardFromOrcamento } from '@/services/statusService';
 import { useRouter } from 'next/navigation';
 import AgendaOrcamentoModal from '@/components/agenda/AgendaOrcamentoModal';
@@ -197,29 +199,64 @@ export default function Page() {
 
   // Carregar dados do localStorage e mockFabricantes
   useEffect(() => {
-    const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
-    
-    // Migrar dados antigos: mapper desconto -> descontoMaximo
-    const tiposOsMigrados = tiposOsCadastrados.map(tipo => ({
-      ...tipo,
-      itens: tipo.itens.map((item: any) => ({
-        ...item,
-        descontoMaximo: item.descontoMaximo ?? item.desconto ?? 0,
-      }))
-    }));
-    
-    setTiposOs(tiposOsMigrados);
-    setTipoOptions(tiposOsMigrados.map(t => ({ value: t.id, label: t.nome })));
+    const carregarDados = async () => {
+      try {
+        // Carregar dados da API em vez do localStorage
+        const [tiposResponse, parceiroResponse, equipeResponse] = await Promise.all([
+          Promise.resolve(readArray<TipoOS>('tiposOs')),
+          parceiroServiceAPI.findAll(),
+          equipeServiceAPI.findAll()
+        ]);
 
-    const parceirosCadastrados = readArray<Parceiro>('parceiros');
-    setParceiros(parceirosCadastrados);
-    setParceiroOptions(parceirosCadastrados.map(p => ({ value: p.id, label: p.nome })));
+        const tiposOsCadastrados = tiposResponse || [];
+        
+        // Migrar dados antigos: mapper desconto -> descontoMaximo
+        const tiposOsMigrados = tiposOsCadastrados.map(tipo => ({
+          ...tipo,
+          itens: tipo.itens.map((item: any) => ({
+            ...item,
+            descontoMaximo: item.descontoMaximo ?? item.desconto ?? 0,
+          }))
+        }));
+        
+        setTiposOs(tiposOsMigrados);
+        setTipoOptions(tiposOsMigrados.map(t => ({ value: t.id, label: t.nome })));
 
-    const equipesCadastradas = readArray<Equipe>('equipes');
-    setEquipes(equipesCadastradas);
+        // Usar dados vindos da API
+        const parceirosCadastrados = parceiroResponse || [];
+        setParceiros(parceirosCadastrados);
+        setParceiroOptions(parceirosCadastrados.map(p => ({ value: p.id, label: p.nome })));
 
-    // Usar mockFabricantes diretamente
-    setFabricanteOptions(mockFabricantes);
+        const equipesCadastradas = equipeResponse || [];
+        setEquipes(equipesCadastradas);
+
+        // Usar mockFabricantes diretamente
+        setFabricanteOptions(mockFabricantes);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        // Fallback para localStorage se API falhar
+        const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
+        const parceirosCadastrados = readArray<Parceiro>('parceiros');
+        const equipesCadastradas = readArray<Equipe>('equipes');
+        
+        const tiposOsMigrados = tiposOsCadastrados.map(tipo => ({
+          ...tipo,
+          itens: tipo.itens.map((item: any) => ({
+            ...item,
+            descontoMaximo: item.descontoMaximo ?? item.desconto ?? 0,
+          }))
+        }));
+        
+        setTiposOs(tiposOsMigrados);
+        setTipoOptions(tiposOsMigrados.map(t => ({ value: t.id, label: t.nome })));
+        setParceiros(parceirosCadastrados);
+        setParceiroOptions(parceirosCadastrados.map(p => ({ value: p.id, label: p.nome })));
+        setEquipes(equipesCadastradas);
+        setFabricanteOptions(mockFabricantes);
+      }
+    };
+
+    carregarDados();
   }, []);
 
   // Atualizar responsáveis quando parceiro muda

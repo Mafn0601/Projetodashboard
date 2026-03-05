@@ -5,6 +5,7 @@ import { AgendaItem } from '@/services/agendaService';
 import { Button } from '@/components/ui/Button';
 import { Trash2 } from 'lucide-react';
 import { readArray } from '@/lib/storage';
+import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 
 type Props = {
   isOpen: boolean;
@@ -37,7 +38,7 @@ function formatarData(data: string): string {
 }
 
 export default function AgendaDetailsModal({ isOpen, agendamento, onClose, onDelete, onChegou }: Props) {
-  const [nomeResponsavel, setNomeResponsavel] = useState(agendamento?.responsavel as string || '-');
+  const [nomeResponsavel, setNomeResponsavel] = useState<string>('-');
 
   useEffect(() => {
     if (!agendamento) {
@@ -45,26 +46,28 @@ export default function AgendaDetailsModal({ isOpen, agendamento, onClose, onDel
       return;
     }
     
-    try {
-      // Se responsavel é um objeto com nome, usar diretamente
-      if (typeof agendamento.responsavel === 'object' && agendamento.responsavel && 'nome' in agendamento.responsavel) {
-        setNomeResponsavel((agendamento.responsavel as any).nome);
-        return;
-      }
-      
-      // Se responsavel é string ID, buscar no localStorage
-      if (typeof agendamento.responsavel === 'string') {
-        const equipes = readArray<Equipe>('equipes');
-        const equipe = equipes.find(e => e.id === agendamento.responsavel);
-        if (equipe) {
-          setNomeResponsavel(equipe.nome || equipe.login);
-        } else {
-          setNomeResponsavel(agendamento.responsavel);
+    const carregarResponsavel = async () => {
+      try {
+        // Se responsavel é um objeto com nome, usar diretamente
+        if (typeof agendamento.responsavel === 'object' && agendamento.responsavel && 'nome' in agendamento.responsavel) {
+          setNomeResponsavel((agendamento.responsavel as any).nome || '-');
+          return;
         }
+        
+        // Se responsavel é string ID, buscar na API
+        if (typeof agendamento.responsavel === 'string' && agendamento.responsavel) {
+          const equipe = await equipeServiceAPI.findById(agendamento.responsavel);
+          setNomeResponsavel(equipe?.login || equipe?.cpf || agendamento.responsavel);
+        } else {
+          setNomeResponsavel('-');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar responsável:', error);
+        setNomeResponsavel(typeof agendamento.responsavel === 'string' ? agendamento.responsavel : '-');
       }
-    } catch {
-      setNomeResponsavel(typeof agendamento.responsavel === 'string' ? agendamento.responsavel : '-');
-    }
+    };
+
+    carregarResponsavel();
   }, [agendamento]);
 
   if (!isOpen || !agendamento) return null;

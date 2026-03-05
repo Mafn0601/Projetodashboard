@@ -78,6 +78,9 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
   const { user } = useAuth();
   const [tipoOs, setTipoOs] = useState('');
   const [item, setItem] = useState('');
+  const [tiposItens, setTiposItens] = useState<Array<{tipoId: string; tipoNome: string; itemId: string; itemNome: string; preco: number}>>([]);
+  const [tipoTemporario, setTipoTemporario] = useState('');
+  const [itemTemporario, setItemTemporario] = useState('');
   const [dataIso, setDataIso] = useState('');
   const [horario, setHorario] = useState('');
   const [duracao, setDuracao] = useState(60);
@@ -321,18 +324,58 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     validarDisponibilidade();
   }, [isOpen, dataIso, horario, duracao, tipoOs, item, boxId, tiposOsList]);
 
+  const handleAdicionarItem = () => {
+    if (!tipoTemporario || !itemTemporario) {
+      alert('Selecione um tipo e um item');
+      return;
+    }
+
+    const tipoSelecionado = tiposOsList.find(t => t.id === tipoTemporario);
+    const itemSelecionado = tipoSelecionado?.itens.find(i => i.id === itemTemporario);
+
+    if (!tipoSelecionado || !itemSelecionado) {
+      alert('Tipo ou item não encontrado');
+      return;
+    }
+
+    // Verificar se o item já foi adicionado
+    const jaAdicionado = tiposItens.some(
+      ti => ti.tipoId === tipoTemporario && ti.itemId === itemTemporario
+    );
+
+    if (jaAdicionado) {
+      alert('Este item já foi adicionado');
+      return;
+    }
+
+    setTiposItens([...tiposItens, {
+      tipoId: tipoTemporario,
+      tipoNome: tipoSelecionado.nome,
+      itemId: itemTemporario,
+      itemNome: itemSelecionado.nome,
+      preco: itemSelecionado.preco
+    }]);
+
+    setTipoTemporario('');
+    setItemTemporario('');
+  };
+
+  const handleRemoverItem = (index: number) => {
+    setTiposItens(tiposItens.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     traceAgendar('quick-modal:submit-start', {
-      tipoOs,
-      item,
+      tiposItens: tiposItens.length,
       dataIso,
       horario,
       hasBox: Boolean(boxId),
     });
 
-    if (!dataIso || !horario || !tipoOs) {
+    if (!dataIso || !horario || tiposItens.length === 0 || !responsavel) {
       traceAgendar('quick-modal:submit-invalid');
+      setErroValidacao('Preencha todos os campos obrigatórios (selecione pelo menos um tipo/item e responsável)');
       return;
     }
 
@@ -364,20 +407,22 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     const titulo = `${ano} ${fabricanteNome} - ${modeloNome}`;
 
     try {
-      // Salvar agendamento na API
+      // Salvar agendamentos na API para cada tipo/item selecionado
       const dataAgendamentoISO = new Date(dataIso + 'T' + horario + ':00.000Z').toISOString();
       
-      const novoAgendamentoAPI = await agendamentoServiceAPI.create({
-        clienteId: cliente.id,
-        responsavelId: responsavel || undefined,
-        dataAgendamento: dataAgendamentoISO,
-        horarioAgendamento: horario,
-        tipoAgendamento: itemSelecionado?.nome || tipoSelecionado?.nome || 'Serviço',
-        descricaoServico: `${titulo} - ${cliente.placaChassi || cliente.placa || 'SEM PLACA'}`,
-      });
+      for (const tipoItem of tiposItens) {
+        const novoAgendamentoAPI = await agendamentoServiceAPI.create({
+          clienteId: cliente.id,
+          responsavelId: responsavel,
+          dataAgendamento: dataAgendamentoISO,
+          horarioAgendamento: horario,
+          tipoAgendamento: `${tipoItem.tipoNome} - ${tipoItem.itemNome}`,
+          descricaoServico: `${titulo} - ${cliente.placaChassi || cliente.placa || 'SEM PLACA'}`,
+        });
 
-      if (novoAgendamentoAPI) {
-        traceAgendar('quick-modal:api-success', { id: novoAgendamentoAPI.id });
+        if (novoAgendamentoAPI) {
+          traceAgendar('quick-modal:api-success', { id: novoAgendamentoAPI.id });
+        }
       }
     } catch (error) {
       console.error('Erro ao salvar agendamento na API:', error);
@@ -386,44 +431,49 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       });
     }
 
-    // Também salvar no localStorage para compatibilidade
-    const novoAgendamento = addAgendamento({
-      titulo,
-      placa: cliente.placaChassi || cliente.placa || 'SEM-PLACA',
-      responsavel: responsavel || 'Atendente',
-      cliente: cliente.nome || cliente.nomeCliente || 'Cliente',
-      telefone: cliente.telefone || '',
-      tipo: itemSelecionado?.nome || tipoSelecionado?.nome || 'Serviço',
-      tag: origemPedido,
-      data: dataCurta,
-      horario,
-      duracaoEstimada: duracao,
-      boxId: boxId || undefined,
-      boxNome: boxSelecionado?.nome || undefined,
-      clienteId: cliente.id,
+    // Também salvar no localStorage para compatibilidade (para cada item)
+    for (const tipoItem of tiposItens) {
+      const novoAgendamento = addAgendamento({
+        titulo,
+        placa: cliente.placaChassi || cliente.placa || 'SEM-PLACA',
+        responsavel: responsavel || 'Atendente',
+        cliente: cliente.nome || cliente.nomeCliente || 'Cliente',
+        telefone: cliente.telefone || '',
+        tipo: `${tipoItem.tipoNome} - ${tipoItem.itemNome}`,
+        tag: origemPedido,
+        data: dataCurta,
+        horario,
+        duracaoEstimada: duracao,
+        boxId: boxId || undefined,
+        boxNome: boxId ? boxes.find(b => b.id === boxId)?.nome : undefined,
+        clienteId: cliente.id,
         formaPagamento: formaPagamento || undefined,
         meioPagamento: meioPagamento || undefined,
-    });
-    traceAgendar('quick-modal:agendamento-created', { id: novoAgendamento.id });
-
-    // Criar ocupação de box se selecionado
-    if (boxId && boxSelecionado) {
-      const horaFim = calcularHoraFim(horario, duracao);
-      
-      addOcupacao({
-        boxId,
-        boxNome: boxSelecionado.nome,
-        referencia: novoAgendamento.id,
-        tipoReferencia: 'agendamento',
-        cliente: cliente.nome || cliente.nomeCliente || 'Cliente',
-        veiculo: titulo,
-        dataInicio: dataCompleta,
-        horaInicio: horario,
-        dataFim: dataCompleta,
-        horaFim,
-        status: 'agendado',
       });
-      traceAgendar('quick-modal:ocupacao-created', { boxId });
+      traceAgendar('quick-modal:agendamento-created', { id: novoAgendamento.id });
+
+      // Criar ocupação de box se selecionado
+      if (boxId) {
+        const boxSelecionado = boxes.find(b => b.id === boxId);
+        if (boxSelecionado) {
+          const horaFim = calcularHoraFim(horario, duracao);
+          
+          addOcupacao({
+            boxId,
+            boxNome: boxSelecionado.nome,
+            referencia: novoAgendamento.id,
+            tipoReferencia: 'agendamento',
+            cliente: cliente.nome || cliente.nomeCliente || 'Cliente',
+            veiculo: titulo,
+            dataInicio: dataCompleta,
+            horaInicio: horario,
+            dataFim: dataCompleta,
+            horaFim,
+            status: 'agendado',
+          });
+          traceAgendar('quick-modal:ocupacao-created', { boxId });
+        }
+      }
     }
 
     // Notificar
@@ -441,6 +491,9 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     // Limpar e fechar
     setTipoOs('');
     setItem('');
+    setTiposItens([]);
+    setTipoTemporario('');
+    setItemTemporario('');
     setDataIso(getBrasiliaTodayISO());
     setHorario('');
     setDuracao(60);
@@ -454,6 +507,9 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     traceAgendar('quick-modal:close-click');
     setTipoOs('');
     setItem('');
+    setTiposItens([]);
+    setTipoTemporario('');
+    setItemTemporario('');
     setDataIso(getBrasiliaTodayISO());
     setHorario('');
     setDuracao(60);
@@ -509,23 +565,77 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
 
           <Select
             label="Tipo de OS"
-            value={tipoOs}
-            onChange={(val) => { setTipoOs(val); setItem(''); }}
+            value={tipoTemporario}
+            onChange={(val) => { setTipoTemporario(val); setItemTemporario(''); }}
             options={tiposOsList.map(t => ({ value: t.id, label: t.nome }))}
-            required
           />
 
-          {itensDisponiveis.length > 0 && (
+          {tipoTemporario && (
             <Select
               label="Item"
-              value={item}
-              onChange={setItem}
-              options={itensDisponiveis.map(i => ({ 
-                value: i.id, 
-                label: `${i.nome} (${i.tipo === 'servico' ? 'Serviço' : 'Produto'})` 
-              }))}
-              required
+              value={itemTemporario}
+              onChange={setItemTemporario}
+              options={tiposOsList
+                .find(t => t.id === tipoTemporario)
+                ?.itens.map(i => ({ 
+                  value: i.id, 
+                  label: `${i.nome} - R$ ${i.preco.toFixed(2)} (${i.tipo === 'servico' ? 'Serviço' : 'Produto'})` 
+                })) || []}
             />
+          )}
+
+          {tipoTemporario && itemTemporario && (
+            <button
+              type="button"
+              onClick={handleAdicionarItem}
+              className="w-full px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors text-sm font-semibold"
+            >
+              ➕ Adicionar Tipo/Item
+            </button>
+          )}
+
+          {/* Lista de Tipos/Itens Selecionados */}
+          {tiposItens.length > 0 && (
+            <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">Tipos/Itens Selecionados</h4>
+              <div className="space-y-2">
+                {tiposItens.map((tipoItem, index) => (
+                  <div key={index} className="flex items-center justify-between bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {tipoItem.tipoNome} - {tipoItem.itemNome}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Preço: <span className="font-semibold text-green-600 dark:text-green-400">R$ {tipoItem.preco.toFixed(2)}</span>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoverItem(index)}
+                      className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
+                    >
+                      ✕ Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Total de Itens: <span className="text-blue-600 dark:text-blue-400">{tiposItens.length}</span>
+                </p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Soma dos Preços: <span className="text-green-600 dark:text-green-400">R$ {tiposItens.reduce((sum, item) => sum + item.preco, 0).toFixed(2)}</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {tiposItens.length === 0 && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                ⚠️ Selecione pelo menos um tipo/item para continuar
+              </p>
+            </div>
           )}
 
           <Select

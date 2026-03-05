@@ -17,6 +17,7 @@ export default function Page() {
   const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [isCreating, setIsCreating] = useState(false);
 
   const carregarClientes = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
     const silent = options?.silent ?? false;
@@ -125,6 +126,16 @@ export default function Page() {
     }
     setIsModalOpen(false);
     setEditingCompleto(undefined);
+    setIsCreating(false);
+  };
+
+  const handleOpenModal = () => {
+    setIsCreating(true);
+    setTimeout(() => {
+      setEditingCompleto(undefined);
+      setIsModalOpen(true);
+      setIsCreating(false);
+    }, 200);
   };
 
   return (
@@ -140,9 +151,18 @@ export default function Page() {
           <Button
             size="sm"
             variant="primary"
-            onClick={() => { setEditingCompleto(undefined); setIsModalOpen(true); }}
+            onClick={handleOpenModal}
+            disabled={isCreating}
+            className={isCreating ? 'opacity-70 cursor-not-allowed' : ''}
           >
-            Novo Formulário
+            {isCreating ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                Abrindo...
+              </span>
+            ) : (
+              'Novo Formulário'
+            )}
           </Button>
         </div>
       </header>
@@ -181,6 +201,7 @@ export default function Page() {
           <ClienteTable
             clientes={clientesFiltrados}
             onDelete={handleDelete}
+            deletingIds={deletingIds}
           />
         )}
       </section>

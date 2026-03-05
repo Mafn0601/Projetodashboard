@@ -192,13 +192,14 @@ export default function AgendaOrcamentoModal({
 
       // Criar agendamento via API
       console.log('📤 Criando agendamento via API...');
+      const dataAgendamentoISO = new Date(dataIso + 'T' + horario + ':00.000Z').toISOString();
       const novoAgendamento = await agendamentoServiceAPI.create({
         clienteId: dadosOrcamento.clienteId,
         veiculoId: dadosOrcamento.veiculoId, // Vincular veículo se disponível
         responsavelId: dadosOrcamento.responsavelId,
         tipoOSId: dadosOrcamento.tipoOsId,
         itemOSId: dadosOrcamento.itemId,
-        dataAgendamento: dataIso, // ISO date string
+        dataAgendamento: dataAgendamentoISO,
         horarioAgendamento: horario,
         tipoAgendamento: dadosOrcamento.tipoOsNome,
         descricaoServico: `${dadosOrcamento.veiculo} - ${dadosOrcamento.nomeCliente}`,

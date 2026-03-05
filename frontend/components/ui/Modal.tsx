@@ -26,6 +26,13 @@ export function Modal({
 }: ModalProps) {
   if (!open) return null;
 
+  // Debug: Log quando modal abre
+  React.useEffect(() => {
+    if (open) {
+      console.log('🔍 Modal aberto - showFooter:', showFooter, 'title:', title);
+    }
+  }, [open, showFooter, title]);
+
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();

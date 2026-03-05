@@ -356,6 +356,7 @@ export default function BoxPage() {
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editandoId ? "Editar Box" : "Novo Box"}
+        showFooter={false}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input

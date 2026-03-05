@@ -10,6 +10,7 @@ import * as clienteService from '@/services/clienteService';
 import { clienteServiceAPI } from '@/services/clienteServiceAPI';
 import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
+import tipoOSServiceAPI from '@/services/tipoOSServiceAPI';
 import { veiculoServiceAPI } from '@/services/veiculoServiceAPI';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { addAgendamento } from '@/services/agendaService';
@@ -26,7 +27,7 @@ type TipoOSItem = {
   nome: string;
   preco: number;
   desconto: number;
-  tipo: 'servico' | 'produto';
+  tipo: 'servico' | 'produto' | 'SERVICO' | 'PRODUTO';
   duracao: number;
 };
 
@@ -57,6 +58,15 @@ type ClienteFormProps = {
   initial?: clienteService.ClienteCompleto;
   onSaved: (cliente?: clienteService.ClienteCompleto) => void;
   onCancel?: () => void;
+};
+
+type AgendamentoSelecionado = {
+  tipoOSId: string;
+  itemOSId: string;
+  tipoNome: string;
+  itemNome: string;
+  itemTipo: string;
+  duracao?: number;
 };
 
 function generateId(prefix: string) {
@@ -112,6 +122,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
   const [tiposOs, setTiposOs] = useState<TipoOS[]>([]);
   const [tiposOsOptions, setTiposOsOptions] = useState<SelectOption[]>([]);
   const [tipoItemOptions, setTipoItemOptions] = useState<SelectOption[]>([]);
+  const [agendamentosSelecionados, setAgendamentosSelecionados] = useState<AgendamentoSelecionado[]>([]);
 
   // Loading State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -201,6 +212,17 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       });
     }
     setErrors({});
+    setAgendamentosSelecionados(
+      initial?.tipoAgendamento && initial?.tipo
+        ? [{
+            tipoOSId: initial.tipoAgendamento,
+            itemOSId: initial.tipo,
+            tipoNome: initial.tipoAgendamento,
+            itemNome: initial.tipo,
+            itemTipo: '-',
+          }]
+        : []
+    );
   }, [initial]);
 
   /**
@@ -228,8 +250,15 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       setParceiroOptions(options);
       setEquipes(equipesData as unknown as Equipe[]);
 
-      // Carregar Tipos de OS do localStorage (temporário até ter API)
-      const tiposOsData = readArray<TipoOS>('tiposOs');
+      // Carregar Tipos de OS da API (com fallback)
+      const tiposOsApi = await tipoOSServiceAPI.findAll({ preferCache: true });
+      const tiposOsData = (tiposOsApi as unknown as TipoOS[]).map((tipo) => ({
+        ...tipo,
+        itens: (tipo.itens || []).map((item) => ({
+          ...item,
+          tipo: item.tipo === 'SERVICO' ? 'servico' : item.tipo === 'PRODUTO' ? 'produto' : item.tipo,
+        })),
+      }));
       setTiposOs(tiposOsData);
       const tiposOsOpts: SelectOption[] = tiposOsData.map((t) => ({
         value: t.id,
@@ -329,6 +358,50 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
     setResponsavelOptions(options);
   };
 
+  const adicionarTipoItemSelecionado = () => {
+    if (!formData.tipoAgendamento || !formData.tipo) {
+      setErrors((prev) => ({
+        ...prev,
+        tipoAgendamento: !formData.tipoAgendamento ? 'Selecione o tipo de agendamento' : prev.tipoAgendamento,
+        tipo: !formData.tipo ? 'Selecione o item' : prev.tipo,
+      }));
+      return;
+    }
+
+    const tipoSelecionado = tiposOs.find((t) => t.id === formData.tipoAgendamento);
+    const itemSelecionado = tipoSelecionado?.itens?.find((item) => item.id === formData.tipo);
+
+    if (!tipoSelecionado || !itemSelecionado) return;
+
+    setAgendamentosSelecionados((prev) => {
+      const jaExiste = prev.some(
+        (item) => item.tipoOSId === tipoSelecionado.id && item.itemOSId === itemSelecionado.id
+      );
+      if (jaExiste) return prev;
+
+      return [
+        ...prev,
+        {
+          tipoOSId: tipoSelecionado.id,
+          itemOSId: itemSelecionado.id,
+          tipoNome: tipoSelecionado.nome,
+          itemNome: itemSelecionado.nome,
+          itemTipo:
+            itemSelecionado.tipo === 'servico' || itemSelecionado.tipo === 'SERVICO'
+              ? 'Serviço'
+              : 'Produto',
+          duracao: itemSelecionado.duracao,
+        },
+      ];
+    });
+  };
+
+  const removerTipoItemSelecionado = (tipoOSId: string, itemOSId: string) => {
+    setAgendamentosSelecionados((prev) =>
+      prev.filter((item) => !(item.tipoOSId === tipoOSId && item.itemOSId === itemOSId))
+    );
+  };
+
 
 
   /**
@@ -407,9 +480,32 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
     setIsSubmitting(true);
 
     try {
+      const tipoPadrao = tiposOs.find((t) => t.id === formData.tipoAgendamento);
+      const itemPadrao = tipoPadrao?.itens?.find((item) => item.id === formData.tipo);
+      const paresAgendamento =
+        agendamentosSelecionados.length > 0
+          ? agendamentosSelecionados
+          : formData.tipoAgendamento && formData.tipo
+            ? [{
+                tipoOSId: formData.tipoAgendamento,
+                itemOSId: formData.tipo,
+                tipoNome: tipoPadrao?.nome || formData.tipoAgendamento,
+                itemNome: itemPadrao?.nome || formData.tipo,
+                itemTipo:
+                  itemPadrao?.tipo === 'servico' || itemPadrao?.tipo === 'SERVICO' ? 'Serviço' : 'Produto',
+                duracao: itemPadrao?.duracao,
+              }]
+            : [];
+
+      const primeiroPar = paresAgendamento[0];
+
       const cliente: clienteService.ClienteCompleto = {
         id: initial?.id || generateId('cli'),
         ...formData,
+        tipoAgendamento: primeiroPar?.tipoOSId || formData.tipoAgendamento,
+        tipo: primeiroPar?.itemOSId || formData.tipo,
+        formaPagamento: formData.meioPagamento,
+        meioPagamento: formData.formaPagamento,
         // garantir campos principais preenchidos corretamente
         nome: formData.nomeCliente,
         email: formData.emailCliente,
@@ -450,42 +546,54 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
           }
         }
 
-        if (clienteId && formData.dataAgendamento && horarioNormalizado && formData.tipoAgendamento) {
+        if (clienteId && formData.dataAgendamento && horarioNormalizado && paresAgendamento.length > 0) {
           const responsavelId = isUuid(user?.id) ? user?.id : (isUuid(formData.responsavel) ? formData.responsavel : undefined);
           const parceiroId = isUuid(formData.parceiro) ? formData.parceiro : undefined;
 
           if (responsavelId) {
             const dataAgendamentoISO = `${formData.dataAgendamento}T${horarioNormalizado}:00.000Z`;
-            await agendamentoServiceAPI.create({
-              clienteId,
-              responsavelId,
-              parceiroId: parceiroId || undefined,
-              dataAgendamento: dataAgendamentoISO,
-              horarioAgendamento: horarioNormalizado,
-              tipoAgendamento: formData.tipoAgendamento,
-              descricaoServico: formData.descricaoServico || undefined,
-            });
-          }
 
-          addAgendamento({
-            titulo: `${String(new Date().getFullYear()).slice(-2)} ${formData.fabricante || 'VEÍCULO'} - ${formData.modelo || 'MODELO'}`,
-            placa: placa || 'SEM-PLACA',
-            responsavel: formData.responsavel || user?.name || 'Responsável',
-            cliente: formData.nomeCliente || formData.nome || 'Cliente',
-            telefone: formData.telefone || '',
-            tipo: formData.tipo || formData.tipoAgendamento,
-            tag: formData.origemPedido,
-            horario: horarioNormalizado,
-            data: formData.dataAgendamento.split('-').reverse().slice(0, 2).join('/'),
-            clienteId,
-            formaPagamento: formData.formaPagamento || undefined,
-            meioPagamento: formData.meioPagamento || undefined,
-          });
+            for (const itemSelecionado of paresAgendamento) {
+              await agendamentoServiceAPI.create({
+                clienteId,
+                responsavelId,
+                parceiroId: parceiroId || undefined,
+                dataAgendamento: dataAgendamentoISO,
+                horarioAgendamento: horarioNormalizado,
+                tipoAgendamento: itemSelecionado.tipoOSId,
+                tipoOSId: itemSelecionado.tipoOSId,
+                itemOSId: itemSelecionado.itemOSId,
+                duracao: itemSelecionado.duracao,
+                formaPagamento: formData.meioPagamento || undefined,
+                meioPagamento: formData.formaPagamento || undefined,
+                descricaoServico: formData.descricaoServico || undefined,
+              });
+
+              addAgendamento({
+                titulo: `${String(new Date().getFullYear()).slice(-2)} ${formData.fabricante || 'VEÍCULO'} - ${formData.modelo || 'MODELO'}`,
+                placa: placa || 'SEM-PLACA',
+                responsavel: formData.responsavel || user?.name || 'Responsável',
+                cliente: formData.nomeCliente || formData.nome || 'Cliente',
+                telefone: formData.telefone || '',
+                tipo: `${itemSelecionado.tipoNome} • ${itemSelecionado.itemNome}`,
+                tag: formData.origemPedido,
+                horario: horarioNormalizado,
+                data: formData.dataAgendamento.split('-').reverse().slice(0, 2).join('/'),
+                clienteId,
+                formaPagamento: formData.meioPagamento || undefined,
+                meioPagamento: formData.formaPagamento || undefined,
+              });
+            }
+          }
         }
 
         const clienteComDados: clienteService.ClienteCompleto = {
           ...resultado,
           ...formData,
+          tipoAgendamento: primeiroPar?.tipoOSId || formData.tipoAgendamento,
+          tipo: primeiroPar?.itemOSId || formData.tipo,
+          formaPagamento: formData.meioPagamento,
+          meioPagamento: formData.formaPagamento,
           nome: formData.nomeCliente,
           email: formData.emailCliente,
         };
@@ -600,6 +708,44 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
             required
           />
 
+          <div className="md:col-span-2 flex justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={adicionarTipoItemSelecionado}
+              disabled={!formData.tipoAgendamento || !formData.tipo}
+            >
+              + Adicionar Tipo/Item
+            </Button>
+          </div>
+
+          <div className="md:col-span-2 space-y-2">
+            {agendamentosSelecionados.length > 0 ? (
+              agendamentosSelecionados.map((item) => (
+                <div
+                  key={`${item.tipoOSId}_${item.itemOSId}`}
+                  className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2"
+                >
+                  <span className="text-sm text-slate-900 dark:text-slate-100">
+                    {item.tipoNome} • {item.itemNome} ({item.itemTipo})
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="danger"
+                    onClick={() => removerTipoItemSelecionado(item.tipoOSId, item.itemOSId)}
+                  >
+                    Remover
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-700 dark:text-slate-400">
+                Selecione e adicione 1 ou mais combinações de Tipo de Agendamento e Item.
+              </p>
+            )}
+          </div>
+
           <Select
             label="Origem do Pedido"
             options={[
@@ -709,21 +855,6 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações de Pagamento</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
-            label="Forma de Pagamento"
-            options={[
-              { value: 'A_VISTA', label: 'A VISTA' },
-              { value: '2_VEZES', label: '2 VEZES' },
-              { value: '3_VEZES', label: '3 VEZES' },
-              { value: '4_VEZES', label: '4 VEZES' },
-              { value: '5_VEZES', label: '5 VEZES' },
-              { value: '6_VEZES', label: '6 VEZES' },
-            ]}
-            value={formData.formaPagamento}
-            onChange={(value) => handleFieldChange('formaPagamento', value)}
-            placeholder="Selecione a forma de pagamento"
-          />
-
-          <Select
             label="Meio de Pagamento"
             options={[
               { value: 'TRANSFERENCIA_TED', label: 'TRANSFERENCIA/TED' },
@@ -739,6 +870,21 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
             value={formData.meioPagamento}
             onChange={(value) => handleFieldChange('meioPagamento', value)}
             placeholder="Selecione o meio de pagamento"
+          />
+
+          <Select
+            label="Forma de Pagamento"
+            options={[
+              { value: 'A_VISTA', label: 'A VISTA' },
+              { value: '2_VEZES', label: '2 VEZES' },
+              { value: '3_VEZES', label: '3 VEZES' },
+              { value: '4_VEZES', label: '4 VEZES' },
+              { value: '5_VEZES', label: '5 VEZES' },
+              { value: '6_VEZES', label: '6 VEZES' },
+            ]}
+            value={formData.formaPagamento}
+            onChange={(value) => handleFieldChange('formaPagamento', value)}
+            placeholder="Selecione a forma de pagamento"
           />
         </div>
       </div>

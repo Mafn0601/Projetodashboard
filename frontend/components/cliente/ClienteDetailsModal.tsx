@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { readArray } from '@/lib/storage';
 import AgendaQuickModal from '@/components/agenda/AgendaQuickModal';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
+import parceiroServiceAPI from '@/services/parceiroServiceAPI';
+import equipeServiceAPI from '@/services/equipeServiceAPI';
 import {
   mockFabricantes,
   mockModelos,
@@ -102,57 +104,69 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
 
   useEffect(() => {
     if (isOpen) {
-      try {
-        const parceirosCadastrados = readArray<Parceiro>('parceiros');
-        setParceiros(parceirosCadastrados);
+      const carregarDados = async () => {
+        try {
+          const [parceirosApi, equipesApi] = await Promise.all([
+            parceiroServiceAPI.findAll({ preferCache: true }),
+            equipeServiceAPI.findAll(undefined, undefined, { preferCache: true }),
+          ]);
 
-        const equipasData = readArray<Equipe>('equipes');
-        setEquipes(equipasData);
+          setParceiros((parceirosApi as Parceiro[]) || readArray<Parceiro>('parceiros'));
+          setEquipes((equipesApi as Equipe[]) || readArray<Equipe>('equipes'));
 
-        const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
-        setTiposOs(tiposOsCadastrados);
+          const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
+          setTiposOs(tiposOsCadastrados);
 
-        if (cliente?.id) {
-          agendamentoServiceAPI.findAll({ clienteId: cliente.id, take: 1 }).then((agendamentos) => {
+          if (cliente?.id) {
+            const agendamentos = await agendamentoServiceAPI.findAll({ clienteId: cliente.id, take: 1 });
             setUltimoAgendamento(agendamentos?.[0] || null);
-          });
+          }
+        } catch (e) {
+          console.error('Erro ao carregar dados do cliente:', e);
         }
-      } catch (e) {
-        console.error('Erro ao carregar dados do cliente:', e);
-      }
+      };
+
+      carregarDados();
     }
   }, [isOpen, cliente?.id]);
 
-  const obterLabelParceiro = (parcId: string | undefined): string => {
-    if (!parcId) {
-      if (ultimoAgendamento?.parceiro?.nome) {
-        return ultimoAgendamento.parceiro.nome;
-      }
-      return '-';
+  const extrairIdOuNome = (valor: unknown): { id?: string; nome?: string } => {
+    if (!valor) return {};
+    if (typeof valor === 'string') return { id: valor };
+    if (typeof valor === 'object') {
+      const obj = valor as { id?: unknown; nome?: unknown };
+      return {
+        id: typeof obj.id === 'string' ? obj.id : undefined,
+        nome: typeof obj.nome === 'string' ? obj.nome : undefined,
+      };
     }
-    const parceiro = parceiros.find(p => p.id === parcId);
-    if (parceiro) return parceiro.nome;
-    // Se não encontrar em parceiros, buscar no último agendamento
+    return {};
+  };
+
+  const obterLabelParceiro = (parceiroValor: unknown): string => {
+    const { id, nome } = extrairIdOuNome(parceiroValor);
+    if (nome) return nome;
+    if (id) {
+      const parceiro = parceiros.find(p => p.id === id);
+      if (parceiro) return parceiro.nome;
+    }
     if (ultimoAgendamento?.parceiro?.nome) {
       return ultimoAgendamento.parceiro.nome;
     }
-    return parcId;
+    return '-';
   };
 
-  const obterLabelResponsavel = (respId: string | undefined): string => {
-    if (!respId) {
-      if (ultimoAgendamento?.responsavel?.nome) {
-        return ultimoAgendamento.responsavel.nome;
-      }
-      return '-';
+  const obterLabelResponsavel = (responsavelValor: unknown): string => {
+    const { id, nome } = extrairIdOuNome(responsavelValor);
+    if (nome) return nome;
+    if (id) {
+      const equipe = equipes.find(e => e.id === id);
+      if (equipe) return equipe.nome || equipe.login;
     }
-    const equipe = equipes.find(e => e.id === respId);
-    if (equipe) return equipe.nome || equipe.login;
-    // Se não encontrar em equipes, buscar no último agendamento
     if (ultimoAgendamento?.responsavel?.nome) {
       return ultimoAgendamento.responsavel.nome;
     }
-    return respId;
+    return '-';
   };
 
   const obterLabelTipoAgendamento = (tipoId: string | undefined): string => {
@@ -218,11 +232,11 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Responsável</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelResponsavel(cliente.responsavel)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelResponsavel((cliente as any).responsavelId ?? cliente.responsavel)}</p>
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Parceiro</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelParceiro(cliente.parceiro)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelParceiro((cliente as any).parceiroId ?? cliente.parceiro)}</p>
               </div>
             </div>
           </div>

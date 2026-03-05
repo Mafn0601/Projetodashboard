@@ -27,6 +27,12 @@ export default function Page() {
   const [itemTipo, setItemTipo] = useState<'SERVICO' | 'PRODUTO'>('SERVICO');
   const [itemDuracao, setItemDuracao] = useState('45');
 
+  // Estados de loading
+  const [salvandoTipo, setSalvandoTipo] = useState(false);
+  const [salvandoItem, setSalvandoItem] = useState(false);
+  const [deletandoId, setDeletandoId] = useState<string | null>(null);
+  const [deletandoItemId, setDeletandoItemId] = useState<string | null>(null);
+
   // Carregar dados com cache
   const carregarTipos = async (options?: { forceRefresh?: boolean }) => {
     try {
@@ -74,6 +80,7 @@ export default function Page() {
     }
 
     try {
+      setSalvandoTipo(true);
       if (editandoId) {
         await tipoOSServiceAPI.update(editandoId, { nome, descricao });
       } else {
@@ -83,15 +90,20 @@ export default function Page() {
       fecharModal();
     } catch (error: any) {
       alert(error.message || 'Erro ao salvar tipo de OS');
+    } finally {
+      setSalvandoTipo(false);
     }
   };
 
   const deletarTipo = async (id: string) => {
     try {
+      setDeletandoId(id);
       await tipoOSServiceAPI.delete(id);
       await carregarTipos({ forceRefresh: true });
     } catch (error: any) {
       alert(error.message || 'Erro ao deletar tipo de OS');
+    } finally {
+      setDeletandoId(null);
     }
   };
 
@@ -134,6 +146,7 @@ export default function Page() {
     }
 
     try {
+      setSalvandoItem(true);
       const data = {
         tipoOSId: tipoSelecionadoId,
         nome: itemNome,
@@ -159,15 +172,20 @@ export default function Page() {
       fecharModalItem();
     } catch (error: any) {
       alert(error.message || 'Erro ao salvar item');
+    } finally {
+      setSalvandoItem(false);
     }
   };
 
   const deletarItem = async (itemId: string) => {
     try {
+      setDeletandoItemId(itemId);
       await tipoOSServiceAPI.deleteItem(itemId);
       await carregarTipos({ forceRefresh: true });
     } catch (error: any) {
       alert(error.message || 'Erro ao deletar item');
+    } finally {
+      setDeletandoItemId(null);
     }
   };
 
@@ -248,6 +266,7 @@ export default function Page() {
                             }}
                             variant="outline"
                             size="sm"
+                            disabled={deletandoId === tipo.id}
                           >
                             Editar
                           </Button>
@@ -258,8 +277,14 @@ export default function Page() {
                             }}
                             variant="danger"
                             size="sm"
+                            disabled={deletandoId === tipo.id}
                           >
-                            Deletar
+                            {deletandoId === tipo.id ? (
+                              <span className="flex items-center gap-2">
+                                <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                Deletando...
+                              </span>
+                            ) : 'Deletar'}
                           </Button>
                         </div>
                       </td>
@@ -443,6 +468,7 @@ export default function Page() {
                             onClick={() => abrirModalItem(editandoId, item)}
                             variant="outline"
                             size="sm"
+                            disabled={deletandoItemId === item.id}
                           >
                             ✏️
                           </Button>
@@ -450,8 +476,11 @@ export default function Page() {
                             onClick={() => deletarItem(item.id)}
                             variant="danger"
                             size="sm"
+                            disabled={deletandoItemId === item.id}
                           >
-                            ✕
+                            {deletandoItemId === item.id ? (
+                              <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            ) : '✕'}
                           </Button>
                         </div>
                       </div>
@@ -470,11 +499,27 @@ export default function Page() {
 
           {/* Botões de ação */}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="secondary" onClick={fecharModal} size="sm" className="min-w-[120px]">
+            <Button 
+              variant="secondary" 
+              onClick={fecharModal} 
+              size="sm" 
+              className="min-w-[120px]"
+              disabled={salvandoTipo}
+            >
               Cancelar
             </Button>
-            <Button onClick={salvarTipo} size="sm" className="min-w-[120px]">
-              {editandoId ? 'Atualizar' : 'Criar'}
+            <Button 
+              onClick={salvarTipo} 
+              size="sm" 
+              className="min-w-[120px]"
+              disabled={salvandoTipo}
+            >
+              {salvandoTipo ? (
+                <span className="flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Salvando...
+                </span>
+              ) : (editandoId ? 'Atualizar' : 'Criar')}
             </Button>
           </div>
         </div>
@@ -536,11 +581,23 @@ export default function Page() {
             />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <Button variant="secondary" onClick={fecharModalItem}>
+            <Button 
+              variant="secondary" 
+              onClick={fecharModalItem}
+              disabled={salvandoItem}
+            >
               Cancelar
             </Button>
-            <Button onClick={salvarItem}>
-              {itemEditando ? 'Salvar Alterações' : 'Adicionar Item'}
+            <Button 
+              onClick={salvarItem}
+              disabled={salvandoItem}
+            >
+              {salvandoItem ? (
+                <span className="flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Salvando...
+                </span>
+              ) : (itemEditando ? 'Salvar Alterações' : 'Adicionar Item')}
             </Button>
           </div>
         </div>

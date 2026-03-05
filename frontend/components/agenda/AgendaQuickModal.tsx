@@ -391,7 +391,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       titulo,
       placa: cliente.placaChassi || cliente.placa || 'SEM-PLACA',
       responsavel: responsavel || 'Atendente',
-      cliente: cliente.nomeCliente || 'Cliente',
+      cliente: cliente.nome || cliente.nomeCliente || 'Cliente',
       telefone: cliente.telefone || '',
       tipo: itemSelecionado?.nome || tipoSelecionado?.nome || 'Serviço',
       tag: origemPedido,
@@ -415,7 +415,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
         boxNome: boxSelecionado.nome,
         referencia: novoAgendamento.id,
         tipoReferencia: 'agendamento',
-        cliente: cliente.nomeCliente || 'Cliente',
+        cliente: cliente.nome || cliente.nomeCliente || 'Cliente',
         veiculo: titulo,
         dataInicio: dataCompleta,
         horaInicio: horario,
@@ -470,11 +470,11 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
           <div className="grid md:grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-xs text-slate-600 dark:text-slate-400">Nome</p>
-              <p className="text-slate-900 dark:text-slate-100 font-medium">{cliente.nomeCliente}</p>
+              <p className="text-slate-900 dark:text-slate-100 font-medium">{cliente?.nome || cliente?.nomeCliente || '-'}</p>
             </div>
             <div>
                 <p className="text-xs text-slate-600 dark:text-slate-400">Telefone</p>
-              <p className="text-slate-900 dark:text-slate-100">{cliente.telefone}</p>
+              <p className="text-slate-900 dark:text-slate-100">{cliente?.telefone || '-'}</p>
             </div>
           </div>
         </div>

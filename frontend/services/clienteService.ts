@@ -77,6 +77,7 @@ export type ClienteCompleto = {
   cor?: string;
   dataAgendamento?: string;
   horarioAgendamento?: string;
+  boxId?: string;
   descricaoServico?: string;
   formaPagamento?: string;
   meioPagamento?: string;

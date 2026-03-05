@@ -77,17 +77,17 @@ export function BoxTimeline({ box, ocupacoes, data }: Props) {
 
   return (
     <div className="border-2 border-slate-200 dark:border-slate-700/50 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm hover:shadow-md">
-      <div className="flex gap-2 items-stretch min-w-[760px]">
+      <div className="flex gap-1 items-stretch min-w-[720px]">
       {/* Label do Box com informações */}
       <div 
-        className="w-36 md:w-40 flex-shrink-0 px-3 md:px-4 py-3 flex flex-col justify-between text-white rounded-none border-r-2 border-slate-200 dark:border-slate-700"
+        className="w-32 flex-shrink-0 px-3 py-2 flex flex-col justify-between text-white rounded-none border-r-2 border-slate-200 dark:border-slate-700"
         style={{ backgroundColor: box.cor || '#6366f1' }}
       >
         <div>
-          <div className="font-bold text-sm md:text-base">{box.nome}</div>
-          <div className="text-xs md:text-sm opacity-90 mt-1">{box.parceiro}</div>
+          <div className="font-bold text-sm">{box.nome}</div>
+          <div className="text-xs opacity-90 mt-0.5">{box.parceiro}</div>
         </div>
-        <div className={`text-xs px-2 py-1 rounded text-center font-semibold ${
+        <div className={`text-[10px] px-1.5 py-0.5 rounded text-center font-semibold ${
           ocupacoes.length === 0 
             ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200' 
             : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
@@ -97,19 +97,19 @@ export function BoxTimeline({ box, ocupacoes, data }: Props) {
       </div>
 
       {/* Timeline */}
-      <div className="flex-1 flex gap-1 p-2 bg-white dark:bg-slate-900/40 min-w-[600px]">
+      <div className="flex-1 flex gap-0.5 p-1.5 bg-white dark:bg-slate-900/40 min-w-[560px]">
         {horas.map(hora => {
           const slots = calcularOcupacao(hora);
           
           return (
-            <div key={hora} className="w-12 flex-shrink-0 flex flex-col gap-0.5">
+            <div key={hora} className="w-11 flex-shrink-0 flex flex-col gap-0.5">
               {/* Label da hora */}
-              <div className="text-center text-xs font-semibold text-slate-700 dark:text-slate-400 h-5">
+              <div className="text-center text-[10px] font-semibold text-slate-700 dark:text-slate-400 h-4">
                 {String(hora).padStart(2, '0')}h
               </div>
               
               {/* Slots do horário */}
-              <div className="flex flex-col gap-1 flex-1">
+              <div className="flex flex-col gap-0.5 flex-1">
                 {slots.map((slot, idx) => {
                   if (slot.tipo === 'almoco') {
                     return (
@@ -171,17 +171,17 @@ export function TimelineHeader() {
   }, []);
 
   return (
-    <div className="flex gap-2 items-stretch mb-4 bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border-2 border-slate-300 dark:border-slate-700 min-w-[760px]">
+    <div className="flex gap-1 items-stretch mb-3 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-lg border-2 border-slate-300 dark:border-slate-700 min-w-[720px]">
       {/* Espaço para o label do box */}
-      <div className="w-36 md:w-40 flex-shrink-0 font-bold text-slate-800 dark:text-slate-300 flex items-center text-xs">
+      <div className="w-32 flex-shrink-0 font-bold text-slate-800 dark:text-slate-300 flex items-center text-xs">
         BOX
       </div>
       
       {/* Horas */}
-      <div className="flex-1 flex gap-1 p-1 min-w-[600px]">
+      <div className="flex-1 flex gap-0.5 p-0.5 min-w-[560px]">
         {horas.map(hora => (
-          <div key={hora} className="w-12 flex-shrink-0">
-            <div className="text-center text-xs font-bold text-slate-800 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-md py-1 px-0.5 border border-slate-300 dark:border-slate-600">
+          <div key={hora} className="w-11 flex-shrink-0">
+            <div className="text-center text-[10px] font-bold text-slate-800 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-md py-0.5 px-0.5 border border-slate-300 dark:border-slate-600">
               {String(hora).padStart(2, '0')}:00
             </div>
           </div>
@@ -194,8 +194,8 @@ export function TimelineHeader() {
 // Legenda
 export function TimelineLegend() {
   return (
-    <div className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900/50 dark:to-slate-800/50 rounded-lg p-4 border-2 border-blue-200 dark:border-blue-900/50 mt-6">
-      <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">📋 Legenda de Status</div>
+    <div className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900/50 dark:to-slate-800/50 rounded-lg p-3 border-2 border-blue-200 dark:border-blue-900/50 mt-4">
+      <div className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">📋 Legenda de Status</div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
         {/* Disponível */}
         <div className="flex items-center gap-3 p-2 bg-white dark:bg-slate-900/50 rounded-md border-2 border-emerald-400 dark:border-emerald-700">

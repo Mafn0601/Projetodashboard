@@ -52,15 +52,15 @@ export default function ClienteTable({ clientes, onDelete, deletingIds = new Set
                   </Button>
                   {isAdmin && (
                     <Button 
-                      size=\"sm\" 
-                      variant=\"danger\" 
+                      size="sm" 
+                      variant="danger" 
                       onClick={() => onDelete(c.id)}
                       disabled={deletingIds.has(c.id)}
                       className={deletingIds.has(c.id) ? 'opacity-70 cursor-not-allowed' : ''}
                     >
                       {deletingIds.has(c.id) ? (
-                        <span className=\"inline-flex items-center gap-2\">
-                          <span className=\"inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent\"></span>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
                           Deletando...
                         </span>
                       ) : (

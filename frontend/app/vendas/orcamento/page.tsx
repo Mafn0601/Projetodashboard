@@ -12,24 +12,11 @@ import { clienteServiceAPI } from '@/services/clienteServiceAPI';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { ordemServicoServiceAPI } from '@/services/ordemServicoServiceAPI';
 import { veiculoServiceAPI } from '@/services/veiculoServiceAPI';
-import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
-import { equipeServiceAPI } from '@/services/equipeServiceAPI';
+import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
+import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
 import { addStatusCardFromOrcamento } from '@/services/statusService';
 import { useRouter } from 'next/navigation';
 import AgendaOrcamentoModal from '@/components/agenda/AgendaOrcamentoModal';
-
-type Parceiro = {
-  id: string;
-  nome: string;
-  [key: string]: unknown;
-};
-
-type Equipe = {
-  id: string;
-  login: string;
-  parceiro: string;
-  [key: string]: unknown;
-};
 
 type Fabricante = {
   id: string;
@@ -74,8 +61,8 @@ type TipoOS = {
 export default function Page() {
   const router = useRouter();
   const [tiposOs, setTiposOs] = useState<TipoOS[]>([]);
-  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
-  const [equipes, setEquipes] = useState<Equipe[]>([]);
+  const [parceiros, setParceiros] = useState<ParceiroAPI[]>([]);
+  const [equipes, setEquipes] = useState<EquipeAPI[]>([]);
   const [fabricantes, setFabricantes] = useState<Fabricante[]>([]);
   const [modelos, setModelos] = useState<Modelo[]>([]);
   const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
@@ -236,8 +223,8 @@ export default function Page() {
         console.error('Erro ao carregar dados:', error);
         // Fallback para localStorage se API falhar
         const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
-        const parceirosCadastrados = readArray<Parceiro>('parceiros');
-        const equipesCadastradas = readArray<Equipe>('equipes');
+        const parceirosCadastrados = readArray<ParceiroAPI>('parceiros');
+        const equipesCadastradas = readArray<EquipeAPI>('equipes');
         
         const tiposOsMigrados = tiposOsCadastrados.map(tipo => ({
           ...tipo,
@@ -261,7 +248,7 @@ export default function Page() {
 
   // Atualizar responsáveis quando parceiro muda
   const atualizarResponsaveis = (parceiroId: string) => {
-    const equipasFiltradas = equipes.filter(e => e.parceiro === parceiroId);
+    const equipasFiltradas = equipes.filter(e => e.parceiroId === parceiroId);
     setResponsavelOptions(equipasFiltradas.map(e => ({
       value: e.id,
       label: e.login

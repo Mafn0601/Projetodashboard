@@ -768,7 +768,53 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         </div>
       </div>
 
-      {/* Seção 3: Tipo de OS */}
+      {/* Seção 3: Veículo */}
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações do Veículo</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Select
+            label="Fabricante"
+            options={mockFabricantes}
+            value={formData.fabricante}
+            onChange={(value) => handleFieldChange('fabricante', value)}
+            error={errors.fabricante || undefined}
+            placeholder="Selecione o fabricante"
+            required
+          />
+
+          <Select
+            label="Modelo"
+            options={modelosDisponiveis}
+            value={formData.modelo}
+            onChange={(value) => handleFieldChange('modelo', value)}
+            error={errors.modelo || undefined}
+            placeholder={formData.fabricante ? "Selecione o modelo" : "Selecione um fabricante para carregar os modelos"}
+            disabled={!formData.fabricante}
+            required
+          />
+
+          <MaskedInput
+            label="Placa/Chassi"
+            mask="placaChassi"
+            placeholder="ABC-1234 ou 9BWZZZ377VT004251"
+            value={formData.placaChassi}
+            onChange={(value) => handleFieldChange('placaChassi', value)}
+            error={errors.placaChassi || undefined}
+            required
+          />
+
+          <Input
+            label="Cor"
+            type="text"
+            placeholder="Ex: Branco, Preto, Prata"
+            value={formData.cor}
+            onChange={(e) => handleFieldChange('cor', e.target.value)}
+            error={errors.cor || undefined}
+          />
+        </div>
+      </div>
+
+      {/* Seção 4: Tipo de OS */}
       <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Serviços/Produtos</h3>
         <div className="space-y-4">
@@ -941,53 +987,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         </div>
       </div>
 
-      {/* Seção 4: Veículo */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações do Veículo</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="Fabricante"
-            options={mockFabricantes}
-            value={formData.fabricante}
-            onChange={(value) => handleFieldChange('fabricante', value)}
-            error={errors.fabricante || undefined}
-            placeholder="Selecione o fabricante"
-            required
-          />
-
-          <Select
-            label="Modelo"
-            options={modelosDisponiveis}
-            value={formData.modelo}
-            onChange={(value) => handleFieldChange('modelo', value)}
-            error={errors.modelo || undefined}
-            placeholder={formData.fabricante ? "Selecione o modelo" : "Selecione um fabricante para carregar os modelos"}
-            disabled={!formData.fabricante}
-            required
-          />
-
-          <MaskedInput
-            label="Placa/Chassi"
-            mask="placaChassi"
-            placeholder="ABC-1234 ou 9BWZZZ377VT004251"
-            value={formData.placaChassi}
-            onChange={(value) => handleFieldChange('placaChassi', value)}
-            error={errors.placaChassi || undefined}
-            required
-          />
-
-          <Input
-            label="Cor"
-            type="text"
-            placeholder="Ex: Branco, Preto, Prata"
-            value={formData.cor}
-            onChange={(e) => handleFieldChange('cor', e.target.value)}
-            error={errors.cor || undefined}
-          />
-        </div>
-      </div>
-
-      {/* Seção 6: Descrição */}
+      {/* Seção 5: Descrição */}
       <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Detalhes</h3>
         <div>

@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { readArray } from '@/lib/storage';
 import AgendaQuickModal from '@/components/agenda/AgendaQuickModal';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
-import parceiroServiceAPI from '@/services/parceiroServiceAPI';
-import equipeServiceAPI from '@/services/equipeServiceAPI';
+import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
+import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 import {
   mockFabricantes,
   mockModelos,

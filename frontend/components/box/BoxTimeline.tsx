@@ -76,7 +76,7 @@ export function BoxTimeline({ box, ocupacoes, data }: Props) {
   };
 
   return (
-    <div className="border-2 border-slate-200 dark:border-slate-700/50 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm hover:shadow-md">
+    <div className="w-max border-2 border-slate-200 dark:border-slate-700/50 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm hover:shadow-md">
       <div className="flex gap-2 items-stretch min-w-[800px]">
       {/* Label do Box com informações */}
       <div 
@@ -97,7 +97,7 @@ export function BoxTimeline({ box, ocupacoes, data }: Props) {
       </div>
 
       {/* Timeline */}
-      <div className="flex-1 flex gap-1 p-2.5 bg-white dark:bg-slate-900/40 min-w-[640px]">
+      <div className="flex gap-1 p-2.5 bg-white dark:bg-slate-900/40 min-w-[640px]">
         {horas.map(hora => {
           const slots = calcularOcupacao(hora);
           
@@ -171,14 +171,14 @@ export function TimelineHeader() {
   }, []);
 
   return (
-    <div className="flex gap-2 items-stretch mb-4 bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border-2 border-slate-300 dark:border-slate-700 min-w-[800px]">
+    <div className="w-max flex gap-2 items-stretch mb-4 bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border-2 border-slate-300 dark:border-slate-700 min-w-[800px]">
       {/* Espaço para o label do box */}
       <div className="w-40 flex-shrink-0 font-bold text-slate-800 dark:text-slate-300 flex items-center text-xs">
         BOX
       </div>
       
       {/* Horas */}
-      <div className="flex-1 flex gap-1 p-1 min-w-[640px]">
+      <div className="flex gap-1 p-1 min-w-[640px]">
         {horas.map(hora => (
           <div key={hora} className="w-12 flex-shrink-0">
             <div className="text-center text-xs font-bold text-slate-800 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-md py-1 px-0.5 border border-slate-300 dark:border-slate-600">

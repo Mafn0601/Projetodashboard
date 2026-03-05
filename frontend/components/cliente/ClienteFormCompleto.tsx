@@ -564,8 +564,6 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
                 tipoOSId: itemSelecionado.tipoOSId,
                 itemOSId: itemSelecionado.itemOSId,
                 duracao: itemSelecionado.duracao,
-                formaPagamento: formData.meioPagamento || undefined,
-                meioPagamento: formData.formaPagamento || undefined,
                 descricaoServico: formData.descricaoServico || undefined,
               });
 

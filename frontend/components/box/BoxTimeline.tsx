@@ -76,8 +76,8 @@ export function BoxTimeline({ box, ocupacoes, data }: Props) {
   };
 
   return (
-    <div className="w-max border-2 border-slate-200 dark:border-slate-700/50 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm hover:shadow-md">
-      <div className="flex gap-2 items-stretch min-w-[800px]">
+    <div className="w-full border-2 border-slate-200 dark:border-slate-700/50 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm hover:shadow-md">
+      <div className="flex gap-3 items-stretch w-full">
       {/* Label do Box com informações */}
       <div 
         className="w-40 flex-shrink-0 px-4 py-3 flex flex-col justify-between text-white rounded-none border-r-2 border-slate-200 dark:border-slate-700"
@@ -97,12 +97,12 @@ export function BoxTimeline({ box, ocupacoes, data }: Props) {
       </div>
 
       {/* Timeline */}
-      <div className="flex gap-1 p-2.5 bg-white dark:bg-slate-900/40 min-w-[640px]">
+      <div className="grid grid-cols-11 gap-2 p-2.5 bg-white dark:bg-slate-900/40 flex-1 min-w-0">
         {horas.map(hora => {
           const slots = calcularOcupacao(hora);
           
           return (
-            <div key={hora} className="w-12 flex-shrink-0 flex flex-col gap-0.5">
+            <div key={hora} className="min-w-0 flex flex-col gap-1">
               {/* Label da hora */}
               <div className="text-center text-xs font-semibold text-slate-700 dark:text-slate-400 h-5">
                 {String(hora).padStart(2, '0')}h
@@ -171,16 +171,16 @@ export function TimelineHeader() {
   }, []);
 
   return (
-    <div className="w-max flex gap-2 items-stretch mb-4 bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border-2 border-slate-300 dark:border-slate-700 min-w-[800px]">
+    <div className="w-full flex gap-3 items-stretch mb-4 bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border-2 border-slate-300 dark:border-slate-700">
       {/* Espaço para o label do box */}
       <div className="w-40 flex-shrink-0 font-bold text-slate-800 dark:text-slate-300 flex items-center text-xs">
         BOX
       </div>
       
       {/* Horas */}
-      <div className="flex gap-1 p-1 min-w-[640px]">
+      <div className="grid grid-cols-11 gap-2 p-1 flex-1 min-w-0">
         {horas.map(hora => (
-          <div key={hora} className="w-12 flex-shrink-0">
+          <div key={hora} className="min-w-0">
             <div className="text-center text-xs font-bold text-slate-800 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-md py-1 px-0.5 border border-slate-300 dark:border-slate-600">
               {String(hora).padStart(2, '0')}:00
             </div>

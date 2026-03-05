@@ -433,6 +433,7 @@ export default function BoxPage() {
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editandoId ? "Editar Box" : "Novo Box"}
+        showFooter={false}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -494,13 +495,6 @@ export default function BoxPage() {
           </div>
 
           <div className="flex gap-2 justify-end pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setIsModalOpen(false)}
-            >
-              Cancelar
-            </Button>
             <Button type="submit">
               {editandoId ? "Salvar" : "Cadastrar"}
             </Button>

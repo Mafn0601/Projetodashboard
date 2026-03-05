@@ -203,14 +203,14 @@ export default function BoxPage() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
             Gerenciamento de Boxes
           </h1>
-          <p className="text-xs text-slate-700 dark:text-slate-400">
+          <p className="text-sm text-slate-700 dark:text-slate-400">
             Gerencie os boxes de trabalho e visualize ocupações
           </p>
         </div>
@@ -247,9 +247,9 @@ export default function BoxPage() {
 
       {/* Seletor de Data para Timeline */}
       {modoVisualizacao === "timeline" && (
-        <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 border border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+        <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Data:
             </label>
             <input
@@ -259,9 +259,9 @@ export default function BoxPage() {
                 const [ano, mes, dia] = e.target.value.split('-');
                 setDataSelecionada(`${dia}/${mes}/${ano}`);
               }}
-              className="px-2 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="px-3 py-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
             />
-            <span className="text-xs text-slate-700 dark:text-slate-400">
+            <span className="text-sm text-slate-700 dark:text-slate-400">
               Visualizando ocupações para {dataSelecionada}
             </span>
           </div>
@@ -270,7 +270,7 @@ export default function BoxPage() {
 
       {/* Visualização Timeline */}
       {modoVisualizacao === "timeline" && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {Object.entries(boxesPorParceiro).map(([parceiro, boxesDoParceiro]) => {
             const isParceirosExpandido = expandedParceirosTimeline.has(parceiro);
             
@@ -299,7 +299,7 @@ export default function BoxPage() {
                 
                 {/* Conteúdo Timeline - Visível quando expandido */}
                 {isParceirosExpandido && (
-                  <div className="p-3 space-y-2">
+                  <div className="p-4 space-y-4">
                     <div className="overflow-x-auto pb-4 scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-500 scrollbar-track-slate-200 dark:scrollbar-track-slate-700" style={{ scrollbarWidth: 'thin' }}>
                       <TimelineHeader />
                     </div>

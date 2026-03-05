@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { readArray } from '@/lib/storage';
 import AgendaQuickModal from '@/components/agenda/AgendaQuickModal';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
-import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
-import { equipeServiceAPI } from '@/services/equipeServiceAPI';
+import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
+import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
 import {
   mockFabricantes,
   mockModelos,
@@ -30,18 +30,7 @@ type TipoOS = {
   [key: string]: unknown;
 };
 
-type Parceiro = {
-  id: string;
-  nome: string;
-  [key: string]: unknown;
-};
 
-type Equipe = {
-  id: string;
-  nome: string;
-  login: string;
-  [key: string]: unknown;
-};
 
 type Props = {
   isOpen: boolean;
@@ -96,8 +85,8 @@ function formatarDataAgendamento(data: string | undefined): string {
 }
 
 export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props) {
-  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
-  const [equipes, setEquipes] = useState<Equipe[]>([]);
+  const [parceiros, setParceiros] = useState<ParceiroAPI[]>([]);
+  const [equipes, setEquipes] = useState<EquipeAPI[]>([]);
   const [tiposOs, setTiposOs] = useState<TipoOS[]>([]);
   const [isAgendaQuickOpen, setIsAgendaQuickOpen] = useState(false);
   const [ultimoAgendamento, setUltimoAgendamento] = useState<any | null>(null);
@@ -111,8 +100,8 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
             equipeServiceAPI.findAll(undefined, undefined, { preferCache: true }),
           ]);
 
-          setParceiros((parceirosApi as Parceiro[]) || readArray<Parceiro>('parceiros'));
-          setEquipes((equipesApi as Equipe[]) || readArray<Equipe>('equipes'));
+          setParceiros(parceirosApi || []);
+          setEquipes(equipesApi || []);
 
           const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
           setTiposOs(tiposOsCadastrados);
@@ -161,7 +150,7 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
     if (nome) return nome;
     if (id) {
       const equipe = equipes.find(e => e.id === id);
-      if (equipe) return equipe.nome || equipe.login;
+      if (equipe) return equipe.login;
     }
     if (ultimoAgendamento?.responsavel?.nome) {
       return ultimoAgendamento.responsavel.nome;

@@ -317,6 +317,35 @@ model HistoricoOS {
   
   @@map("historico_os")
 }
+// ==================== STATUS CARDS ====================
+
+model StatusCard {
+  id                    String        @id @default(uuid())
+  numero                String        @unique
+  veiculo               String
+  dataAgendamento       DateTime
+  dataEntrega           DateTime
+  cliente               String
+  parceiro              String
+  responsavel           String
+  status                String        @default("recebido")
+  
+  boxId                 String?
+  boxNome               String?
+  agendamentoId         String?
+  horaInicio            String?
+  horaFim               String?
+  
+  formaPagamento        String?
+  meioPagamento         String?
+  
+  timestampFinalizacao  DateTime?
+  
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  
+  @@map("status_cards")
+}
 
 // ==================== BOX ====================
 
@@ -325,6 +354,10 @@ model Box {
   numero      String        @unique
   nome        String
   descricao   String?
+  tipo        String?       // "lavagem" ou "servico_geral"
+  parceiroId  String?
+  parceiro    String?       // Nome do parceiro (desnormalizado para compatibilidade)
+  cor         String?       // Cor para identificação visual
   ativo       Boolean       @default(true)
   
   createdAt   DateTime      @default(now())

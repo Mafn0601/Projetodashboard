@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Box, OcupacaoBox } from '@/services/boxService';
+import { OcupacaoBox } from '@/services/boxService';
+import { BoxAPI } from '@/services/boxServiceAPI';
 
 const HORARIO_INICIO = 8; // 8:00
 const HORARIO_FIM = 18; // 18:00
@@ -9,7 +10,7 @@ const ALMOCO_INICIO = 12; // 12:00
 const ALMOCO_FIM = 13.5; // 13:30
 
 type Props = {
-  box: Box;
+  box: BoxAPI;
   ocupacoes: OcupacaoBox[];
   data: string; // formato dd/mm/yyyy
 };

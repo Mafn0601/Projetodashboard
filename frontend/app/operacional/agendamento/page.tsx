@@ -4,7 +4,6 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getNext7ValidDays, toDdMmFromISODate } from "@/lib/dateUtils";
 import {
-  getAgendamentos,
   AgendaItem,
 } from "@/services/agendaService";
 import { addStatusCardFromAgendamento } from "@/services/statusService";
@@ -89,11 +88,9 @@ export default function Page() {
   // Memoize agendamentos convertidos
   const allAgendamentos = useMemo(() => {
     const fromApi = apiAgendamentos.map(mapAgendamentoToAgendaItem);
-    const fromLocal = getAgendamentos();
-    const all = [...fromApi, ...fromLocal];
 
     const unique = new Map<string, AgendaItem>();
-    all.forEach((item) => {
+    fromApi.forEach((item) => {
       const dedupeKey = `${item.clienteId || item.cliente}|${item.data}|${item.horario}|${item.tipo}`;
       if (!unique.has(dedupeKey)) {
         unique.set(dedupeKey, item);

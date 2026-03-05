@@ -2,16 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Box, 
   TipoBox,
-  getBoxes, 
-  addBox, 
-  updateBox, 
-  deleteBox,
   getOcupacoesBoxPorData,
   initializeMockBoxes,
   OcupacaoBox
 } from "@/services/boxService";
+import boxServiceAPI, { BoxAPI } from "@/services/boxServiceAPI";
 import { readArray } from "@/lib/storage";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
@@ -45,12 +41,13 @@ const coresDisponiveis = [
 
 export default function BoxPage() {
   console.log('🔄 Box Page Build: 2026-03-05-09:00 - showFooter=false CONFIRMADO');
-  const [boxes, setBoxes] = useState<Box[]>([]);
+  const [boxes, setBoxes] = useState<BoxAPI[]>([]);
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOcupacoesModalOpen, setIsOcupacoesModalOpen] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [selectedBoxOcupacoes, setSelectedBoxOcupacoes] = useState<{ box: Box; ocupacoes: OcupacaoBox[] } | null>(null);
+  const [selectedBoxOcupacoes, setSelectedBoxOcupacoes] = useState<{ box: BoxAPI; ocupacoes: OcupacaoBox[] } | null>(null);
   const [dataSelecionada, setDataSelecionada] = useState("");
   const [modoVisualizacao, setModoVisualizacao] = useState<"timeline" | "lista">("timeline");
   
@@ -70,12 +67,20 @@ export default function BoxPage() {
     setDataSelecionada(dataHoje);
   }, []);
 
-  const carregarDados = () => {
-    const boxesData = getBoxes();
-    setBoxes(boxesData);
-    
-    const parceirosData = readArray<Parceiro>("parceiros");
-    setParceiros(parceirosData.filter(p => p.status === "ativo"));
+  const carregarDados = async () => {
+    try {
+      setIsLoading(true);
+      const boxesData = await boxServiceAPI.findAll({ ativo: true });
+      setBoxes(boxesData);
+      
+      const parceirosData = readArray<Parceiro>("parceiros");
+      setParceiros(parceirosData.filter(p => p.status === "ativo"));
+    } catch (error) {
+      console.error("Erro ao carregar boxes:", error);
+      alert("Erro ao carregar boxes. Verifique sua conexão.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const abrirModal = () => {
@@ -84,10 +89,10 @@ export default function BoxPage() {
     setIsModalOpen(true);
   };
 
-  const abrirModalEdicao = (box: Box) => {
+  const abrirModalEdicao = (box: BoxAPI) => {
     setNome(box.nome);
-    setTipo(box.tipo);
-    setParceiroId(box.parceiroId);
+    setTipo(box.tipo as TipoBox);
+    setParceiroId(box.parceiroId || "");
     setAtivo(box.ativo);
     setCor(box.cor || "#3b82f6");
     setEditandoId(box.id);
@@ -102,7 +107,7 @@ export default function BoxPage() {
     setCor("#3b82f6");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const parceiroSelecionado = parceiros.find(p => p.id === parceiroId);
@@ -111,41 +116,64 @@ export default function BoxPage() {
       return;
     }
 
-    if (editandoId) {
-      // Edição
-      updateBox(editandoId, {
-        nome,
-        tipo,
-        parceiroId,
-        parceiro: parceiroSelecionado.nome,
-        ativo,
-        cor
-      });
-    } else {
-      // Novo
-      addBox({
-        nome,
-        tipo,
-        parceiroId,
-        parceiro: parceiroSelecionado.nome,
-        ativo,
-        cor
-      });
-    }
+    try {
+      setIsLoading(true);
+      
+      // Gerar número sequencial baseado na quantidade atual de boxes
+      const numeroBox = (boxes.length + 1).toString().padStart(2, '0');
 
-    carregarDados();
-    setIsModalOpen(false);
-    limparForm();
+      if (editandoId) {
+        // Edição
+        await boxServiceAPI.update(editandoId, {
+          nome,
+          tipo,
+          parceiroId,
+          parceiro: parceiroSelecionado.nome,
+          ativo,
+          cor
+        });
+      } else {
+        // Novo
+        await boxServiceAPI.create({
+          numero: numeroBox,
+          nome,
+          tipo,
+          parceiroId,
+          parceiro: parceiroSelecionado.nome,
+          ativo,
+          cor
+        });
+      }
+
+      await carregarDados();
+      setIsModalOpen(false);
+      limparForm();
+    } catch (error) {
+      console.error("Erro ao salvar box:", error);
+      alert("Erro ao salvar box. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Deseja realmente excluir este box?")) {
-      deleteBox(id);
-      carregarDados();
+  const handleDelete = async (id: string) => {
+    if (!confirm("Deseja realmente excluir este box?")) {
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      await boxServiceAPI.delete(id);
+      await carregarDados();
+    } catch (error) {
+      console.error("Erro ao excluir box:", error);
+      alert("Erro ao excluir box. Pode haver ocupações ativas vinculadas.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const verOcupacoes = (box: Box) => {
+  const verOcupacoes = (box: BoxAPI) => {
     const dataHoje = toDdMmYyyyFromISODate(getBrasiliaTodayISO());
     const ocupacoes = getOcupacoesBoxPorData(box.id, dataHoje);
     
@@ -168,7 +196,7 @@ export default function BoxPage() {
     }
     acc[parceiro].push(box);
     return acc;
-  }, {} as Record<string, Box[]>);
+  }, {} as Record<string, BoxAPI[]>);
 
   // Obter ocupações para a data selecionada
   const getOcupacoesParaData = (boxId: string) => {
@@ -419,8 +447,8 @@ export default function BoxPage() {
           </div>
 
           <div className="flex gap-2 justify-end pt-4">
-            <Button type="submit">
-              {editandoId ? "Salvar" : "Cadastrar"}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Salvando..." : editandoId ? "Salvar" : "Cadastrar"}
             </Button>
           </div>
         </form>
@@ -494,10 +522,10 @@ function BoxCard({
   onDelete,
   onVerOcupacoes
 }: { 
-  box: Box; 
-  onEdit: (box: Box) => void; 
+  box: BoxAPI; 
+  onEdit: (box: BoxAPI) => void; 
   onDelete: (id: string) => void;
-  onVerOcupacoes: (box: Box) => void;
+  onVerOcupacoes: (box: BoxAPI) => void;
 }) {
   return (
     <div 

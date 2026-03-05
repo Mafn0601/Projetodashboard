@@ -14,7 +14,7 @@ import tipoOSServiceAPI from '@/services/tipoOSServiceAPI';
 import { veiculoServiceAPI } from '@/services/veiculoServiceAPI';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { addAgendamento, getAgendamentos } from '@/services/agendaService';
-import { getBoxesDisponiveis, getTipoBoxPreferidoPorServico } from '@/services/boxService';
+import { getBoxes, getBoxesDisponiveis, getTipoBoxPreferidoPorServico } from '@/services/boxService';
 import { validateForm } from '@/lib/validation';
 import { readArray } from '@/lib/storage';
 import {
@@ -113,6 +113,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
     cor: initial?.cor || '',
     dataAgendamento: initial?.dataAgendamento || '',
     horarioAgendamento: initial?.horarioAgendamento || '',
+    boxId: initial?.boxId || '',
     descricaoServico: initial?.descricaoServico || '',
     formaPagamento: initial?.formaPagamento || '',
     meioPagamento: initial?.meioPagamento || '',
@@ -132,6 +133,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
   const [tiposOsOptions, setTiposOsOptions] = useState<SelectOption[]>([]);
   const [tipoItemOptions, setTipoItemOptions] = useState<SelectOption[]>([]);
   const [agendamentosSelecionados, setAgendamentosSelecionados] = useState<AgendamentoSelecionado[]>([]);
+  const [boxes, setBoxes] = useState<Array<{id: string; nome: string; ativo: boolean; parceiro: string; tipo: 'lavagem' | 'servico_geral'}>>([]);
 
   // Loading State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -189,6 +191,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         cor: initial.cor || '',
         dataAgendamento: initial.dataAgendamento || '',
         horarioAgendamento: initial.horarioAgendamento || '',
+        boxId: initial.boxId || '',
         descricaoServico: initial.descricaoServico || '',
           formaPagamento: initial.formaPagamento || '',
           meioPagamento: initial.meioPagamento || '',
@@ -214,6 +217,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         cor: '',
         dataAgendamento: '',
         horarioAgendamento: '',
+        boxId: '',
         descricaoServico: '',
           formaPagamento: '',
           meioPagamento: '',
@@ -274,6 +278,10 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         label: t.nome
       }));
       setTiposOsOptions(tiposOsOpts);
+
+      // Carregar Boxes
+      const boxesData = getBoxes().filter(b => b.ativo);
+      setBoxes(boxesData);
     } catch (error) {
       console.error('❌ Erro ao carregar dados da API:', error);
       console.warn('⚠️ Tentando fallback para localStorage...');
@@ -894,11 +902,10 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
           {/* Box */}
           <Select
             label="Box"
-            options={[]}
-            value=""
-            onChange={() => {}}
-            placeholder="Selecione..."
-            disabled
+            options={boxes.map(b => ({ value: b.id, label: b.nome }))}
+            value={formData.boxId}
+            onChange={(value) => handleFieldChange('boxId', value)}
+            placeholder="Selecione um box"
           />
 
           {/* Data, Horário, Duração em linha */}

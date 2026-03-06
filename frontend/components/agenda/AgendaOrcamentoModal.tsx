@@ -7,12 +7,12 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import {
   Box,
-  getBoxes,
   getBoxesDisponiveis,
   getTipoBoxPreferidoPorServico,
   addOcupacao,
 } from '@/services/boxService';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
+import boxServiceAPI from '@/services/boxServiceAPI';
 import { getAgendamentos } from '@/services/agendaService';
 import {
   getBrasiliaTodayISO,
@@ -80,11 +80,29 @@ export default function AgendaOrcamentoModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    const boxes = getBoxes();
-    setTodosBoxes(boxes);
+    const carregarDados = async () => {
+      try {
+        const boxesApi = await boxServiceAPI.findAll({ ativo: true });
+        const boxesFormatados: Box[] = (boxesApi || []).map((box) => ({
+          id: box.id,
+          nome: box.nome,
+          tipo: (box.tipo as 'lavagem' | 'servico_geral') || 'servico_geral',
+          parceiroId: box.parceiroId || '',
+          parceiro: box.parceiro || 'Sem parceiro',
+          ativo: box.ativo,
+          cor: box.cor,
+        }));
+        setTodosBoxes(boxesFormatados);
+      } catch (error) {
+        console.error('Erro ao carregar boxes para agendamento:', error);
+        setTodosBoxes([]);
+      }
 
-    const tipos = readArray<TipoOS>('tiposOs');
-    setTiposOsList(tipos);
+      const tipos = readArray<TipoOS>('tiposOs');
+      setTiposOsList(tipos);
+    };
+
+    carregarDados();
   }, [isOpen]);
 
   // Função auxiliar para verificar conflitos de horário
@@ -195,6 +213,12 @@ export default function AgendaOrcamentoModal({
   const handleSalvar = async () => {
     setErroValidacao('');
 
+    const boxesAtivos = todosBoxes.filter((b) => b.ativo);
+    if (boxesAtivos.length === 0) {
+      setErroValidacao('Nenhum box ativo cadastrado. Cadastre um box antes de agendar.');
+      return;
+    }
+
     // Validações
     if (!dataIso) {
       setErroValidacao('Selecione uma data');
@@ -219,7 +243,7 @@ export default function AgendaOrcamentoModal({
 
       // Criar agendamento via API
       console.log('📤 Criando agendamento via API...');
-      const dataAgendamentoISO = new Date(dataIso + 'T' + horario + ':00.000Z').toISOString();
+      const dataAgendamentoISO = new Date(`${dataIso}T${horario}:00`).toISOString();
       const novoAgendamento = await agendamentoServiceAPI.create({
         clienteId: dadosOrcamento.clienteId,
         veiculoId: dadosOrcamento.veiculoId, // Vincular veículo se disponível
@@ -229,6 +253,7 @@ export default function AgendaOrcamentoModal({
         dataAgendamento: dataAgendamentoISO,
         horarioAgendamento: horario,
         tipoAgendamento: dadosOrcamento.tipoOsNome,
+        status: 'CONFIRMADO',
         descricaoServico: `${dadosOrcamento.veiculo} - ${dadosOrcamento.nomeCliente}`,
         observacoes: `Box: ${boxSelecionado?.nome || ''} | Placa: ${dadosOrcamento.placa} | Duração: ${dadosOrcamento.duracao}min`,
         duracao: dadosOrcamento.duracao,
@@ -239,6 +264,8 @@ export default function AgendaOrcamentoModal({
       }
 
       console.log('✅ Agendamento criado via API:', novoAgendamento);
+
+      window.dispatchEvent(new Event('agendamento:novo'));
 
       // Criar ocupação do box (mantém localStorage por enquanto)
       addOcupacao({

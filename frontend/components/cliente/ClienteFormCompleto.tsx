@@ -646,21 +646,28 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
             }
 
             // Se passou todas as validações, criar os agendamentos
-            const dataAgendamentoISO = `${formData.dataAgendamento}T${horarioNormalizado}:00.000Z`;
+            const dataAgendamentoISO = new Date(`${formData.dataAgendamento}T${horarioNormalizado}:00`).toISOString();
 
             for (const itemSelecionado of paresAgendamento) {
-              await agendamentoServiceAPI.create({
+              const novoAgendamento = await agendamentoServiceAPI.create({
                 clienteId,
                 responsavelId,
                 parceiroId: parceiroId || undefined,
                 dataAgendamento: dataAgendamentoISO,
                 horarioAgendamento: horarioNormalizado,
                 tipoAgendamento: itemSelecionado.tipoOSId,
+                status: 'CONFIRMADO',
                 tipoOSId: itemSelecionado.tipoOSId,
                 itemOSId: itemSelecionado.itemOSId,
                 duracao: itemSelecionado.duracao,
                 descricaoServico: formData.descricaoServico || undefined,
               });
+
+              if (!novoAgendamento) {
+                throw new Error('Falha ao criar agendamento na API');
+              }
+
+              window.dispatchEvent(new Event('agendamento:novo'));
 
               addAgendamento({
                 titulo: `${String(new Date().getFullYear()).slice(-2)} ${formData.fabricante || 'VEÍCULO'} - ${formData.modelo || 'MODELO'}`,

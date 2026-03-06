@@ -90,11 +90,13 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
   const [tiposOs, setTiposOs] = useState<TipoOS[]>([]);
   const [isAgendaQuickOpen, setIsAgendaQuickOpen] = useState(false);
   const [ultimoAgendamento, setUltimoAgendamento] = useState<any | null>(null);
+  const [isLoadingAgendamento, setIsLoadingAgendamento] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       const carregarDados = async () => {
         try {
+          // Carregar parceiros e equipes
           const [parceirosApi, equipesApi] = await Promise.all([
             parceiroServiceAPI.findAll({ preferCache: true }),
             equipeServiceAPI.findAll(undefined, undefined, { preferCache: true }),
@@ -106,18 +108,48 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
           const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
           setTiposOs(tiposOsCadastrados);
 
+          // Carregar último agendamento
           if (cliente?.id) {
-            const agendamentos = await agendamentoServiceAPI.findAll({ clienteId: cliente.id, take: 1 });
-            setUltimoAgendamento(agendamentos?.[0] || null);
+            setIsLoadingAgendamento(true);
+            console.log('📍 Carregando último agendamento do cliente:', cliente.id);
+            try {
+              const agendamentos = await agendamentoServiceAPI.findAll({ clienteId: cliente.id, take: 1 });
+              console.log('📍 Agendamentos retornados:', agendamentos);
+              if (agendamentos && agendamentos.length > 0) {
+                console.log('📍 Último agendamento carregado:', agendamentos[0]);
+                setUltimoAgendamento(agendamentos[0]);
+              } else {
+                console.log('⚠️ Nenhum agendamento encontrado para este cliente');
+                setUltimoAgendamento(null);
+              }
+            } catch (agendamentoError) {
+              console.error('❌ Erro ao carregar agendamento:', agendamentoError);
+              setUltimoAgendamento(null);
+            } finally {
+              setIsLoadingAgendamento(false);
+            }
           }
         } catch (e) {
-          console.error('Erro ao carregar dados do cliente:', e);
+          console.error('❌ Erro ao carregar dados do cliente:', e);
+          setUltimoAgendamento(null);
+          setIsLoadingAgendamento(false);
         }
       };
 
       carregarDados();
     }
   }, [isOpen, cliente?.id]);
+
+  // Debug: monitorar quando ultimoAgendamento muda
+  useEffect(() => {
+    if (ultimoAgendamento) {
+      console.log('📍 ultimoAgendamento atualizado:', {
+        id: ultimoAgendamento.id,
+        responsavel: ultimoAgendamento.responsavel,
+        parceiro: ultimoAgendamento.parceiro,
+      });
+    }
+  }, [ultimoAgendamento]);
 
   const extrairIdOuNome = (valor: unknown): { id?: string; nome?: string } => {
     if (!valor) return {};
@@ -133,6 +165,12 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
   };
 
   const obterLabelParceiro = (parceiroValor: unknown): string => {
+    // Prioridade 1: Se tem ultimoAgendamento com parceiro, usa esse
+    if (ultimoAgendamento?.parceiro?.nome) {
+      return ultimoAgendamento.parceiro.nome;
+    }
+
+    // Prioridade 2: Se tem um valor direto no cliente
     const { id, nome } = extrairIdOuNome(parceiroValor);
     if (nome) return nome;
     if (id) {
@@ -143,28 +181,30 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
     if (typeof parceiroValor === 'string' && parceiroValor !== '-') {
       return parceiroValor;
     }
-    if (ultimoAgendamento?.parceiro?.nome) {
-      return ultimoAgendamento.parceiro.nome;
-    }
+
     return '-';
   };
 
   const obterLabelResponsavel = (responsavelValor: unknown): string => {
+    // Prioridade 1: Se tem ultimoAgendamento com responsavel, usa esse
+    if (ultimoAgendamento?.responsavel?.nome) {
+      return ultimoAgendamento.responsavel.nome;
+    }
+
+    // Prioridade 2: Se tem um valor direto no cliente
     const { id, nome } = extrairIdOuNome(responsavelValor);
     if (nome) return nome;
     if (id) {
       const equipe = equipes.find(e => e.id === id);
       if (equipe) {
-        return equipe.login || id;
+        return equipe.login || equipe.nome || id;
       }
     }
     // Se for uma string simples (pode ser o login ou nome do responsável)
     if (typeof responsavelValor === 'string' && responsavelValor !== '-') {
       return responsavelValor;
     }
-    if (ultimoAgendamento?.responsavel?.nome) {
-      return ultimoAgendamento.responsavel.nome;
-    }
+
     return '-';
   };
 
@@ -231,11 +271,15 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Responsável</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelResponsavel(cliente.responsavel)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">
+                 {isLoadingAgendamento ? '⏳ Carregando...' : obterLabelResponsavel(cliente.responsavel)}
+               </p>
               </div>
               <div>
                <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Parceiro</p>
-               <p className="text-sm text-slate-900 dark:text-slate-100">{obterLabelParceiro(cliente.parceiro)}</p>
+               <p className="text-sm text-slate-900 dark:text-slate-100">
+                 {isLoadingAgendamento ? '⏳ Carregando...' : obterLabelParceiro(cliente.parceiro)}
+               </p>
               </div>
             </div>
           </div>

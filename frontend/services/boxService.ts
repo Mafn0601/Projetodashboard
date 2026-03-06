@@ -499,3 +499,60 @@ export function initializeMockBoxes(): void {
   
   writeArray(BOX_STORAGE_KEY, mockBoxes);
 }
+
+// ============ Conversão de BoxAPI para Box ============
+
+/**
+ * Converte um array de BoxAPI (da API) para Box (formato local)
+ */
+export function convertBoxAPIToService(boxesApi: Array<{
+  id: string;
+  numero?: string;
+  nome: string;
+  tipo?: string;
+  parceiro?: string;
+  parceiroId?: string;
+  ativo: boolean;
+  cor?: string;
+}>): Box[] {
+  return boxesApi
+    .filter(b => b.ativo)
+    .map(b => ({
+      id: b.id,
+      nome: b.nome,
+      tipo: (b.tipo as TipoBox) || "servico_geral",
+      parceiroId: b.parceiroId || "",
+      parceiro: b.parceiro || "Sem Parceiro",
+      ativo: b.ativo,
+      cor: b.cor,
+    }));
+}
+
+/**
+ * Lista boxes disponíveis com base em um array de boxes fornecido
+ * Versão que aceita boxes como parâmetro (não usa localStorage)
+ */
+export function getBoxesDisponivelsDaeArray(
+  boxes: Box[],
+  dataInicio: string,
+  horaInicio: string,
+  dataFim: string,
+  horaFim: string,
+  tipo?: TipoBox,
+  excluirReferencia?: string
+): Box[] {
+  // Limpeza prévia de ocupações que já expiraram
+  cleanupExpiredOcupacoes();
+  
+  let boxesFiltrados = boxes.filter(b => b.ativo);
+  
+  // Filtra por tipo se especificado
+  if (tipo) {
+    boxesFiltrados = boxesFiltrados.filter(b => b.tipo === tipo);
+  }
+  
+  // Filtra apenas os disponíveis
+  return boxesFiltrados.filter(box => 
+    isBoxDisponivel(box.id, dataInicio, horaInicio, dataFim, horaFim, excluirReferencia)
+  );
+}

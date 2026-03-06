@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/components/AuthContext';
-import { getBoxes, getBoxesDisponiveis, getTipoBoxPreferidoPorServico, addOcupacao } from '@/services/boxService';
+import { getBoxes, getBoxesDisponiveis, getTipoBoxPreferidoPorServico, addOcupacao, convertBoxAPIToService, getBoxesDisponivelsDaeArray } from '@/services/boxService';
+import { boxServiceAPI, BoxAPI } from '@/services/boxServiceAPI';
 import { ClienteCompleto } from '@/services/clienteService';
 import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
 import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
@@ -101,7 +102,8 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
   const [tiposOsList, setTiposOsList] = useState<TipoOS[]>([]);
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [parceiros, setParceiros] = useState<ParceiroAPI[]>([]);
-  const [boxes, setBoxes] = useState<Array<{id: string; nome: string; ativo: boolean; parceiro: string; tipo: 'lavagem' | 'servico_geral'}>>([]);
+  const [boxes, setBoxes] = useState<BoxAPI[]>([]);
+  const [boxesConvertidos, setBoxesConvertidos] = useState<Array<{id: string; nome: string; ativo: boolean; parceiro: string; tipo: 'lavagem' | 'servico_geral'}>>([]);
 
   // Carregar dados apenas quando modal abre
   useEffect(() => {
@@ -115,7 +117,8 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
           Promise.all([
             parceiroServiceAPI.findAll({ preferCache: true }),
             equipeServiceAPI.findAll(undefined, undefined, { preferCache: true }),
-          ]).then(([parceirosApi, equipesApi]) => {
+            boxServiceAPI.findAll({ ativo: true }, { preferCache: true }),
+          ]).then(([parceirosApi, equipesApi, boxesApi]) => {
             const equipesAtivas = (equipesApi || []).filter((eq: EquipeAPI) => eq.ativo !== false);
             setParceiros(parceirosApi || []);
             setEquipes(
@@ -127,10 +130,14 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
                 ativo: eq.ativo,
               }))
             );
+            setBoxes(boxesApi || []);
+            const boxesMs = Math.round(performance.now());
+            traceAgendar('quick-modal:boxes-loaded', { count: (boxesApi || []).length, ms: boxesMs });
           }).catch((e) => {
-            console.error('Erro ao carregar parceiros/equipes da API no agendamento rápido:', e);
+            console.error('Erro ao carregar parceiros/equipes/boxes da API no agendamento rápido:', e);
             setParceiros([]);
             setEquipes([]);
+            setBoxes([]);
           });
 
           const tiposStart = performance.now();
@@ -138,12 +145,6 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
           setTiposOsList(tipos);
           const tiposMs = Math.round(performance.now() - tiposStart);
           traceAgendar('quick-modal:tipos-loaded', { count: tipos.length, ms: tiposMs });
-
-          const boxesStart = performance.now();
-          const boxesData = getBoxes().filter(b => b.ativo);
-          setBoxes(boxesData);
-          const boxesMs = Math.round(performance.now() - boxesStart);
-          traceAgendar('quick-modal:boxes-loaded', { count: boxesData.length, ms: boxesMs });
         } catch (e) {
           traceAgendar('quick-modal:load-error', {
             message: e instanceof Error ? e.message : 'erro desconhecido',
@@ -167,6 +168,16 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       traceAgendar('quick-modal:closed');
     }
   }, [isOpen, cliente?.id, user]);
+
+  // Converter boxes da API para o formato esperado pelo boxService
+  useEffect(() => {
+    if (boxes.length > 0) {
+      const converted = convertBoxAPIToService(boxes);
+      setBoxesConvertidos(converted);
+    } else {
+      setBoxesConvertidos([]);
+    }
+  }, [boxes]);
 
   const responsavelOptionsFiltrados = equipes
     .filter((equipeAtual) => !parceiroId || equipeAtual.parceiroId === parceiroId)
@@ -205,13 +216,14 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
 
   const tipoPreferidoSelecionado = getTipoBoxPreferidoPorServico(tipoServicoSelecionado);
   const horarioOptions = getBusinessTimeOptions(duracao);
-  const boxesCompativeis = boxes.filter(
+  const boxesCompativeis = boxesConvertidos.filter(
     (box) => !tipoPreferidoSelecionado || box.tipo === tipoPreferidoSelecionado
   );
 
   const boxesDisponiveisSelecionados =
     dataIso && horario && tipoOs
-      ? getBoxesDisponiveis(
+      ? getBoxesDisponivelsDaeArray(
+          boxesCompativeis,
           toDdMmYyyyFromISODate(dataIso),
           horario,
           toDdMmYyyyFromISODate(dataIso),
@@ -441,6 +453,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       // Salvar agendamentos na API para cada tipo/item selecionado
       const dataAgendamentoISO = new Date(dataIso + 'T' + horario + ':00.000Z').toISOString();
       
+      let sucessoAgendamentos = 0;
       for (const tipoItem of tiposItens) {
         const novoAgendamentoAPI = await agendamentoServiceAPI.create({
           clienteId: cliente.id,
@@ -453,14 +466,25 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
         });
 
         if (novoAgendamentoAPI) {
+          sucessoAgendamentos++;
           traceAgendar('quick-modal:api-success', { id: novoAgendamentoAPI.id });
+        } else {
+          console.warn('⚠️ Agendamento não foi criado:', tipoItem.tipoNome);
+          traceAgendar('quick-modal:api-failed', { tipoItem: tipoItem.tipoNome });
         }
+      }
+
+      // Se nenhum agendamento foi criado na API, lançar erro
+      if (sucessoAgendamentos === 0) {
+        throw new Error('Nenhum agendamento foi criado. Por favor, verifique os dados e tente novamente.');
       }
     } catch (error) {
       console.error('Erro ao salvar agendamento na API:', error);
       traceAgendar('quick-modal:api-error', {
         message: error instanceof Error ? error.message : 'erro desconhecido',
       });
+      setErroValidacao(error instanceof Error ? error.message : 'Erro ao criar agendamento');
+      return;
     }
 
     // Também salvar no localStorage para compatibilidade (para cada item)

@@ -7,6 +7,8 @@ import { StatusCard as StatusCardType } from '@/services/statusService';
 import { updateCardStatus } from '@/services/statusService';
 import { updateCardDeliveryDate } from '@/services/statusService';
 import { readArray } from '@/lib/storage';
+import { equipeServiceAPI } from '@/services/equipeServiceAPI';
+import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 
 type Props = {
   isOpen: boolean;
@@ -49,26 +51,103 @@ function getStatusColor(status: StatusCardType['status']): string {
 
 export default function StatusDetailsModal({ isOpen, card, onClose, onDelete }: Props) {
   const [nomeResponsavel, setNomeResponsavel] = useState(card?.responsavel || '-');
+  const [veiculoExibicao, setVeiculoExibicao] = useState(card?.veiculo || '-');
   const [dataSaida, setDataSaida] = useState('');
   const [horaSaida, setHoraSaida] = useState('');
+
+  const isUuid = (value: string): boolean =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+  const pareceIdentificadorTecnico = (value: string): boolean => {
+    const normalized = String(value || '').toLowerCase();
+    return (
+      normalized.includes('fab_') ||
+      normalized.includes('mod_') ||
+      /^[a-z]{3,}_[a-z0-9_-]+$/i.test(normalized)
+    );
+  };
 
   useEffect(() => {
     if (!card || !card.responsavel) {
       setNomeResponsavel('-');
       return;
     }
-    
-    try {
-      const equipes = readArray<Equipe>('equipes');
-      const equipe = equipes.find(e => e.id === card.responsavel);
-      if (equipe) {
-        setNomeResponsavel(equipe.nome || equipe.login);
-      } else {
-        setNomeResponsavel(card.responsavel);
+
+    let mounted = true;
+
+    const resolverResponsavel = async () => {
+      try {
+        const equipes = readArray<Equipe>('equipes');
+        const equipeLocal = equipes.find(e => e.id === card.responsavel);
+        if (equipeLocal) {
+          if (mounted) setNomeResponsavel(String(equipeLocal.nome || equipeLocal.login || card.responsavel));
+          return;
+        }
+
+        if (isUuid(card.responsavel)) {
+          const equipeApi = await equipeServiceAPI.findById(card.responsavel);
+          if (mounted && equipeApi) {
+            setNomeResponsavel(String(equipeApi.login || equipeApi.email || card.responsavel));
+            return;
+          }
+        }
+
+        if (mounted) setNomeResponsavel(card.responsavel || '-');
+      } catch {
+        if (mounted) setNomeResponsavel(card.responsavel || '-');
       }
-    } catch {
-      setNomeResponsavel(card.responsavel || '-');
+    };
+
+    resolverResponsavel();
+
+    return () => {
+      mounted = false;
+    };
+  }, [card]);
+
+  useEffect(() => {
+    if (!card) {
+      setVeiculoExibicao('-');
+      return;
     }
+
+    let mounted = true;
+
+    const resolverVeiculo = async () => {
+      const veiculoAtual = String(card.veiculo || '').trim();
+
+      if (!veiculoAtual) {
+        if (mounted) setVeiculoExibicao('-');
+        return;
+      }
+
+      if (!pareceIdentificadorTecnico(veiculoAtual)) {
+        if (mounted) setVeiculoExibicao(veiculoAtual);
+        return;
+      }
+
+      if (card.agendamentoId) {
+        const agendamento = await agendamentoServiceAPI.findById(card.agendamentoId);
+        const veiculo = agendamento?.veiculo;
+        if (agendamento && veiculo) {
+          const partes = [veiculo.marca, veiculo.modelo, veiculo.anoModelo, veiculo.placa]
+            .map((parte: unknown) => String(parte || '').trim())
+            .filter(Boolean);
+          if (mounted && partes.length > 0) {
+            setVeiculoExibicao(partes.join(' • '));
+            return;
+          }
+        }
+      }
+
+      if (mounted) setVeiculoExibicao('Veículo não identificado');
+    };
+
+    resolverVeiculo();
+
+    return () => {
+      mounted = false;
+    };
   }, [card]);
 
   useEffect(() => {
@@ -171,7 +250,7 @@ export default function StatusDetailsModal({ isOpen, card, onClose, onDelete }: 
                 </div>
                 <div>
                   <p className="text-xs text-slate-700 mb-1">Veiculo</p>
-                  <p className="text-slate-900 dark:text-slate-100 font-medium">{card.veiculo}</p>
+                  <p className="text-slate-900 dark:text-slate-100 font-medium">{veiculoExibicao}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-700 mb-1">Agendamento</p>

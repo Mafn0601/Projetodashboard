@@ -615,10 +615,19 @@ export default function Page() {
       
       // Obter dados para criar a OS
       const parceiroNome = parceiroOptions.find(p => p.value === parceiro)?.label || parceiro;
-      const responsavelNome = responsavelOptions.find(r => r.value === responsavel)?.label || responsavel;
-      const fabricanteNome = fabricanteOptions.find(f => f.value === fabricanteSel)?.label || fabricanteSel;
-      const modeloNome = modeloOptions.find(m => m.value === modeloSel)?.label || modeloSel;
-      const veiculoCompleto = `${fabricanteNome} ${modeloNome} ${versao || ''} ${anoFabMod}`.trim();
+      const responsavelNome =
+        responsavelOptions.find(r => r.value === responsavel)?.label ||
+        equipes.find(e => e.id === responsavel)?.login ||
+        'Responsável não informado';
+
+      const fabricanteNome = fabricanteOptions.find(f => f.value === fabricanteSel)?.label || '';
+      const modeloNome = modeloOptions.find(m => m.value === modeloSel)?.label || '';
+      const partesVeiculo = [fabricanteNome, modeloNome, versao || '', anoFabMod || '']
+        .map((parte) => String(parte || '').trim())
+        .filter(Boolean);
+      const veiculoCompleto = partesVeiculo.length > 0
+        ? partesVeiculo.join(' ')
+        : (chassis_placa || 'Veículo não informado');
       
       // Criar card de status (OS) vinculado ao agendamento
       const novoCard = addStatusCardFromOrcamento({

@@ -103,6 +103,7 @@ export default function Page() {
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
   const [parceiroOptions, setParceiroOptions] = useState<SelectOption[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEquipe, setSelectedEquipe] = useState<Equipe | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedParceiros, setExpandedParceiros] = useState<string[]>([]);
@@ -316,6 +317,20 @@ export default function Page() {
     setIsModalOpen(true);
   };
 
+  const handleViewDetails = (equipe: Equipe) => {
+    setSelectedEquipe(equipe);
+  };
+
+  const closeDetailsModal = () => {
+    setSelectedEquipe(null);
+  };
+
+  const handleEditFromDetails = () => {
+    if (!selectedEquipe) return;
+    handleEdit(selectedEquipe);
+    closeDetailsModal();
+  };
+
   const handleDelete = async () => {
     if (!editingId) return;
 
@@ -491,6 +506,7 @@ export default function Page() {
       {/* Table */}
         {!isLoading && (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
+        <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
           <thead className="bg-slate-50 dark:bg-slate-900">
             <tr>
@@ -534,7 +550,11 @@ export default function Page() {
                     </td>
                   </tr>
                   {isExpanded && membros.map((equipe) => (
-                    <tr key={equipe.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <tr
+                      key={equipe.id}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
+                      onClick={() => handleViewDetails(equipe)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
                         {obterLabelParceiro(equipe.parceiroId || '')}
                       </td>
@@ -559,7 +579,14 @@ export default function Page() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <Button onClick={() => handleEdit(equipe)} size="sm" variant="secondary">
+                        <Button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleEdit(equipe);
+                          }}
+                          size="sm"
+                          variant="secondary"
+                        >
                           Editar
                         </Button>
                       </td>
@@ -570,7 +597,142 @@ export default function Page() {
             })}
           </tbody>
         </table>
+        </div>
+
+        <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-700">
+          {Object.entries(groupedEquipes).map(([parceiroId, membros]) => {
+            const isExpanded = expandedParceiros.includes(parceiroId);
+            const parceiroLabel = parceiroId === 'sem_parceiro' ? 'Sem parceiro' : obterLabelParceiro(parceiroId);
+
+            return (
+              <div key={parceiroId}>
+                <button
+                  type="button"
+                  className="w-full bg-slate-50 dark:bg-slate-900/60 px-4 py-3 text-left"
+                  onClick={() => alternarGrupo(parceiroId)}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{parceiroLabel}</span>
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-400">
+                      {membros.length} membro(s)
+                    </span>
+                  </div>
+                </button>
+
+                {isExpanded && (
+                  <div className="space-y-3 p-3">
+                    {membros.map((equipe) => (
+                      <div
+                        key={equipe.id}
+                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3"
+                      >
+                        <div className="space-y-1.5 text-sm">
+                          <p className="text-slate-900 dark:text-slate-100">
+                            <span className="font-medium">Login:</span> {equipe.login}
+                          </p>
+                          <p className="text-slate-900 dark:text-slate-100 font-mono">
+                            <span className="font-medium not-italic">CPF:</span> {equipe.cpf}
+                          </p>
+                          <p className="text-slate-900 dark:text-slate-100">
+                            <span className="font-medium">Função:</span> {obterLabelFuncao(equipe.funcao)}
+                          </p>
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="font-medium text-slate-900 dark:text-slate-100">Comissão:</span>
+                            {equipe.comissaoAtiva ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                Ativa
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-300">
+                                Inativa
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <Button onClick={() => handleEdit(equipe)} size="sm" variant="secondary" className="w-full">
+                            Editar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
+      )}
+
+      {/* Modal de Visualização (Desktop) */}
+      {selectedEquipe && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]"
+          onClick={(e) => e.target === e.currentTarget && closeDetailsModal()}
+        >
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50 mb-6">
+                Detalhes do Cadastro
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Parceiro</p>
+                  <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">
+                    {obterLabelParceiro(selectedEquipe.parceiroId || '')}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Login</p>
+                  <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{selectedEquipe.login}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">CPF</p>
+                  <p className="text-sm text-slate-900 dark:text-slate-100 font-mono">{selectedEquipe.cpf || '-'}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Função</p>
+                  <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">
+                    {obterLabelFuncao(selectedEquipe.funcao)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">E-mail</p>
+                  <p className="text-sm text-slate-900 dark:text-slate-100">{selectedEquipe.email || '-'}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Telefone</p>
+                  <p className="text-sm text-slate-900 dark:text-slate-100">{selectedEquipe.telefone || '-'}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 md:col-span-2">
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Comissão</p>
+                  {selectedEquipe.comissaoAtiva ? (
+                    <div className="space-y-1 text-sm text-slate-900 dark:text-slate-100">
+                      <p><span className="font-medium">Status:</span> Ativa</p>
+                      <p><span className="font-medium">Meio de pagamento:</span> {selectedEquipe.meioPagamento || '-'}</p>
+                      <p><span className="font-medium">Tipo:</span> {selectedEquipe.tipoComissao || '-'}</p>
+                      <p><span className="font-medium">Valor:</span> {selectedEquipe.valorComissao || '-'}</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-900 dark:text-slate-100">Inativa</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <Button onClick={closeDetailsModal} variant="secondary" size="sm">
+                  Fechar
+                </Button>
+                <Button onClick={handleEditFromDetails} size="sm">
+                  Editar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal */}

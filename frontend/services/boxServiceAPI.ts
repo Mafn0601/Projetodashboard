@@ -25,7 +25,7 @@ interface FindAllFilters {
 
 class BoxServiceAPI {
   private async getAuthHeaders(): Promise<HeadersInit> {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     return {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
@@ -35,7 +35,7 @@ class BoxServiceAPI {
   async findAll(filters?: FindAllFilters): Promise<BoxAPI[]> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${API_URL}/boxes`, {
+      const response = await fetch(`${API_URL}/api/boxes`, {
         headers,
       });
 
@@ -60,7 +60,7 @@ class BoxServiceAPI {
   async findById(id: string): Promise<BoxAPI> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${API_URL}/boxes/${id}`, {
+      const response = await fetch(`${API_URL}/api/boxes/${id}`, {
         headers,
       });
 
@@ -90,7 +90,7 @@ class BoxServiceAPI {
   }): Promise<BoxAPI> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${API_URL}/boxes`, {
+      const response = await fetch(`${API_URL}/api/boxes`, {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
@@ -123,7 +123,7 @@ class BoxServiceAPI {
   ): Promise<BoxAPI> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${API_URL}/boxes/${id}`, {
+      const response = await fetch(`${API_URL}/api/boxes/${id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(data),
@@ -144,7 +144,7 @@ class BoxServiceAPI {
   async delete(id: string): Promise<void> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${API_URL}/boxes/${id}`, {
+      const response = await fetch(`${API_URL}/api/boxes/${id}`, {
         method: 'DELETE',
         headers,
       });

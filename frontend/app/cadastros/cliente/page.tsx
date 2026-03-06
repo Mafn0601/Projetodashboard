@@ -27,7 +27,7 @@ export default function Page() {
       if (!silent) {
         setLoading(true);
       }
-      const resultado = await clienteServiceAPI.findAll({}, { preferCache: !forceRefresh, forceRefresh });
+      const resultado = await clienteServiceAPI.findAll({ ativo: true }, { preferCache: !forceRefresh, forceRefresh });
       setClientes(resultado || []);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);

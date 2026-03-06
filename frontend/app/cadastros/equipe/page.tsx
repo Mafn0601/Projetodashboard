@@ -108,6 +108,7 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedParceiros, setExpandedParceiros] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const didInitExpand = useRef(false);
   const [formData, setFormData] = useState<Equipe>({
     id: '',
@@ -219,6 +220,7 @@ export default function Page() {
     });
     setErrors({});
     setEditingId(null);
+    setMostrarSenha(false);
   };
 
   const handleChange = (field: keyof Equipe, value: string | boolean) => {
@@ -314,6 +316,7 @@ export default function Page() {
   const handleEdit = (equipe: Equipe) => {
     setFormData(equipe);
     setEditingId(equipe.id);
+    setMostrarSenha(false);
     setIsModalOpen(true);
   };
 
@@ -775,11 +778,20 @@ export default function Page() {
                   />
                   <Input
                     label="Senha *"
-                    type="password"
+                    type={mostrarSenha ? 'text' : 'password'}
                     value={formData.senha || ''}
                     onChange={(e) => handleChange('senha', e.target.value)}
                     error={errors.senha}
                   />
+                  <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 -mt-2">
+                    <input
+                      type="checkbox"
+                      checked={mostrarSenha}
+                      onChange={(e) => setMostrarSenha(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300"
+                    />
+                    Visualizar senha digitada
+                  </label>
                   <MaskedInput
                     label="CPF *"
                     value={formData.cpf}

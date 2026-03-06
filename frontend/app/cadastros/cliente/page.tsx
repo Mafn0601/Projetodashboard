@@ -27,7 +27,8 @@ export default function Page() {
       if (!silent) {
         setLoading(true);
       }
-      const resultado = await clienteServiceAPI.findAll({ ativo: true }, { preferCache: !forceRefresh, forceRefresh });
+      // Usar cache por padrão, exceto quando forçar refresh
+      const resultado = await clienteServiceAPI.findAll({ ativo: true }, { preferCache: true, forceRefresh });
       setClientes(resultado || []);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
@@ -43,10 +44,19 @@ export default function Page() {
   useEffect(() => {
     const cached = clienteServiceAPI.getCached();
     if (cached.length > 0) {
-      setClientes(cached);
+      // Tem cache - carregar instantaneamente do cache
+      const clientesFiltrados = cached.filter(c => c.ativo === true);
+      setClientes(clientesFiltrados);
       setLoading(false);
-      carregarClientes({ silent: true, forceRefresh: true });
+      // Atualizar em background (sem aguardar)
+      clienteServiceAPI.findAll({ ativo: true }, { forceRefresh: true }).then(resultado => {
+        const clientesFiltrados = (resultado || []).filter(c => c.ativo === true);
+        setClientes(clientesFiltrados);
+      }).catch(err => {
+        console.error('Erro ao atualizar clientes em background:', err);
+      });
     } else {
+      // Sem cache - carregar da API
       carregarClientes({ forceRefresh: true });
     }
 

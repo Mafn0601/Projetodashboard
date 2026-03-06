@@ -104,10 +104,10 @@ export default function BoxPage() {
         setIsLoading(true);
       }
       
-      // Carregar boxes
+      // Usar cache por padrão, exceto quando forçar refresh
       const boxesData = await boxServiceAPI.findAll(
         { ativo: true }, 
-        { preferCache: !forceRefresh, forceRefresh }
+        { preferCache: true, forceRefresh }
       );
       setBoxes(boxesData);
       

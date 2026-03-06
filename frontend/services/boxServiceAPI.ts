@@ -58,10 +58,10 @@ class BoxServiceAPI {
   async findAll(filters?: FindAllFilters, options?: { preferCache?: boolean; forceRefresh?: boolean }): Promise<BoxAPI[]> {
     const preferCache = options?.preferCache ?? false;
     const forceRefresh = options?.forceRefresh ?? false;
+    const canUseSharedCache = filters?.ativo === undefined;
 
     try {
       // Se preferir cache e não forçar refresh, retornar cache imediatamente
-      const canUseSharedCache = filters?.ativo === undefined;
       if (canUseSharedCache && preferCache && !forceRefresh) {
         const cached = this.getCached();
         if (cached.length > 0) {

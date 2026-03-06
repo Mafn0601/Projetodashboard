@@ -41,6 +41,37 @@ export class OrdemServicoController {
     }
   }
 
+  // ✅ NOVO: Buscar OSs de um parceiro específico
+  async findByParceiro(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { parceiroId } = req.params;
+      const { skip, take, status } = req.query;
+
+      const skipNum = parseInt(String(skip)) || 0;
+      const takeNum = Math.min(parseInt(String(take)) || 20, 100);
+
+      const result = await ordemServicoService.findByParceiro(parceiroId, {
+        skip: skipNum,
+        take: takeNum,
+        status: status ? (String(status).toUpperCase() as StatusOS) : undefined,
+      });
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ✅ NOVO: Estatísticas por status
+  async getStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      const stats = await ordemServicoService.getByStatus(true);
+      res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const validatedData = createOrdemServicoSchema.parse(req.body);

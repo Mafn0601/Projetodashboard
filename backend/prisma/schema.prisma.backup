@@ -252,18 +252,6 @@ model OrdemServico {
   boxOcupacoes      BoxOcupacao[]
   historico         HistoricoOS[]
   
-  // ✅ ÍNDICES PARA PERFORMANCE
-  @@index([clienteId])
-  @@index([veiculoId])
-  @@index([responsavelId])
-  @@index([parceiroId])           // 🔴 CRÍTICO para /by-parceiro
-  @@index([agendamentoId])
-  @@index([status])
-  @@index([dataAbertura])
-  @@index([parceiroId, status])   // Composite: filtrar por parceiro + status
-  @@index([status, createdAt])    // Composite: filtrar por status + ordenar por data
-  @@index([clienteId, createdAt]) // Composite: histórico do cliente
-  
   @@map("ordens_servico")
 }
 

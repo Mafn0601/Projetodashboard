@@ -1,5 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// ==================== SCHEMA OTIMIZADO COM ÍNDICES ====================
+// Alterações principais:
+// 1. Índices adicionados em foreign keys e campos frequently queryed
+// 2. Índices compostos para queries comuns (parceiroId + status, clienteId + createdAt)
+// 3. Removida desnormalização do Box (campo parceiro string)
+// 4. Índice UNIQUE onde apropriado
 
 generator client {
   provider = "prisma-client-js"
@@ -34,6 +38,9 @@ model Usuario {
   boxOcupacoes     BoxOcupacao[]
   leads            Lead[]
   
+  // ÍNDICES - Foreign keys devem ter índices
+  @@index([parceiroId])
+  @@index([ativo])
   @@map("usuarios")
 }
 
@@ -68,7 +75,11 @@ model Parceiro {
   equipes          Equipe[]
   agendamentos     Agendamento[]
   ordensServico    OrdemServico[]
+  boxes            Box[]
   
+  // ÍNDICES
+  @@index([ativo])
+  @@index([cnpj])
   @@map("parceiros")
 }
 
@@ -98,6 +109,9 @@ model Equipe {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   
+  // ÍNDICES
+  @@index([parceiroId])
+  @@index([ativo])
   @@map("equipes")
 }
 
@@ -126,6 +140,10 @@ model Cliente {
   leads           Lead[]
   orcamentos      Orcamento[]
   
+  // ÍNDICES - Usado para listagem e paginação
+  @@index([ativo])
+  @@index([cpfCnpj])
+  @@index([createdAt])
   @@map("clientes")
 }
 
@@ -152,6 +170,8 @@ model Veiculo {
   agendamentos    Agendamento[]
   ordensServico   OrdemServico[]
   
+  // ÍNDICES
+  @@index([clienteId])
   @@map("veiculos")
 }
 
@@ -195,6 +215,13 @@ model Agendamento {
   // Relações
   ordemServico        OrdemServico?
   
+  // ÍNDICES - Queries comuns
+  @@index([clienteId])
+  @@index([parceiroId])
+  @@index([responsavelId])
+  @@index([dataAgendamento])
+  @@index([status])
+  @@index([createdAt])
   @@map("agendamentos")
 }
 
@@ -252,18 +279,16 @@ model OrdemServico {
   boxOcupacoes      BoxOcupacao[]
   historico         HistoricoOS[]
   
-  // ✅ ÍNDICES PARA PERFORMANCE
+  // ✅ ÍNDICES CRUCIAIS - OrdemServico é uma das tabelas mais queryed
   @@index([clienteId])
-  @@index([veiculoId])
   @@index([responsavelId])
-  @@index([parceiroId])           // 🔴 CRÍTICO para /by-parceiro
-  @@index([agendamentoId])
+  @@index([parceiroId])
   @@index([status])
-  @@index([dataAbertura])
-  @@index([parceiroId, status])   // Composite: filtrar por parceiro + status
-  @@index([status, createdAt])    // Composite: filtrar por status + ordenar por data
-  @@index([clienteId, createdAt]) // Composite: histórico do cliente
-  
+  @@index([createdAt])
+  // Índices compostos para queries comuns
+  @@index([parceiroId, status])  // Muito usado: buscar OSs ativas por parceiro
+  @@index([clienteId, status])   // Muito usado: OSs ativas por cliente
+  @@index([status, createdAt])   // Listagem ordenada por status e data
   @@map("ordens_servico")
 }
 
@@ -307,6 +332,7 @@ model ItemOS {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   
+  @@index([ordemServicoId])
   @@map("itens_os")
 }
 
@@ -327,8 +353,11 @@ model HistoricoOS {
   
   createdAt       DateTime     @default(now())
   
+  @@index([ordemServicoId])
+  @@index([createdAt])
   @@map("historico_os")
 }
+
 // ==================== STATUS CARDS ====================
 
 model StatusCard {
@@ -356,6 +385,7 @@ model StatusCard {
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
   
+  @@index([status])
   @@map("status_cards")
 }
 
@@ -367,8 +397,11 @@ model Box {
   nome        String
   descricao   String?
   tipo        String?       // "lavagem" ou "servico_geral"
+  
+  // ✅ REMOVIDO: parceiro String? // Campo redundante - usar relação
   parceiroId  String?
-  parceiro    String?       // Nome do parceiro (desnormalizado para compatibilidade)
+  parceiro    Parceiro?     @relation(fields: [parceiroId], references: [id])
+  
   cor         String?       // Cor para identificação visual
   ativo       Boolean       @default(true)
   
@@ -378,6 +411,9 @@ model Box {
   // Relações
   ocupacoes   BoxOcupacao[]
   
+  @@index([parceiroId])
+  @@index([ativo])
+  @@index([tipo])
   @@map("boxes")
 }
 
@@ -401,6 +437,9 @@ model BoxOcupacao {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   
+  @@index([boxId])
+  @@index([ordemServicoId])
+  @@index([responsavelId])
   @@map("box_ocupacoes")
 }
 
@@ -419,6 +458,7 @@ model TipoOS {
   itens       TipoOSItem[]
   agendamentos Agendamento[]
   
+  @@index([ativo])
   @@map("tipos_os")
 }
 
@@ -441,6 +481,7 @@ model TipoOSItem {
   itensOS     ItemOS[]
   agendamentos Agendamento[]
   
+  @@index([tipoOSId])
   @@map("tipos_os_itens")
 }
 
@@ -467,6 +508,9 @@ model Lead {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   
+  @@index([clienteId])
+  @@index([status])
+  @@index([responsavelId])
   @@map("leads")
 }
 
@@ -502,6 +546,9 @@ model Orcamento {
   // Relações
   itens           ItemOrcamento[]
   
+  @@index([clienteId])
+  @@index([status])
+  @@index([createdAt])
   @@map("orcamentos")
 }
 
@@ -525,6 +572,7 @@ model ItemOrcamento {
   
   createdAt       DateTime   @default(now())
   
+  @@index([orcamentoId])
   @@map("itens_orcamento")
 }
 
@@ -548,6 +596,7 @@ model MetaComissao {
   updatedAt   DateTime @updatedAt
   
   @@unique([mesReferencia, anoReferencia, nome])
+  @@index([ativo])
   @@map("metas_comissao")
 }
 
@@ -565,6 +614,8 @@ model Chamado {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   
+  @@index([status])
+  @@index([urgencia])
   @@map("chamados")
 }
 

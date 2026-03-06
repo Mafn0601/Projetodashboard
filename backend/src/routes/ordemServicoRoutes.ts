@@ -7,6 +7,11 @@ const router = Router();
 // Todas as rotas de OS requerem autenticação
 router.use(authenticate);
 
+// ✅ ROTAS ESPECÍFICAS (devem vir ANTES de /:id)
+router.get('/by-parceiro/:parceiroId', ordemServicoController.findByParceiro);
+router.get('/stats', ordemServicoController.getStats);
+
+// Rotas genéricas
 router.get('/', ordemServicoController.findAll);
 router.get('/:id', ordemServicoController.findById);
 router.post('/', ordemServicoController.create);

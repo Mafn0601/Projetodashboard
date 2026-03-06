@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/components/AuthContext';
 import { getBoxes, getBoxesDisponiveis, getTipoBoxPreferidoPorServico, addOcupacao } from '@/services/boxService';
 import { ClienteCompleto } from '@/services/clienteService';
+import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
+import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
 import { addAgendamento, getAgendamentos } from '@/services/agendaService';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { readArray } from '@/lib/storage';
@@ -34,6 +36,8 @@ type Equipe = {
   id: string;
   nome: string;
   login: string;
+  parceiroId?: string;
+  ativo?: boolean;
   [key: string]: unknown;
 };
 
@@ -84,6 +88,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
   const [dataIso, setDataIso] = useState('');
   const [horario, setHorario] = useState('');
   const [duracao, setDuracao] = useState(60);
+  const [parceiroId, setParceiroId] = useState('');
   const [responsavel, setResponsavel] = useState('');
   const [boxId, setBoxId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -95,6 +100,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
   // Estados para dados carregados
   const [tiposOsList, setTiposOsList] = useState<TipoOS[]>([]);
   const [equipes, setEquipes] = useState<Equipe[]>([]);
+  const [parceiros, setParceiros] = useState<ParceiroAPI[]>([]);
   const [boxes, setBoxes] = useState<Array<{id: string; nome: string; ativo: boolean; parceiro: string; tipo: 'lavagem' | 'servico_geral'}>>([]);
 
   // Carregar dados apenas quando modal abre
@@ -106,22 +112,32 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
 
       const timer = window.setTimeout(() => {
         try {
+          Promise.all([
+            parceiroServiceAPI.findAll({ preferCache: true }),
+            equipeServiceAPI.findAll(undefined, undefined, { preferCache: true }),
+          ]).then(([parceirosApi, equipesApi]) => {
+            const equipesAtivas = (equipesApi || []).filter((eq: EquipeAPI) => eq.ativo !== false);
+            setParceiros(parceirosApi || []);
+            setEquipes(
+              equipesAtivas.map((eq: EquipeAPI) => ({
+                id: eq.id,
+                nome: eq.login,
+                login: eq.login,
+                parceiroId: eq.parceiroId,
+                ativo: eq.ativo,
+              }))
+            );
+          }).catch((e) => {
+            console.error('Erro ao carregar parceiros/equipes da API no agendamento rápido:', e);
+            setParceiros([]);
+            setEquipes([]);
+          });
+
           const tiposStart = performance.now();
           const tipos = readArray<TipoOS>('tiposOs');
           setTiposOsList(tipos);
           const tiposMs = Math.round(performance.now() - tiposStart);
           traceAgendar('quick-modal:tipos-loaded', { count: tipos.length, ms: tiposMs });
-
-          const equipesData = readArray<Equipe>('equipes');
-          setEquipes(equipesData);
-          
-          // Definir responsável padrão como usuário logado
-          if (user && equipesData.length > 0) {
-            const userEquipe = equipesData.find(e => e.nome === user.name || e.login === user.email);
-            if (userEquipe) {
-              setResponsavel(userEquipe.id);
-            }
-          }
 
           const boxesStart = performance.now();
           const boxesData = getBoxes().filter(b => b.ativo);
@@ -144,12 +160,27 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       };
     } else {
       setTiposOsList([]);
+      setParceiros([]);
       setEquipes([]);
       setBoxes([]);
       setIsLoading(false);
       traceAgendar('quick-modal:closed');
     }
   }, [isOpen, cliente?.id, user]);
+
+  const responsavelOptionsFiltrados = equipes
+    .filter((equipeAtual) => !parceiroId || equipeAtual.parceiroId === parceiroId)
+    .map((equipeAtual) => ({
+      value: equipeAtual.id,
+      label: equipeAtual.nome ? `${equipeAtual.nome} (${equipeAtual.login})` : equipeAtual.login,
+    }));
+
+  useEffect(() => {
+    if (!responsavel) return;
+    if (!responsavelOptionsFiltrados.some((option) => option.value === responsavel)) {
+      setResponsavel('');
+    }
+  }, [parceiroId, responsavel, responsavelOptionsFiltrados]);
 
   if (!isOpen || !cliente) return null;
 
@@ -373,9 +404,9 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       hasBox: Boolean(boxId),
     });
 
-    if (!dataIso || !horario || tiposItens.length === 0 || !responsavel) {
+    if (!dataIso || !horario || tiposItens.length === 0 || !parceiroId || !responsavel) {
       traceAgendar('quick-modal:submit-invalid');
-      setErroValidacao('Preencha todos os campos obrigatórios (selecione pelo menos um tipo/item e responsável)');
+      setErroValidacao('Preencha todos os campos obrigatórios (parceiro, responsável e pelo menos um tipo/item)');
       return;
     }
 
@@ -413,6 +444,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       for (const tipoItem of tiposItens) {
         const novoAgendamentoAPI = await agendamentoServiceAPI.create({
           clienteId: cliente.id,
+          parceiroId: parceiroId || undefined,
           responsavelId: responsavel,
           dataAgendamento: dataAgendamentoISO,
           horarioAgendamento: horario,
@@ -497,6 +529,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     setDataIso(getBrasiliaTodayISO());
     setHorario('');
     setDuracao(60);
+    setParceiroId('');
     setBoxId('');
     traceAgendar('quick-modal:submit-success');
     
@@ -513,6 +546,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     setDataIso(getBrasiliaTodayISO());
     setHorario('');
     setDuracao(60);
+    setParceiroId('');
     setBoxId('');
     onClose();
   };
@@ -542,14 +576,20 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
           )}
 
           <Select
+            label="Parceiro"
+            value={parceiroId}
+            onChange={setParceiroId}
+            options={parceiros.map((parceiroAtual) => ({ value: parceiroAtual.id, label: parceiroAtual.nome }))}
+            required
+          />
+
+          <Select
             label="Responsável"
             value={responsavel}
             onChange={setResponsavel}
-            options={equipes.map(e => ({ 
-              value: e.id, 
-              label: e.nome ? `${e.nome} (${e.login})` : e.login
-            }))}
+            options={responsavelOptionsFiltrados}
             required
+            disabled={!parceiroId}
           />
 
           <Select

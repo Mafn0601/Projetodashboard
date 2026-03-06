@@ -63,7 +63,19 @@ export default function BoxPage() {
   useEffect(() => {
     initializeMockBoxes();
     initializeAgendamentos();
-    carregarDados();
+    
+    // Carregar do cache primeiro (instantâneo)
+    const cached = boxServiceAPI.getCached();
+    if (cached.length > 0) {
+      const boxesAtivos = cached.filter(b => b.ativo);
+      setBoxes(boxesAtivos);
+      setIsLoading(false);
+      // Atualizar em background
+      carregarDados({ silent: true, forceRefresh: true });
+    } else {
+      // Se não tiver cache, carregar normalmente
+      carregarDados({ forceRefresh: true });
+    }
     
     // Inicializar com data de hoje
     const dataHoje = toDdMmYyyyFromISODate(getBrasiliaTodayISO());
@@ -83,19 +95,32 @@ export default function BoxPage() {
     setExpandedParceirosTimeline(parceirosUnicos);
   }, [boxes]);
 
-  const carregarDados = async () => {
+  const carregarDados = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
+    const silent = options?.silent ?? false;
+    const forceRefresh = options?.forceRefresh ?? false;
+
     try {
-      setIsLoading(true);
-      const boxesData = await boxServiceAPI.findAll({ ativo: true });
+      if (!silent) {
+        setIsLoading(true);
+      }
+      
+      // Carregar boxes
+      const boxesData = await boxServiceAPI.findAll(
+        { ativo: true }, 
+        { preferCache: !forceRefresh, forceRefresh }
+      );
       setBoxes(boxesData);
       
+      // Carregar parceiros
       const parceirosData = readArray<Parceiro>("parceiros");
       setParceiros(parceirosData.filter(p => p.status === "ativo"));
     } catch (error) {
       console.error("Erro ao carregar boxes:", error);
-      alert("Erro ao carregar boxes. Verifique sua conexão.");
+      setBoxes([]);
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -161,7 +186,7 @@ export default function BoxPage() {
         });
       }
 
-      await carregarDados();
+      await carregarDados({ forceRefresh: true });
       setIsModalOpen(false);
       limparForm();
     } catch (error) {
@@ -180,7 +205,7 @@ export default function BoxPage() {
     try {
       setIsLoading(true);
       await boxServiceAPI.delete(id);
-      await carregarDados();
+      await carregarDados({ forceRefresh: true });
     } catch (error) {
       console.error("Erro ao excluir box:", error);
       alert("Erro ao excluir box. Pode haver ocupações ativas vinculadas.");

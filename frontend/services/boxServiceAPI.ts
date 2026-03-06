@@ -4,6 +4,7 @@
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const BOXES_CACHE_KEY = 'cache_api_boxes_v1';
 
 export interface BoxAPI {
   id: string;
@@ -32,8 +33,47 @@ class BoxServiceAPI {
     };
   }
 
-  async findAll(filters?: FindAllFilters): Promise<BoxAPI[]> {
+  private setCachedBoxes(data: BoxAPI[]): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(BOXES_CACHE_KEY, JSON.stringify(data));
+  }
+
+  private clearCache(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(BOXES_CACHE_KEY);
+  }
+
+  getCached(): BoxAPI[] {
+    if (typeof window === 'undefined') return [];
     try {
+      const raw = localStorage.getItem(BOXES_CACHE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async findAll(filters?: FindAllFilters, options?: { preferCache?: boolean; forceRefresh?: boolean }): Promise<BoxAPI[]> {
+    const preferCache = options?.preferCache ?? false;
+    const forceRefresh = options?.forceRefresh ?? false;
+
+    try {
+      // Se preferir cache e não forçar refresh, retornar cache imediatamente
+      const canUseSharedCache = filters?.ativo === undefined;
+      if (canUseSharedCache && preferCache && !forceRefresh) {
+        const cached = this.getCached();
+        if (cached.length > 0) {
+          console.log('✅ Boxes carregados do cache:', cached.length);
+          // Aplicar filtros no cache
+          if (filters?.ativo !== undefined) {
+            return cached.filter((box: BoxAPI) => box.ativo === filters.ativo);
+          }
+          return cached;
+        }
+      }
+
       const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_URL}/api/boxes`, {
         headers,
@@ -44,6 +84,12 @@ class BoxServiceAPI {
       }
 
       const boxes = await response.json();
+      console.log('✅ Boxes carregados da API:', boxes.length);
+
+      // Salvar no cache se não houver filtro de ativo
+      if (canUseSharedCache) {
+        this.setCachedBoxes(boxes);
+      }
 
       // Aplicar filtros no client-side se necessário
       if (filters?.ativo !== undefined) {
@@ -53,6 +99,19 @@ class BoxServiceAPI {
       return boxes;
     } catch (error) {
       console.error('Erro ao buscar boxes:', error);
+      
+      // Fallback para cache em caso de erro
+      if (canUseSharedCache) {
+        const cached = this.getCached();
+        if (cached.length > 0) {
+          console.log('⚠️ Usando cache como fallback:', cached.length);
+          if (filters?.ativo !== undefined) {
+            return cached.filter((box: BoxAPI) => box.ativo === filters.ativo);
+          }
+          return cached;
+        }
+      }
+      
       throw error;
     }
   }
@@ -101,7 +160,12 @@ class BoxServiceAPI {
         throw new Error(error.error || `HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      
+      // Limpar cache após criar
+      this.clearCache();
+      
+      return result;
     } catch (error) {
       console.error('Erro ao criar box:', error);
       throw error;
@@ -134,7 +198,12 @@ class BoxServiceAPI {
         throw new Error(error.error || `HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      
+      // Limpar cache após atualizar
+      this.clearCache();
+      
+      return result;
     } catch (error) {
       console.error('Erro ao atualizar box:', error);
       throw error;
@@ -153,6 +222,9 @@ class BoxServiceAPI {
         const error = await response.json();
         throw new Error(error.error || `HTTP error! status: ${response.status}`);
       }
+      
+      // Limpar cache após deletar
+      this.clearCache();
     } catch (error) {
       console.error('Erro ao deletar box:', error);
       throw error;

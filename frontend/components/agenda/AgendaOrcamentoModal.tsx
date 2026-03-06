@@ -82,7 +82,7 @@ export default function AgendaOrcamentoModal({
 
     const carregarDados = async () => {
       try {
-        const boxesApi = await boxServiceAPI.findAll({ ativo: true });
+        const boxesApi = await boxServiceAPI.findAll({ ativo: true }, { preferCache: true });
         const boxesFormatados: Box[] = (boxesApi || []).map((box) => ({
           id: box.id,
           nome: box.nome,

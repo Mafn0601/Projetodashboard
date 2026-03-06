@@ -56,13 +56,15 @@ class BoxServiceAPI {
   }
 
   async findAll(filters?: FindAllFilters, options?: { preferCache?: boolean; forceRefresh?: boolean }): Promise<BoxAPI[]> {
-    const preferCache = options?.preferCache ?? false;
+    const preferCache = options?.preferCache ?? true;
     const forceRefresh = options?.forceRefresh ?? false;
-    const canUseSharedCache = filters?.ativo === undefined;
+    // Cache pode ser usado quando não há filtro de busca (todos os dados podem ser cacheados)
+    // O filtro de ativo será aplicado no lado do cliente
+    const canUseCache = true;
 
     try {
       // Se preferir cache e não forçar refresh, retornar cache imediatamente
-      if (canUseSharedCache && preferCache && !forceRefresh) {
+      if (canUseCache && preferCache && !forceRefresh) {
         const cached = this.getCached();
         if (cached.length > 0) {
           console.log('✅ Boxes carregados do cache:', cached.length);
@@ -86,10 +88,8 @@ class BoxServiceAPI {
       const boxes = await response.json();
       console.log('✅ Boxes carregados da API:', boxes.length);
 
-      // Salvar no cache se não houver filtro de ativo
-      if (canUseSharedCache) {
-        this.setCachedBoxes(boxes);
-      }
+      // Salvar no cache
+      this.setCachedBoxes(boxes);
 
       // Aplicar filtros no client-side se necessário
       if (filters?.ativo !== undefined) {
@@ -101,15 +101,13 @@ class BoxServiceAPI {
       console.error('Erro ao buscar boxes:', error);
       
       // Fallback para cache em caso de erro
-      if (canUseSharedCache) {
-        const cached = this.getCached();
-        if (cached.length > 0) {
-          console.log('⚠️ Usando cache como fallback:', cached.length);
-          if (filters?.ativo !== undefined) {
-            return cached.filter((box: BoxAPI) => box.ativo === filters.ativo);
-          }
-          return cached;
+      const cached = this.getCached();
+      if (cached.length > 0) {
+        console.log('⚠️ Usando cache como fallback:', cached.length);
+        if (filters?.ativo !== undefined) {
+          return cached.filter((box: BoxAPI) => box.ativo === filters.ativo);
         }
+        return cached;
       }
       
       throw error;

@@ -73,10 +73,15 @@ class ClienteServiceAPI {
     const forceRefresh = options?.forceRefresh ?? false;
 
     try {
-      const canUseSharedCache = !filters.search && filters.ativo === undefined;
-      if (canUseSharedCache && preferCache && !forceRefresh) {
+      // Cache pode ser usado quando não há busca, o filtro de ativo será aplicado no cliente
+      const canUseCache = !filters.search;
+      if (canUseCache && preferCache && !forceRefresh) {
         const cached = this.getCached();
         if (cached.length > 0) {
+          // Aplicar filtro de ativo no cliente se necessário
+          if (filters.ativo !== undefined) {
+            return cached.filter((c: ClienteCompleto) => c.ativo === filters.ativo);
+          }
           return cached;
         }
       }
@@ -97,15 +102,21 @@ class ClienteServiceAPI {
       // Backend retorna {clientes, total} ou pode retornar {data, total} ou array direto
       const clientes = result.clientes || result.data || result;
       
-      if (!filters.search && filters.ativo === undefined) {
+      // Cachear quando não há busca
+      if (!filters.search) {
         this.setCachedClientes(clientes);
       }
       
       return clientes;
     } catch (error) {
-      if (!filters.search && filters.ativo === undefined) {
+      // Usar cache como fallback se não houver busca
+      if (!filters.search) {
         const cached = this.getCached();
         if (cached.length > 0) {
+          // Aplicar filtro de ativo se necessário
+          if (filters.ativo !== undefined) {
+            return cached.filter((c: ClienteCompleto) => c.ativo === filters.ativo);
+          }
           return cached;
         }
       }

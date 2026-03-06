@@ -8,8 +8,8 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', statusController.findAll);
-router.get('/:id', statusController.findById);
 router.get('/status/:status', statusController.findByStatus);
+router.get('/:id', statusController.findById);
 router.post('/', statusController.create);
 router.put('/:id', statusController.update);
 router.put('/:id/move', statusController.moveCard);

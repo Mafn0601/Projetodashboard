@@ -1,49 +1,130 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { readArray } from '@/lib/storage';
+import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
+import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
+import { ordemServicoServiceAPI, OrdemServico } from '@/services/ordemServicoServiceAPI';
+import { orcamentoServiceAPI, OrcamentoAPI } from '@/services/orcamentoServiceAPI';
+import { agendamentoServiceAPI, Agendamento } from '@/services/agendamentoServiceAPI';
 
-type Parceiro = {
+type AtividadeRecente = {
   id: string;
-  cnpj?: string;
-  nome?: string;
-  grupo?: string;
-  cidade?: string;
-  estado?: string;
-  status?: string;
-  [key: string]: unknown;
+  titulo: string;
+  detalhe: string;
+  data: string;
 };
 
-type Equipe = {
-  id: string;
-  parceiro: string;
-  [key: string]: unknown;
-};
+function formatDateTime(value?: string): string {
+  if (!value) return '-';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return '-';
+  return dt.toLocaleString('pt-BR');
+}
+
+function formatAddress(parceiro: ParceiroAPI | null): string {
+  if (!parceiro) return '-';
+  const partes = [
+    parceiro.rua,
+    parceiro.numero,
+    parceiro.complemento,
+    parceiro.bairro,
+    parceiro.cep,
+  ]
+    .map((parte) => String(parte || '').trim())
+    .filter(Boolean);
+
+  if (parceiro.endereco) {
+    const enderecoBruto = String(parceiro.endereco).trim();
+    return [enderecoBruto, ...partes].filter(Boolean).join(' - ');
+  }
+
+  return partes.length ? partes.join(', ') : '-';
+}
 
 export default function ParceiroDetalhePage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const [parceiro, setParceiro] = useState<Parceiro | null>(null);
+
+  const [parceiro, setParceiro] = useState<ParceiroAPI | null>(null);
+  const [equipes, setEquipes] = useState<EquipeAPI[]>([]);
+  const [ordens, setOrdens] = useState<OrdemServico[]>([]);
+  const [orcamentos, setOrcamentos] = useState<OrcamentoAPI[]>([]);
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalFuncionarios, setTotalFuncionarios] = useState(0);
 
   const id = params.id as string;
-  const nomeParceiro = searchParams.get('nome') || 'Parceiro';
 
   useEffect(() => {
-    const parceiros = readArray<Parceiro>('parceiros');
-    const parceiroEncontrado = parceiros.find(p => p.id === id);
-    setParceiro(parceiroEncontrado || null);
+    let mounted = true;
 
-    const equipes = readArray<Equipe>('equipes');
-    const total = equipes.filter(e => e.parceiro === id).length;
-    setTotalFuncionarios(total);
+    const carregarDetalhes = async () => {
+      try {
+        setLoading(true);
 
-    setLoading(false);
+        const [parceiroData, equipesData, ordensData, orcamentosData, agendamentosData] = await Promise.all([
+          parceiroServiceAPI.findById(id),
+          equipeServiceAPI.findAll(id, undefined, { preferCache: false, forceRefresh: true }),
+          ordemServicoServiceAPI.findAll({ take: 200 }),
+          orcamentoServiceAPI.findAll({ status: 'PENDENTE', take: 200 }),
+          agendamentoServiceAPI.findAll({ take: 200 }),
+        ]);
+
+        if (!mounted) return;
+
+        setParceiro(parceiroData);
+        setEquipes(equipesData || []);
+        setOrdens((ordensData || []).filter((os) => os.parceiroId === id));
+        setOrcamentos(
+          (orcamentosData || []).filter((orc) =>
+            String(orc.observacoes || '').includes(`PARCEIRO_ID:${id}`)
+          )
+        );
+        setAgendamentos((agendamentosData || []).filter((item) => item.parceiroId === id));
+      } catch (error) {
+        console.error('Erro ao carregar detalhes do parceiro:', error);
+        if (mounted) {
+          setParceiro(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    carregarDetalhes();
+
+    return () => {
+      mounted = false;
+    };
   }, [id]);
+
+  const osEmAndamento = useMemo(
+    () => ordens.filter((os) => !['CONCLUIDO', 'ENTREGUE'].includes(os.status)).length,
+    [ordens]
+  );
+
+  const atividadesRecentes = useMemo<AtividadeRecente[]>(() => {
+    const atividadesOS = ordens.map((os) => ({
+      id: `os-${os.id}`,
+      titulo: `OS ${os.numeroOS}`,
+      detalhe: `Status: ${os.status}`,
+      data: os.updatedAt,
+    }));
+
+    const atividadesAgendamento = agendamentos.map((ag) => ({
+      id: `ag-${ag.id}`,
+      titulo: 'Agendamento',
+      detalhe: `${ag.tipoAgendamento} - ${ag.status}`,
+      data: ag.updatedAt,
+    }));
+
+    return [...atividadesOS, ...atividadesAgendamento]
+      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+      .slice(0, 8);
+  }, [ordens, agendamentos]);
 
   if (loading) {
     return (
@@ -75,7 +156,6 @@ export default function ParceiroDetalhePage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={() => router.back()}>
@@ -83,21 +163,13 @@ export default function ParceiroDetalhePage() {
           </Button>
           <div>
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
-              {parceiro.nome || nomeParceiro}
+              {parceiro.nome}
             </h1>
-            <p className="text-sm text-slate-700 dark:text-slate-400">
-              Detalhes do parceiro
-            </p>
+            <p className="text-sm text-slate-700 dark:text-slate-400">Detalhes do parceiro</p>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm">
-            Editar
-          </Button>
         </div>
       </div>
 
-      {/* Informações Principais */}
       <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
           Informações do Parceiro
@@ -105,88 +177,72 @@ export default function ParceiroDetalhePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1">CNPJ</p>
-            <p className="text-base text-slate-900 dark:text-slate-100">
-              {parceiro.cnpj || '-'}
-            </p>
+            <p className="text-base text-slate-900 dark:text-slate-100">{parceiro.cnpj || '-'}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1">Nome da Empresa</p>
-            <p className="text-base text-slate-900 dark:text-slate-100">
-              {parceiro.nome || '-'}
-            </p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1">Email</p>
+            <p className="text-base text-slate-900 dark:text-slate-100">{parceiro.email || '-'}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1">Grupo</p>
-            <p className="text-base text-slate-900 dark:text-slate-100">
-              {parceiro.grupo || '-'}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1">Cidade</p>
-            <p className="text-base text-slate-900 dark:text-slate-100">
-              {parceiro.cidade || '-'}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1">Estado</p>
-            <p className="text-base text-slate-900 dark:text-slate-100">
-              {parceiro.estado || '-'}
-            </p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1">Telefone</p>
+            <p className="text-base text-slate-900 dark:text-slate-100">{parceiro.telefone || '-'}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1">Status</p>
-            <div>
-              {parceiro.status && (
-                <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-lg ${
-                  parceiro.status.toLowerCase() === 'ativo'
-                    ? "bg-green-100 dark:bg-green-950/60 text-green-700 dark:text-green-200 border border-green-200 dark:border-green-800"
-                    : "bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-200 border border-red-200 dark:border-red-800"
-                }`}>
-                  {parceiro.status}
-                </span>
-              )}
-              {!parceiro.status && <span className="text-slate-700">-</span>}
-            </div>
+            <span
+              className={`inline-block px-3 py-1 text-sm font-semibold rounded-lg ${
+                parceiro.ativo
+                  ? 'bg-green-100 dark:bg-green-950/60 text-green-700 dark:text-green-200 border border-green-200 dark:border-green-800'
+                  : 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-200 border border-red-200 dark:border-red-800'
+              }`}
+            >
+              {parceiro.ativo ? 'ativo' : 'inativo'}
+            </span>
+          </div>
+          <div className="md:col-span-2">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1">Endereço completo</p>
+            <p className="text-base text-slate-900 dark:text-slate-100">{formatAddress(parceiro)}</p>
           </div>
         </div>
       </div>
 
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
-            Funcionarios
-          </p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            {totalFuncionarios}
-          </p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">Funcionários vinculados</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{equipes.length}</p>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
-            Orçamentos Ativos
-          </p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            0
-          </p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">Orçamentos ativos</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{orcamentos.length}</p>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">
-            OS em Andamento
-          </p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            0
-          </p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">OS em andamento</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{osEmAndamento}</p>
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">Agendamentos vinculados</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{agendamentos.length}</p>
         </div>
       </div>
 
-      {/* Atividades Recentes */}
       <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
-          Atividades Recentes
-        </h2>
-        <div className="text-center py-8 text-slate-700 dark:text-slate-400">
-          Nenhuma atividade registrada
-        </div>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">Atividades Recentes</h2>
+        {atividadesRecentes.length === 0 ? (
+          <div className="text-center py-8 text-slate-700 dark:text-slate-400">Nenhuma atividade registrada</div>
+        ) : (
+          <div className="space-y-3">
+            {atividadesRecentes.map((atividade) => (
+              <div
+                key={atividade.id}
+                className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-900/40"
+              >
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{atividade.titulo}</p>
+                <p className="text-xs text-slate-700 dark:text-slate-400">{atividade.detalhe}</p>
+                <p className="text-xs text-slate-700 dark:text-slate-500 mt-1">{formatDateTime(atividade.data)}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

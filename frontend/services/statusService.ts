@@ -9,6 +9,7 @@ import {
 } from "@/services/boxService";
 import { getBrasiliaNow, getBrasiliaYear, toDdMmYyyyFromISODate, getBrasiliaTodayISO } from "@/lib/dateUtils";
 import { readArray, writeArray } from "@/lib/storage";
+import statusServiceAPI from "@/services/statusServiceAPI";
 
 export interface StatusCard {
   id: string;
@@ -144,6 +145,48 @@ const defaultCards: StatusCard[] = [
 
 let mockCards: StatusCard[] = [];
 
+function toIsoDateFromBrazilianDate(value: string): string {
+  const [datePart] = value.split(' ');
+  const [day, month, year] = datePart.split('/');
+  if (!day || !month || !year) return new Date().toISOString();
+  return new Date(`${year}-${month}-${day}T00:00:00`).toISOString();
+}
+
+function getNextCardUuid(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `card_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function syncCreateCard(card: StatusCard): void {
+  statusServiceAPI
+    .create({
+      id: card.id,
+      numero: card.numero,
+      veiculo: card.veiculo,
+      dataAgendamento: toIsoDateFromBrazilianDate(card.dataAgendamento),
+      dataEntrega:
+        card.dataEntrega && card.dataEntrega !== '-'
+          ? toIsoDateFromBrazilianDate(card.dataEntrega)
+          : new Date().toISOString(),
+      cliente: card.cliente,
+      parceiro: card.parceiro,
+      responsavel: card.responsavel,
+      status: card.status,
+      boxId: card.boxId,
+      boxNome: card.boxNome,
+      agendamentoId: card.agendamentoId,
+      horaInicio: card.horaInicio,
+      horaFim: card.horaFim,
+      formaPagamento: card.formaPagamento,
+      meioPagamento: card.meioPagamento,
+    })
+    .catch((error) => {
+      console.error('Erro ao sincronizar criação de card com API:', error);
+    });
+}
+
 function ensureCardsLoaded(): void {
   if (mockCards.length > 0) return;
 
@@ -194,7 +237,7 @@ export function addStatusCardFromAgendamento(agendamento: AgendaItem): StatusCar
   ensureCardsLoaded();
   const { numero, veiculo } = parseNumeroAndVeiculo(agendamento.titulo);
   const card: StatusCard = {
-    id: getNextCardId(),
+    id: getNextCardUuid(),
     numero: numero === "-" ? agendamento.id : numero,
     veiculo,
     dataAgendamento: normalizeAgendaDate(agendamento.data),
@@ -214,6 +257,7 @@ export function addStatusCardFromAgendamento(agendamento: AgendaItem): StatusCar
 
   mockCards.push(card);
   persistCards();
+  syncCreateCard(card);
 
   // Atualizar ocupação do box para "em_uso" se existir
   if (agendamento.boxId) {
@@ -264,8 +308,8 @@ export function addStatusCardFromOrcamento(dados: {
   const dataHoje = toDdMmYyyyFromISODate(getBrasiliaTodayISO());
   
   const card: StatusCard = {
-    id: getNextCardId(),
-    numero: `OS-${getNextCardId()}`,
+    id: getNextCardUuid(),
+    numero: `OS-${Date.now().toString().slice(-6)}`,
     veiculo: dados.veiculo.toUpperCase(),
     dataAgendamento: dataHoje,
     dataEntrega: "-",
@@ -278,6 +322,7 @@ export function addStatusCardFromOrcamento(dados: {
 
   mockCards.push(card);
   persistCards();
+  syncCreateCard(card);
 
   return card;
 }
@@ -398,6 +443,9 @@ export function moveCard(
     }
 
     persistCards();
+    statusServiceAPI.moveCard(cardId, toStatus).catch((error) => {
+      console.error('Erro ao sincronizar movimentação de card com API:', error);
+    });
     return true;
   } catch (error) {
     console.error("Erro ao mover card", error);
@@ -433,6 +481,9 @@ export function updateCardStatus(
     }
 
     persistCards();
+    statusServiceAPI.moveCard(cardId, newStatus).catch((error) => {
+      console.error('Erro ao sincronizar status de card com API:', error);
+    });
     return card;
   } catch (error) {
     console.error("Erro ao atualizar status do card", error);
@@ -449,6 +500,9 @@ export function deleteCard(cardId: string): boolean {
 
     mockCards.splice(index, 1);
     persistCards();
+    statusServiceAPI.delete(cardId).catch((error) => {
+      console.error('Erro ao sincronizar exclusão de card com API:', error);
+    });
     return true;
   } catch (error) {
     console.error("Erro ao deletar card", error);
@@ -466,4 +520,28 @@ export function getCard(cardId: string): StatusCard | undefined {
 export function resetCards(): void {
   mockCards = [...defaultCards];
   persistCards();
+}
+
+export function updateCardDeliveryDate(cardId: string, dataEntrega: string): StatusCard | null {
+  try {
+    ensureCardsLoaded();
+    const card = mockCards.find((c) => c.id === cardId);
+    if (!card) return null;
+
+    card.dataEntrega = dataEntrega;
+    persistCards();
+
+    statusServiceAPI
+      .update(cardId, {
+        dataEntrega: toIsoDateFromBrazilianDate(dataEntrega),
+      })
+      .catch((error) => {
+        console.error('Erro ao sincronizar data de entrega com API:', error);
+      });
+
+    return card;
+  } catch (error) {
+    console.error('Erro ao atualizar data de entrega do card', error);
+    return null;
+  }
 }

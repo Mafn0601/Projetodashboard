@@ -11,5 +11,6 @@ router.post('/login', authRateLimit, authController.login);
 
 // Rotas protegidas
 router.get('/me', authenticate, authController.me);
+router.patch('/change-password', authenticate, authController.changePassword);
 
 export default router;

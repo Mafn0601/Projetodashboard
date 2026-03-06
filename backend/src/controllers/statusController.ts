@@ -49,6 +49,7 @@ export class StatusController {
   async create(req: Request, res: Response) {
     try {
       const {
+        id,
         numero,
         veiculo,
         dataAgendamento,
@@ -82,6 +83,7 @@ export class StatusController {
 
       const statusCard = await prisma.statusCard.create({
         data: {
+          ...(id && { id }),
           numero,
           veiculo,
           dataAgendamento: new Date(dataAgendamento),

@@ -13,9 +13,11 @@ export interface OrdemServico {
   responsavelId: string;
   parceiroId?: string;
   agendamentoId?: string;
-  status: 'ABERTA' | 'EM_EXECUCAO' | 'FINALIZADA' | 'CANCELADA';
-  dataCriacao: string;
-  dataFinalizado?: string;
+  status: 'AGUARDANDO' | 'EM_ATENDIMENTO' | 'AGUARDANDO_PECAS' | 'EM_EXECUCAO' | 'CONCLUIDO' | 'ENTREGUE';
+  dataAbertura: string;
+  dataFinalizacao?: string;
+  dataPrevisao?: string;
+  descricao?: string;
   observacoes?: string;
   createdAt: string;
   updatedAt: string;
@@ -32,6 +34,17 @@ interface FindAllFilters {
 }
 
 class OrdemServicoServiceAPI {
+  private getAuthHeaders(contentType: boolean = true): Record<string, string> {
+    const headers: Record<string, string> = contentType ? { 'Content-Type': 'application/json' } : {};
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return headers;
+  }
+
   private buildQueryParams(filters: FindAllFilters): string {
     const params = new URLSearchParams();
     
@@ -52,9 +65,7 @@ class OrdemServicoServiceAPI {
       const queryString = this.buildQueryParams(filters);
       const response = await fetch(`${API_URL}/api/ordens-servico${queryString}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -64,7 +75,7 @@ class OrdemServicoServiceAPI {
       const result = await response.json();
       console.log('✅ Ordens de serviço carregadas:', result);
       
-      return result.data || result;
+      return result.ordensServico || result.data || result;
     } catch (error) {
       console.error('❌ Erro ao buscar ordens de serviço:', error);
       return [];
@@ -75,9 +86,7 @@ class OrdemServicoServiceAPI {
     try {
       const response = await fetch(`${API_URL}/api/ordens-servico/${id}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -99,9 +108,7 @@ class OrdemServicoServiceAPI {
       
       const response = await fetch(`${API_URL}/api/ordens-servico`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(ordemServico),
       });
 
@@ -125,9 +132,7 @@ class OrdemServicoServiceAPI {
       
       const response = await fetch(`${API_URL}/api/ordens-servico/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(ordemServico),
       });
 
@@ -151,9 +156,7 @@ class OrdemServicoServiceAPI {
       
       const response = await fetch(`${API_URL}/api/ordens-servico/${id}/status`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
         body: JSON.stringify({ status }),
       });
 
@@ -177,9 +180,7 @@ class OrdemServicoServiceAPI {
       
       const response = await fetch(`${API_URL}/api/ordens-servico/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {

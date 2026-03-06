@@ -130,6 +130,28 @@ export class AuthService {
 
     return usuario;
   }
+
+  async changePassword(userId: string, senhaAtual: string, novaSenha: string) {
+    const usuario = await prisma.usuario.findUnique({ where: { id: userId } });
+
+    if (!usuario) {
+      throw new AppError('Usuário não encontrado', 404);
+    }
+
+    const senhaValida = await comparePassword(senhaAtual, usuario.senha);
+    if (!senhaValida) {
+      throw new AppError('Senha atual inválida', 401);
+    }
+
+    const novaSenhaHash = await hashPassword(novaSenha);
+
+    await prisma.usuario.update({
+      where: { id: userId },
+      data: { senha: novaSenhaHash },
+    });
+
+    return { message: 'Senha alterada com sucesso' };
+  }
 }
 
 export default new AuthService();

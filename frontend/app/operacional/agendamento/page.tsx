@@ -143,26 +143,52 @@ export default function Page() {
       // Converter dd/mm para ISO date (assume ano atual)
       const [dia, mes] = newDate.split('/');
       const ano = new Date().getFullYear();
-      const novaDataISO = `${ano}-${mes}-${dia}T${agendamento.horarioAgendamento || '09:00'}:00`;
+      const horario = agendamento.horarioAgendamento || '09:00';
+      const novaDataISO = new Date(`${ano}-${mes}-${dia}T${horario}:00`).toISOString();
 
       await agendamentoServiceAPI.update(itemId, {
         dataAgendamento: novaDataISO,
+        horarioAgendamento: horario,
       });
 
       console.log('✅ Agendamento movido');
       setUpdateKey((prev) => prev + 1);
     } catch (error) {
       console.error('❌ Erro ao mover agendamento:', error);
+      alert('Não foi possível mover o agendamento. Verifique conflito de box/horário.');
     }
   }, [apiAgendamentos]);
+
+  const handleReschedule = useCallback(
+    async (agendamentoId: string, dataISO: string, horario: string) => {
+      try {
+        const novaDataISO = new Date(`${dataISO}T${horario}:00`).toISOString();
+
+        await agendamentoServiceAPI.update(agendamentoId, {
+          dataAgendamento: novaDataISO,
+          horarioAgendamento: horario,
+        });
+
+        setUpdateKey((prev) => prev + 1);
+        setIsModalOpen(false);
+        setSelectedAgendamento(null);
+      } catch (error) {
+        console.error('❌ Erro ao reagendar manualmente:', error);
+        alert('Não foi possível reagendar. Verifique conflito de box/horário.');
+      }
+    },
+    []
+  );
 
   const handleChegou = useCallback(async (agendamento: AgendaItem) => {
     try {
       console.log('📤 Marcando agendamento como chegado...', agendamento);
+      const chegadaInfo = `Cliente chegou em ${new Date().toLocaleString('pt-BR')}`;
       
       // Atualizar status para EXECUTANDO
       await agendamentoServiceAPI.update(agendamento.id, {
-        status: 'EXECUTANDO'
+        status: 'EXECUTANDO',
+        observacoes: chegadaInfo,
       });
 
       console.log('✅ Status atualizado para EXECUTANDO');
@@ -254,6 +280,7 @@ export default function Page() {
         onClose={() => setIsModalOpen(false)}
         onDelete={handleDeleteAgendamento}
         onChegou={handleChegou}
+        onReschedule={handleReschedule}
       />
     </div>
   );

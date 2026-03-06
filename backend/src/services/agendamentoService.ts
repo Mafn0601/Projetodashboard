@@ -3,7 +3,64 @@ import { supabase } from '../lib/supabase';
 import { AppError } from '../middlewares/errorHandler';
 import { Prisma } from '@prisma/client';
 
+function extractBoxName(observacoes?: string | null): string | null {
+  if (!observacoes) return null;
+  const match = observacoes.match(/Box:\s*([^|]+)/i);
+  if (!match?.[1]) return null;
+  const name = match[1].trim();
+  return name.length > 0 ? name : null;
+}
+
+function getDayRange(date: Date): { start: Date; end: Date } {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
+}
+
 export class AgendamentoService {
+  private async validateBoxConflict(params: {
+    idToIgnore?: string;
+    dataAgendamento: Date;
+    horarioAgendamento?: string | null;
+    observacoes?: string | null;
+  }) {
+    const boxNome = extractBoxName(params.observacoes);
+    const horario = params.horarioAgendamento?.trim();
+
+    if (!boxNome || !horario) {
+      return;
+    }
+
+    const { start, end } = getDayRange(params.dataAgendamento);
+
+    const conflito = await prisma.agendamento.findFirst({
+      where: {
+        id: params.idToIgnore ? { not: params.idToIgnore } : undefined,
+        status: { not: 'CANCELADO' },
+        horarioAgendamento: horario,
+        dataAgendamento: {
+          gte: start,
+          lt: end,
+        },
+        observacoes: {
+          contains: `Box: ${boxNome}`,
+        },
+      },
+      select: {
+        id: true,
+        horarioAgendamento: true,
+        dataAgendamento: true,
+        observacoes: true,
+      },
+    });
+
+    if (conflito) {
+      throw new AppError(`Conflito de agenda: já existe agendamento no box ${boxNome} às ${horario}`, 409);
+    }
+  }
+
   async findAll(filters?: {
     status?: string;
     clienteId?: string;
@@ -126,6 +183,12 @@ export class AgendamentoService {
   }
 
   async create(data: Prisma.AgendamentoCreateInput) {
+    await this.validateBoxConflict({
+      dataAgendamento: data.dataAgendamento as Date,
+      horarioAgendamento: (data.horarioAgendamento as string | null) ?? undefined,
+      observacoes: (data.observacoes as string | null) ?? undefined,
+    });
+
     const agendamento = await prisma.agendamento.create({
       data,
       include: {
@@ -156,6 +219,28 @@ export class AgendamentoService {
     if (!exists) {
       throw new AppError('Agendamento não encontrado', 404);
     }
+
+    const nextDataAgendamento =
+      data.dataAgendamento instanceof Date
+        ? data.dataAgendamento
+        : data.dataAgendamento
+        ? new Date(data.dataAgendamento as string)
+        : exists.dataAgendamento;
+
+    const nextHorario =
+      typeof data.horarioAgendamento === 'string'
+        ? data.horarioAgendamento
+        : exists.horarioAgendamento;
+
+    const nextObservacoes =
+      typeof data.observacoes === 'string' ? data.observacoes : exists.observacoes;
+
+    await this.validateBoxConflict({
+      idToIgnore: id,
+      dataAgendamento: nextDataAgendamento,
+      horarioAgendamento: nextHorario ?? undefined,
+      observacoes: nextObservacoes ?? undefined,
+    });
 
     const agendamento = await prisma.agendamento.update({
       where: { id },

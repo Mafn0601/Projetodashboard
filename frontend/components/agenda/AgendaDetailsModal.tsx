@@ -13,6 +13,7 @@ type Props = {
   onClose: () => void;
   onDelete: (id: string) => void;
   onChegou: (agendamento: AgendaItem) => void;
+  onReschedule: (agendamentoId: string, dataISO: string, horario: string) => void;
 };
 
 type Equipe = {
@@ -37,8 +38,17 @@ function formatarData(data: string): string {
   return date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit" });
 }
 
-export default function AgendaDetailsModal({ isOpen, agendamento, onClose, onDelete, onChegou }: Props) {
+export default function AgendaDetailsModal({
+  isOpen,
+  agendamento,
+  onClose,
+  onDelete,
+  onChegou,
+  onReschedule,
+}: Props) {
   const [nomeResponsavel, setNomeResponsavel] = useState<string>('-');
+  const [novaData, setNovaData] = useState('');
+  const [novoHorario, setNovoHorario] = useState('');
 
   useEffect(() => {
     if (!agendamento) {
@@ -70,6 +80,19 @@ export default function AgendaDetailsModal({ isOpen, agendamento, onClose, onDel
     carregarResponsavel();
   }, [agendamento]);
 
+  useEffect(() => {
+    if (!agendamento) {
+      setNovaData('');
+      setNovoHorario('');
+      return;
+    }
+
+    const [dia, mes] = agendamento.data.split('/');
+    const ano = new Date().getFullYear();
+    setNovaData(`${ano}-${mes}-${dia}`);
+    setNovoHorario(agendamento.horario || '09:00');
+  }, [agendamento]);
+
   if (!isOpen || !agendamento) return null;
 
   const handleDelete = () => {
@@ -79,6 +102,11 @@ export default function AgendaDetailsModal({ isOpen, agendamento, onClose, onDel
 
   const handleChegou = () => {
     onChegou(agendamento);
+  };
+
+  const handleReagendar = () => {
+    if (!novaData || !novoHorario) return;
+    onReschedule(agendamento.id, novaData, novoHorario);
   };
 
   return (
@@ -177,6 +205,35 @@ export default function AgendaDetailsModal({ isOpen, agendamento, onClose, onDel
                     <p className="text-slate-700 dark:text-slate-400 italic">Nenhum box disponível para este horário</p>
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                Reagendamento Manual
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div>
+                  <p className="text-xs text-slate-700 mb-1">Nova data</p>
+                  <input
+                    type="date"
+                    value={novaData}
+                    onChange={(e) => setNovaData(e.target.value)}
+                    className="w-full h-10 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-700 mb-1">Novo horário</p>
+                  <input
+                    type="time"
+                    value={novoHorario}
+                    onChange={(e) => setNovoHorario(e.target.value)}
+                    className="w-full h-10 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+                <Button onClick={handleReagendar} variant="secondary">
+                  Salvar alteração
+                </Button>
               </div>
             </div>
 

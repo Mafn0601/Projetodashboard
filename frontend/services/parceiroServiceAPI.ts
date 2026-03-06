@@ -122,6 +122,21 @@ class ParceiroServiceAPI {
       throw error;
     }
   }
+
+  async findById(id: string): Promise<ParceiroAPI> {
+    try {
+      const response = await fetch(`${API_URL}/api/parceiros/${id}`, { headers: this.getAuthHeaders() });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar parceiro (HTTP ${response.status})`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('❌ Erro ao buscar parceiro por ID:', error);
+      throw error;
+    }
+  }
 }
 
 export const parceiroServiceAPI = new ParceiroServiceAPI();

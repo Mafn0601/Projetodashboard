@@ -17,6 +17,7 @@ import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
 import { addStatusCardFromOrcamento } from '@/services/statusService';
 import { useRouter } from 'next/navigation';
 import AgendaOrcamentoModal from '@/components/agenda/AgendaOrcamentoModal';
+import { OrcamentoAPI, orcamentoServiceAPI } from '@/services/orcamentoServiceAPI';
 
 type Fabricante = {
   id: string;
@@ -110,6 +111,8 @@ export default function Page() {
   // Estados do modal de agendamento
   const [isAgendamentoOpen, setIsAgendamentoOpen] = useState(false);
   const [dadosAgendamento, setDadosAgendamento] = useState<any>(null);
+  const [orcamentosRecentes, setOrcamentosRecentes] = useState<OrcamentoAPI[]>([]);
+  const [carregandoOrcamentos, setCarregandoOrcamentos] = useState(false);
 
   // Função de validação para Ano Fab./Mod.
   const validarAnoFabMod = (valor: string): boolean => {
@@ -247,6 +250,23 @@ export default function Page() {
   }, []);
 
   // Atualizar responsáveis quando parceiro muda
+
+    const carregarOrcamentos = async () => {
+      try {
+        setCarregandoOrcamentos(true);
+        const data = await orcamentoServiceAPI.findAll({ take: 20 });
+        setOrcamentosRecentes(data || []);
+      } catch (error) {
+        console.error('Erro ao carregar orçamentos:', error);
+        setOrcamentosRecentes([]);
+      } finally {
+        setCarregandoOrcamentos(false);
+      }
+    };
+
+    useEffect(() => {
+      carregarOrcamentos();
+    }, []);
   const atualizarResponsaveis = (parceiroId: string) => {
     const equipasFiltradas = equipes.filter(e => e.parceiroId === parceiroId);
     setResponsavelOptions(equipasFiltradas.map(e => ({
@@ -476,9 +496,39 @@ export default function Page() {
     }
 
     try {
-      await salvarCliente();
-      alert('✅ Orçamento salvo com sucesso!');
-      // Limpar formulário se desejar
+      const clienteId = await salvarCliente();
+
+      const itens = produtos.map((produto) => ({
+        descricao: produto.nome,
+        quantidade: produto.quantidade || 1,
+        valorUnitario: produto.precoUnitario || 0,
+        valorTotal: produto.subtotal || 0,
+      }));
+
+      const payloadObservacoes = [
+        observacoes || '',
+        parceiro ? `PARCEIRO_ID:${parceiro}` : '',
+      ]
+        .filter(Boolean)
+        .join(' | ');
+
+      const novoOrcamento = await orcamentoServiceAPI.create({
+        clienteId,
+        descricao: tipoOptions.find((t) => t.value === tipo)?.label || tipo || 'Orçamento',
+        valorTotal: precoTotal,
+        desconto: descontoTotal,
+        validade: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'PENDENTE',
+        observacoes: payloadObservacoes || undefined,
+        itens,
+      });
+
+      if (!novoOrcamento) {
+        throw new Error('Falha ao salvar orçamento na API');
+      }
+
+      await carregarOrcamentos();
+      alert(`✅ Orçamento ${novoOrcamento.numeroOrcamento} salvo com sucesso!`);
     } catch (error) {
       console.error('❌ Erro ao salvar orçamento:', error);
       alert('Erro ao salvar orçamento. Tente novamente.');
@@ -1222,6 +1272,54 @@ export default function Page() {
           dadosOrcamento={dadosAgendamento}
         />
       )}
+
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-4 mt-6">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-200 mb-3">
+          Orçamentos recentes (Supabase/API)
+        </h2>
+        {carregandoOrcamentos ? (
+          <p className="text-xs text-slate-700 dark:text-slate-400">Carregando...</p>
+        ) : orcamentosRecentes.length === 0 ? (
+          <p className="text-xs text-slate-700 dark:text-slate-400">Nenhum orçamento cadastrado.</p>
+        ) : (
+          <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+            <div className="scrollbar-thin max-h-80 overflow-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 sticky top-0">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Número</th>
+                    <th className="px-3 py-2 font-medium">Cliente</th>
+                    <th className="px-3 py-2 font-medium">Valor (R$)</th>
+                    <th className="px-3 py-2 font-medium">Status</th>
+                    <th className="px-3 py-2 font-medium">Validade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orcamentosRecentes.map((orc) => (
+                    <tr
+                      key={orc.id}
+                      className="border-t border-slate-200 dark:border-slate-800 odd:bg-slate-50 even:bg-slate-100 dark:odd:bg-slate-950/60 dark:even:bg-slate-900/40"
+                    >
+                      <td className="px-3 py-1.5 text-slate-900 dark:text-slate-100">{orc.numeroOrcamento}</td>
+                      <td className="px-3 py-1.5 text-slate-900 dark:text-slate-100">{orc.cliente?.nome || '-'}</td>
+                      <td className="px-3 py-1.5 text-slate-900 dark:text-slate-100">
+                        {Number(orc.valorTotal || 0).toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="px-3 py-1.5 text-slate-900 dark:text-slate-100">{orc.status}</td>
+                      <td className="px-3 py-1.5 text-slate-900 dark:text-slate-100">
+                        {new Date(orc.validade).toLocaleDateString('pt-BR')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

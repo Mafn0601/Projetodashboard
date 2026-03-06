@@ -5,6 +5,7 @@ import { Trash2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { StatusCard as StatusCardType } from '@/services/statusService';
 import { updateCardStatus } from '@/services/statusService';
+import { updateCardDeliveryDate } from '@/services/statusService';
 import { readArray } from '@/lib/storage';
 
 type Props = {
@@ -48,6 +49,8 @@ function getStatusColor(status: StatusCardType['status']): string {
 
 export default function StatusDetailsModal({ isOpen, card, onClose, onDelete }: Props) {
   const [nomeResponsavel, setNomeResponsavel] = useState(card?.responsavel || '-');
+  const [dataSaida, setDataSaida] = useState('');
+  const [horaSaida, setHoraSaida] = useState('');
 
   useEffect(() => {
     if (!card || !card.responsavel) {
@@ -66,6 +69,25 @@ export default function StatusDetailsModal({ isOpen, card, onClose, onDelete }: 
     } catch {
       setNomeResponsavel(card.responsavel || '-');
     }
+  }, [card]);
+
+  useEffect(() => {
+    if (!card) {
+      setDataSaida('');
+      setHoraSaida('');
+      return;
+    }
+
+    const [datePart, timePart] = String(card.dataEntrega || '').split(' ');
+    const [day, month, year] = datePart?.split('/') || [];
+
+    if (day && month && year) {
+      setDataSaida(`${year}-${month}-${day}`);
+    } else {
+      setDataSaida('');
+    }
+
+    setHoraSaida(timePart || '');
   }, [card]);
 
   if (!isOpen || !card) return null;
@@ -97,6 +119,24 @@ export default function StatusDetailsModal({ isOpen, card, onClose, onDelete }: 
       onDelete(card.id);
       onClose();
     }
+  };
+
+  const handleDefinirEntrega = () => {
+    if (!dataSaida || !horaSaida) {
+      alert('Selecione data e horário de saída.');
+      return;
+    }
+
+    const [year, month, day] = dataSaida.split('-');
+    const dataFormatada = `${day}/${month}/${year} ${horaSaida}`;
+    const updated = updateCardDeliveryDate(card.id, dataFormatada);
+
+    if (!updated) {
+      alert('Não foi possível salvar data/horário de saída.');
+      return;
+    }
+
+    onClose();
   };
 
   return (
@@ -185,6 +225,35 @@ export default function StatusDetailsModal({ isOpen, card, onClose, onDelete }: 
                     <p className="text-slate-900 dark:text-slate-100 font-medium">{card.boxNome}</p>
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                Saída do Veículo
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div>
+                  <p className="text-xs text-slate-700 mb-1">Data de saída</p>
+                  <input
+                    type="date"
+                    value={dataSaida}
+                    onChange={(e) => setDataSaida(e.target.value)}
+                    className="w-full h-10 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-700 mb-1">Horário de saída</p>
+                  <input
+                    type="time"
+                    value={horaSaida}
+                    onChange={(e) => setHoraSaida(e.target.value)}
+                    className="w-full h-10 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+                <Button variant="secondary" onClick={handleDefinirEntrega}>
+                  Definir saída
+                </Button>
               </div>
             </div>
 

@@ -117,6 +117,17 @@ export const registerSchema = z.object({
   role: z.enum(['ADMIN', 'GERENTE', 'OPERADOR', 'PARCEIRO']).optional(),
 });
 
+export const changePasswordSchema = z
+  .object({
+    senhaAtual: z.string().min(6, 'Senha atual inválida'),
+    novaSenha: z.string().min(6, 'Nova senha deve ter no mínimo 6 caracteres'),
+    confirmarNovaSenha: z.string().min(6, 'Confirmação de senha inválida'),
+  })
+  .refine((data) => data.novaSenha === data.confirmarNovaSenha, {
+    message: 'Confirmação de senha não confere',
+    path: ['confirmarNovaSenha'],
+  });
+
 // ==================== CLIENTE ====================
 
 export const createClienteSchema = z.object({
@@ -291,6 +302,51 @@ export const ordemServicoParamsSchema = z.object({
 export const updateOrdemServicoStatusSchema = z.object({
   status: z.enum(['AGUARDANDO', 'EM_ATENDIMENTO', 'AGUARDANDO_PECAS', 'EM_EXECUCAO', 'CONCLUIDO', 'ENTREGUE']),
   observacao: z.string().optional(),
+});
+
+// ==================== ORÇAMENTO ====================
+
+export const createOrcamentoItemSchema = z.object({
+  descricao: z.string().min(1, 'Descrição do item é obrigatória'),
+  quantidade: z.number().int().positive('Quantidade inválida').default(1),
+  valorUnitario: z.number().nonnegative('Valor unitário inválido'),
+  valorTotal: z.number().nonnegative('Valor total inválido'),
+});
+
+export const createOrcamentoSchema = z.object({
+  clienteId: z.string().uuid('Cliente ID inválido'),
+  descricao: z.string().optional(),
+  valorTotal: z.number().nonnegative('Valor total inválido'),
+  desconto: z.number().nonnegative('Desconto inválido').optional(),
+  validade: z.string().datetime('Data de validade inválida'),
+  status: z.enum(['PENDENTE', 'APROVADO', 'REJEITADO', 'EXPIRADO']).optional(),
+  observacoes: z.string().optional(),
+  itens: z.array(createOrcamentoItemSchema).optional(),
+});
+
+export const orcamentoListQuerySchema = z
+  .object({
+    status: z
+      .union([z.string(), z.array(z.string())])
+      .optional()
+      .transform((value) => (Array.isArray(value) ? value[0] : value))
+      .refine(
+        (value) =>
+          value === undefined ||
+          z.enum(['PENDENTE', 'APROVADO', 'REJEITADO', 'EXPIRADO']).safeParse(value).success,
+        { message: 'Status inválido' }
+      ),
+    clienteId: optionalUuid,
+    skip: optionalNonNegativeInt,
+    take: optionalNonNegativeInt,
+  })
+  .transform((query) => ({
+    ...query,
+    take: query.take !== undefined ? Math.min(query.take, 100) : undefined,
+  }));
+
+export const orcamentoParamsSchema = z.object({
+  id: z.string().uuid('ID de orçamento inválido'),
 });
 
 // ==================== PARCEIRO ====================

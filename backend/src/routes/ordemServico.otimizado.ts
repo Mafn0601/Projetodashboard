@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import ordemServicoController from '../controllers/ordemServicoController';
-import { authenticateToken } from '../middlewares/auth';
+import { authenticate } from '../middlewares/auth';
 
 /**
  * ✅ OTIMIZADO: Rotas de Ordem de Serviço
@@ -24,18 +24,18 @@ import { authenticateToken } from '../middlewares/auth';
 const router = Router();
 
 // Middleware de autenticação em todas as rotas
-router.use(authenticateToken);
+router.use(authenticate);
 
 // ✅ NOVO + ESPECÍFICAS: Devem vir ANTES das rotas com :id
-router.get('/os/by-parceiro/:parceiroId', ordemServicoController.findByParceiro);
-router.get('/os/stats', ordemServicoController.getStats);
+router.get('/by-parceiro/:parceiroId', ordemServicoController.findByParceiro);
+router.get('/stats', ordemServicoController.getStats);
 
 // CRUD padrão
-router.get('/os', ordemServicoController.listAll);
-router.get('/os/:id', ordemServicoController.findById);
-router.post('/os', ordemServicoController.create);
-router.put('/os/:id', ordemServicoController.update);
-router.delete('/os/:id', ordemServicoController.delete);
+router.get('/', ordemServicoController.findAll);
+router.get('/:id', ordemServicoController.findById);
+router.post('/', ordemServicoController.create);
+router.put('/:id', ordemServicoController.update);
+router.delete('/:id', ordemServicoController.delete);
 
 /**
  * ✅ MAPEAMENTO NOVO DE ENDPOINTS

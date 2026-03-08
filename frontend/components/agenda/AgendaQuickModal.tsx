@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/components/AuthContext';
-import { getBoxes, getBoxesDisponiveis, getTipoBoxPreferidoPorServico, addOcupacao, convertBoxAPIToService, getBoxesDisponivelsDaeArray } from '@/services/boxService';
+import { getBoxes, getBoxesDisponiveis, getTipoBoxPreferidoPorServico, addOcupacao, convertBoxAPIToService, getBoxesDisponivelsDaeArray, Box } from '@/services/boxService';
 import boxServiceAPI, { BoxAPI } from '@/services/boxServiceAPI';
 import { ClienteCompleto } from '@/services/clienteService';
 import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
@@ -103,7 +103,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [parceiros, setParceiros] = useState<ParceiroAPI[]>([]);
   const [boxes, setBoxes] = useState<BoxAPI[]>([]);
-  const [boxesConvertidos, setBoxesConvertidos] = useState<Array<{id: string; nome: string; ativo: boolean; parceiro: string; tipo: 'lavagem' | 'servico_geral'}>>([]);
+  const [boxesConvertidos, setBoxesConvertidos] = useState<Box[]>([]);
 
   // Carregar dados apenas quando modal abre
   useEffect(() => {

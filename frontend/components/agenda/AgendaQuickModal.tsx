@@ -7,7 +7,7 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/components/AuthContext';
 import { getBoxes, getBoxesDisponiveis, getTipoBoxPreferidoPorServico, addOcupacao, convertBoxAPIToService, getBoxesDisponivelsDaeArray } from '@/services/boxService';
-import { boxServiceAPI, BoxAPI } from '@/services/boxServiceAPI';
+import boxServiceAPI, { BoxAPI } from '@/services/boxServiceAPI';
 import { ClienteCompleto } from '@/services/clienteService';
 import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
 import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';

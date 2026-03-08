@@ -197,7 +197,7 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
     if (id) {
       const equipe = equipes.find(e => e.id === id);
       if (equipe) {
-        return equipe.login || equipe.nome || id;
+        return equipe.login || id;
       }
     }
     // Se for uma string simples (pode ser o login ou nome do responsável)

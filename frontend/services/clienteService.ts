@@ -142,7 +142,7 @@ function obterLabelResponsavel(respId: string | undefined): string {
   try {
     const equipes = readArray<any>('equipes');
     const equipe = equipes.find(e => e.id === respId);
-    if (equipe) return equipe.nome || equipe.login || respId;
+    if (equipe) return equipe.login || respId;
   } catch (error) {
     // ignora se der erro ao ler equipes
   }

@@ -12,7 +12,6 @@ interface AgendaCardProps {
 
 type Equipe = {
   id: string;
-  nome: string;
   login: string;
   [key: string]: unknown;
 };
@@ -33,7 +32,7 @@ export function AgendaCard({
       const equipes = readArray<Equipe>('equipes');
       const equipe = equipes.find(e => e.id === item.responsavel);
       if (equipe) {
-        setNomeResponsavel(equipe.nome || equipe.login);
+        setNomeResponsavel(equipe.login);
       } else {
         setNomeResponsavel(item.responsavel);
       }

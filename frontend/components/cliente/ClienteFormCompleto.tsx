@@ -713,8 +713,8 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Seção 1: Informações Básicas */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações Básicas</h3>
+      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações Básicas</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
             label="Responsável (Equipe)"
@@ -758,8 +758,8 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       </div>
 
       {/* Seção 2: Contato */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Contato</h3>
+      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Contato</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MaskedInput
             label="Telefone"
@@ -784,8 +784,8 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       </div>
 
       {/* Seção 3: Veículo */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações do Veículo</h3>
+      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações do Veículo</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
             label="Fabricante"
@@ -830,8 +830,8 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       </div>
 
       {/* Seção 4: Tipo de OS */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Serviços/Produtos</h3>
+      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Serviços/Produtos</h3>
         <div className="space-y-4">
           {/* Tipo de OS e Item */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1002,8 +1002,8 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       </div>
 
       {/* Seção 5: Descrição */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Detalhes</h3>
+      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Detalhes</h3>
         <div>
           <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
             Descrição do Serviço

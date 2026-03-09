@@ -27,12 +27,16 @@ export interface StatusCardAPI {
 
 class StatusCardService {
   private baseURL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/status`;
+  private authToken: string | null = null;
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
 
   private getHeaders() {
-    const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
     return {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(this.authToken && { Authorization: `Bearer ${this.authToken}` }),
     };
   }
 

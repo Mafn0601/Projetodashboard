@@ -33,13 +33,16 @@ interface CreateParceiroData {
 }
 
 class ParceiroServiceAPI {
+  private authToken: string | null = null;
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
+
   private getAuthHeaders(): Record<string, string> {
     const headers: Record<string, string> = {};
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
     }
     return headers;
   }

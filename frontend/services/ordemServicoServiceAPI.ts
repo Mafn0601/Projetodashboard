@@ -34,13 +34,16 @@ interface FindAllFilters {
 }
 
 class OrdemServicoServiceAPI {
+  private authToken: string | null = null;
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
+
   private getAuthHeaders(contentType: boolean = true): Record<string, string> {
     const headers: Record<string, string> = contentType ? { 'Content-Type': 'application/json' } : {};
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+    if (this.authToken) {
+      headers.Authorization = `Bearer ${this.authToken}`;
     }
     return headers;
   }

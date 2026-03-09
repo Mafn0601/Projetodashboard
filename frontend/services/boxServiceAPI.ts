@@ -25,11 +25,16 @@ interface FindAllFilters {
 }
 
 class BoxServiceAPI {
-  private async getAuthHeaders(): Promise<HeadersInit> {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  private authToken: string | null = null;
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
+
+  private getAuthHeaders(): HeadersInit {
     return {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(this.authToken && { Authorization: `Bearer ${this.authToken}` }),
     };
   }
 
@@ -76,7 +81,7 @@ class BoxServiceAPI {
         }
       }
 
-      const headers = await this.getAuthHeaders();
+      const headers = this.getAuthHeaders();
       const response = await fetch(`${API_URL}/api/boxes`, {
         headers,
       });

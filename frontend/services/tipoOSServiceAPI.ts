@@ -29,6 +29,12 @@ export interface TipoOS {
 }
 
 class TipoOSServiceAPI {
+  private authToken: string | null = null;
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
+
   private async extractErrorMessage(response: Response, fallback: string): Promise<string> {
     try {
       const data = await response.json();
@@ -45,11 +51,8 @@ class TipoOSServiceAPI {
       'Content-Type': 'application/json',
     };
 
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
     }
 
     return headers;

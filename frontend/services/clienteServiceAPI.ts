@@ -145,21 +145,9 @@ class ClienteServiceAPI {
 
   async findById(id: string): Promise<ClienteCompleto | null> {
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // Adicionar token se disponível
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-      }
-
       const response = await fetch(`${API_URL}/api/clientes/${id}`, {
         method: 'GET',
-        headers,
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -179,21 +167,9 @@ class ClienteServiceAPI {
     try {
       console.log('📤 Criando cliente:', cliente);
       
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // Adicionar token se disponível
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-      }
-
       const response = await fetch(`${API_URL}/api/clientes`, {
         method: 'POST',
-        headers,
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(cliente),
       });
 
@@ -216,21 +192,9 @@ class ClienteServiceAPI {
     try {
       console.log('📤 Atualizando cliente:', id, cliente);
       
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // Adicionar token se disponível
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-      }
-
       const response = await fetch(`${API_URL}/api/clientes/${id}`, {
         method: 'PUT',
-        headers,
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(cliente),
       });
 
@@ -253,21 +217,9 @@ class ClienteServiceAPI {
     try {
       console.log('📤 Deletando cliente:', id);
       
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // Adicionar token se disponível
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-      }
-
       const response = await fetch(`${API_URL}/api/clientes/${id}`, {
         method: 'DELETE',
-        headers,
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {

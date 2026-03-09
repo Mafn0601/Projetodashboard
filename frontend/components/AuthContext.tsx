@@ -3,6 +3,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { clienteServiceAPI } from '@/services/clienteServiceAPI';
+import tipoOSServiceAPI from '@/services/tipoOSServiceAPI';
+import statusServiceAPI from '@/services/statusServiceAPI';
+import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
+import { ordemServicoServiceAPI } from '@/services/ordemServicoServiceAPI';
+import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
+import { orcamentoServiceAPI } from '@/services/orcamentoServiceAPI';
+import { equipeServiceAPI } from '@/services/equipeServiceAPI';
+import boxServiceAPI from '@/services/boxServiceAPI';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -51,6 +59,19 @@ const defaultValue: AuthContextType = {
   isLoading: true,
 };
 
+// Função auxiliar para propagar token para todos os serviços
+function setAuthTokenInAllServices(token: string | null): void {
+  clienteServiceAPI.setAuthToken(token);
+  tipoOSServiceAPI.setAuthToken(token);
+  statusServiceAPI.setAuthToken(token);
+  parceiroServiceAPI.setAuthToken(token);
+  ordemServicoServiceAPI.setAuthToken(token);
+  agendamentoServiceAPI.setAuthToken(token);
+  orcamentoServiceAPI.setAuthToken(token);
+  equipeServiceAPI.setAuthToken(token);
+  boxServiceAPI.setAuthToken(token);
+}
+
 const AuthContext = createContext<AuthContextType>(defaultValue);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -97,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.token) {
           console.log('✅ Token recebido da API');
           setToken(data.token);
-          clienteServiceAPI.setAuthToken(data.token);
+          setAuthTokenInAllServices(data.token);
         }
 
         if (data.usuario) {
@@ -133,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Salvar token em memória
         console.log('⚠️ Usando usuário MOCK:', foundUser.login);
         setToken(foundUser.token);
-        clienteServiceAPI.setAuthToken(foundUser.token);
+        setAuthTokenInAllServices(foundUser.token);
         setUser(userData);
         router.replace('/');
         return true;
@@ -161,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         console.log('⚠️ Login fallback MOCK:', foundUser.login);
         setToken(foundUser.token);
-        clienteServiceAPI.setAuthToken(foundUser.token);
+        setAuthTokenInAllServices(foundUser.token);
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         router.replace('/');
@@ -175,10 +196,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     console.log('🚪 Logout function called');
     setUser(null);
+    setToken(null);
+    setAuthTokenInAllServices(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
-    console.log('🚪 localStorage cleared, redirecting to /login');
+    console.log('🚪 Authentication cleared, redirecting to /login');
     router.replace('/login');
   };
 

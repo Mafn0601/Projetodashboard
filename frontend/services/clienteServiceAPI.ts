@@ -34,6 +34,8 @@ class ClienteServiceAPI {
       'Content-Type': 'application/json',
     };
     
+    console.log('🔍 getAuthHeaders - Token atual:', this.authToken ? `${this.authToken.substring(0, 20)}...` : 'NULL');
+    
     if (this.authToken) {
       console.log('🔐 Usando token do serviço:', `${this.authToken.substring(0, 20)}...`);
       headers['Authorization'] = `Bearer ${this.authToken}`;

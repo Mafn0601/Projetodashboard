@@ -8,7 +8,6 @@ generator client {
 datasource db {
   provider     = "postgresql"
   url          = env("DATABASE_URL")
-  relationMode = "prisma"
 }
 
 // ==================== AUTENTICAÇÃO ====================
@@ -161,7 +160,7 @@ model Agendamento {
   id                  String          @id @default(uuid())
   
   clienteId           String
-  cliente             Cliente         @relation(fields: [clienteId], references: [id])
+  cliente             Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   
   veiculoId           String?
   veiculo             Veiculo?        @relation(fields: [veiculoId], references: [id])
@@ -212,7 +211,7 @@ model OrdemServico {
   numeroOS          String        @unique // Auto-incrementado
   
   clienteId         String
-  cliente           Cliente       @relation(fields: [clienteId], references: [id])
+  cliente           Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   
   veiculoId         String
   veiculo           Veiculo       @relation(fields: [veiculoId], references: [id])
@@ -454,7 +453,7 @@ model Lead {
   email           String?
   
   clienteId       String?
-  cliente         Cliente?    @relation(fields: [clienteId], references: [id])
+  cliente         Cliente?    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   
   origem          String?     // Telefone, Site, WhatsApp, Indicação
   status          StatusLead  @default(NOVO)
@@ -485,7 +484,7 @@ model Orcamento {
   numeroOrcamento String          @unique
   
   clienteId       String
-  cliente         Cliente         @relation(fields: [clienteId], references: [id])
+  cliente         Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   
   descricao       String?
   valorTotal      Decimal         @db.Decimal(10, 2)

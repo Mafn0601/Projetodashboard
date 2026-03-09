@@ -83,14 +83,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // verifica se tem login e token na sessão
   useEffect(() => {
+    console.log('🔄 AuthContext - Iniciando recuperação de sessão...');
     const savedUser = localStorage.getItem('user');
     const savedToken = sessionStorage.getItem('token');
+    
+    console.log('📦 Dados salvos:', {
+      user: savedUser ? 'EXISTS' : 'NULL',
+      token: savedToken ? `${savedToken.substring(0, 20)}...` : 'NULL'
+    });
     
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
+        console.log('✅ Usuário recuperado do localStorage');
       } catch {
         localStorage.removeItem('user');
+        console.error('❌ Erro ao parsear usuário salvo');
       }
     }
     
@@ -98,6 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('🔐 Token recuperado do sessionStorage');
       setToken(savedToken);
       setAuthTokenInAllServices(savedToken);
+      console.log('✅ Token propagado para todos os serviços');
+    } else {
+      console.warn('⚠️ Nenhum token encontrado no sessionStorage - usuário precisa fazer login');
     }
     
     setIsLoading(false);
@@ -126,9 +137,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (data.token) {
           console.log('✅ Token recebido da API');
+          console.log('💾 Salvando token no sessionStorage...');
           setToken(data.token);
           setAuthTokenInAllServices(data.token);
           sessionStorage.setItem('token', data.token);
+          console.log('✅ Token salvo e propagado para todos os serviços');
         }
 
         if (data.usuario) {
@@ -163,10 +176,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Salvar token em memória e sessionStorage
         console.log('⚠️ Usando usuário MOCK:', foundUser.login);
+        console.log('💾 Salvando token MOCK no sessionStorage...');
         setToken(foundUser.token);
         setAuthTokenInAllServices(foundUser.token);
         sessionStorage.setItem('token', foundUser.token);
+        console.log('✅ Token MOCK salvo e propagado para todos os serviços');
         setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
         router.replace('/');
         return true;
       }
@@ -192,9 +208,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         
         console.log('⚠️ Login fallback MOCK:', foundUser.login);
+        console.log('💾 Salvando token MOCK fallback no sessionStorage...');
         setToken(foundUser.token);
         setAuthTokenInAllServices(foundUser.token);
         sessionStorage.setItem('token', foundUser.token);
+        console.log('✅ Token MOCK fallback salvo e propagado');
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         router.replace('/');

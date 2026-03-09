@@ -142,10 +142,9 @@ export class ClienteService {
       throw new AppError('Cliente não encontrado', 404);
     }
 
-    // Soft delete
-    await prisma.cliente.update({
+    // Hard delete - remove permanentemente do banco de dados
+    await prisma.cliente.delete({
       where: { id },
-      data: { ativo: false },
     });
 
     // Deletar do Supabase também
@@ -158,7 +157,7 @@ export class ClienteService {
       console.error('Erro ao deletar cliente do Supabase:', error);
     }
 
-    return { message: 'Cliente desativado com sucesso' };
+    return { message: 'Cliente deletado permanentemente com sucesso' };
   }
 }
 

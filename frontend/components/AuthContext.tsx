@@ -51,7 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // verifica se tem alguém logado no localStorage
   useEffect(() => {
+    console.log('🔍 Verificando login ao montar...');
+    console.log('localStorage keys:', Object.keys(localStorage));
+    console.log('token em localStorage:', localStorage.getItem('token'));
     const savedUser = localStorage.getItem('user');
+    console.log('user em localStorage:', savedUser);
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
@@ -117,7 +121,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         
         // Salvar token mock
+        console.log('💾 Salvando token MOCK:', foundUser.token);
         localStorage.setItem('token', foundUser.token);
+        console.log('✅ Token salvo em localStorage');
+        console.log('🔍 Verificando:', localStorage.getItem('token'));
         
         // Salvar usuário
         setUser(userData);

@@ -27,8 +27,11 @@ class ClienteServiceAPI {
     };
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      console.log('🔐 Token obtido:', token ? `${token.substring(0, 20)}...` : 'NENHUM TOKEN');
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        console.warn('⚠️ ATENÇÃO: Nenhum token encontrado no localStorage/sessionStorage!');
       }
     }
     return headers;
@@ -87,12 +90,20 @@ class ClienteServiceAPI {
       }
 
       const queryString = this.buildQueryParams(filters);
-      const response = await fetch(`${API_URL}/api/clientes${queryString}`, {
+      const headers = this.getAuthHeaders();
+      const url = `${API_URL}/api/clientes${queryString}`;
+      console.log('📤 Enviando requisição para:', url);
+      console.log('📤 Headers:', { Authorization: headers['Authorization'] ? 'Bearer [...]' : 'VAZIO' });
+      
+      const response = await fetch(url, {
         method: 'GET',
-        headers: this.getAuthHeaders(),
+        headers: headers,
       });
 
       if (!response.ok) {
+        console.error(`❌ Erro ${response.status} (${response.statusText}) ao buscar clientes`);
+        const responseText = await response.text();
+        console.error('Resposta do servidor:', responseText);
         throw new Error(`Erro ao buscar clientes: ${response.statusText}`);
       }
 

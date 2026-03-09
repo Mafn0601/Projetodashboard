@@ -13,6 +13,17 @@ export function authenticate(
   next: NextFunction
 ) {
   try {
+    // ⚠️ BYPASS PARA DESENVOLVIMENTO - remover em produção
+    if (process.env.SKIP_AUTH === 'true') {
+      console.log('⚠️ AUTENTICAÇÃO DESABILITADA (SKIP_AUTH=true)');
+      req.user = {
+        userId: 'dev-user',
+        email: 'dev@example.com',
+        role: 'ADMIN'
+      };
+      return next();
+    }
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {

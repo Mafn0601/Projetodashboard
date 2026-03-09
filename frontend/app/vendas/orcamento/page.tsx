@@ -66,7 +66,6 @@ export default function Page() {
   const [equipes, setEquipes] = useState<EquipeAPI[]>([]);
   const [fabricantes, setFabricantes] = useState<Fabricante[]>([]);
   const [modelos, setModelos] = useState<Modelo[]>([]);
-  const [mostrarOpcoes, setMostrarOpcoes] = useState(false);
   
   const [parceiroOptions, setParceiroOptions] = useState<SelectOption[]>([]);
   const [responsavelOptions, setResponsavelOptions] = useState<SelectOption[]>([]);
@@ -910,8 +909,8 @@ export default function Page() {
       </div>
 
       {/* Dados do Cliente */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
           Dados do Cliente
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -962,8 +961,8 @@ export default function Page() {
       </div>
 
       {/* Dados do Veículo */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
           Dados do Veículo
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1020,8 +1019,8 @@ export default function Page() {
       </div>
 
       {/* Informações Básicas */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
           Informações Básicas
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1057,8 +1056,8 @@ export default function Page() {
       </div>
 
       {/* Produtos/Serviços */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
           Produtos/Serviços
         </h2>
 
@@ -1189,8 +1188,8 @@ export default function Page() {
       </div>
 
       {/* Informações Complementares */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 page-break-avoid">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
           Informações Complementares
         </h2>
         <div>
@@ -1209,65 +1208,18 @@ export default function Page() {
 
       {/* Botões de Ação */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end no-print">
-        <Button variant="outline" size="sm" className="min-w-[170px]">
+        <Button variant="outline" size="sm" className="min-w-[170px]" onClick={() => router.push('/vendas')}>
           Cancelar
         </Button>
-        <div className="relative">
-          <Button 
-            size="sm" 
-            className="min-w-[170px]"
-            onClick={() => setMostrarOpcoes(!mostrarOpcoes)}
-          >
-            Opções <span className={`inline-block ml-1 transition-transform duration-200 ${mostrarOpcoes ? 'rotate-180' : ''}`}>▼</span>
-          </Button>
-          
-          {/* Dropdown de Opções */}
-          {mostrarOpcoes && (
-            <>
-              {/* Overlay para fechar o dropdown ao clicar fora */}
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setMostrarOpcoes(false)}
-              />
-              
-              {/* Menu Dropdown */}
-              <div className="absolute right-0 bottom-full mb-2 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 z-20 overflow-hidden">
-                <button
-                  onClick={() => {
-                    handleImprimir();
-                    setMostrarOpcoes(false);
-                  }}
-                  className="w-full px-4 py-3 text-left text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border-b border-slate-200 dark:border-slate-700"
-                >
-                  <div className="font-medium">Imprimir Orçamento</div>
-                  <div className="text-xs text-slate-700 dark:text-slate-400 mt-1">Imprimir ou salvar como PDF</div>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    handleSalvarOrcamento();
-                    setMostrarOpcoes(false);
-                  }}
-                  className="w-full px-4 py-3 text-left text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border-b border-slate-200 dark:border-slate-700"
-                >
-                  <div className="font-medium">Salvar Orçamento</div>
-                  <div className="text-xs text-slate-700 dark:text-slate-400 mt-1">Salvar sem gerar OS</div>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    handleGerarOS();
-                    setMostrarOpcoes(false);
-                  }}
-                  className="w-full px-4 py-3 text-left text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                >
-                  <div className="font-medium">Gerar Ordem de Serviço</div>
-                  <div className="text-xs text-slate-700 dark:text-slate-400 mt-1">Criar OS a partir deste orçamento</div>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        <Button variant="outline" size="sm" className="min-w-[170px]" onClick={handleImprimir}>
+          Imprimir Orçamento
+        </Button>
+        <Button size="sm" className="min-w-[170px]" onClick={handleSalvarOrcamento}>
+          Salvar Orçamento
+        </Button>
+        <Button size="sm" className="min-w-[170px]" onClick={handleGerarOS}>
+          Gerar Ordem de Serviço
+        </Button>
       </div>
       </div>
       {/* Fim do formulário */}

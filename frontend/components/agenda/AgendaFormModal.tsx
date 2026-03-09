@@ -406,172 +406,188 @@ export default function AgendaFormModal({
 
   return (
     <Modal open={isOpen} onClose={onClose} title={agendamento ? 'Editar Agendamento' : 'Novo Agendamento'} className="max-w-3xl">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid md:grid-cols-2 gap-4">
-          <Input
-            label="Título"
-            value={titulo}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitulo(e.target.value)}
-            required
-            placeholder="Ex: 15 BYD - DOLPHIN"
-          />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações Básicas</h3>
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <Input
+                label="Título"
+                value={titulo}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitulo(e.target.value)}
+                required
+                placeholder="Ex: 15 BYD - DOLPHIN"
+              />
 
-          <Input
-            label="Placa"
-            value={placa}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlaca(e.target.value)}
-            required
-            placeholder="ABC-1234"
-          />
+              <Input
+                label="Placa"
+                value={placa}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlaca(e.target.value)}
+                required
+                placeholder="ABC-1234"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <Input
+                label="Cliente"
+                value={cliente}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCliente(e.target.value)}
+                required
+              />
+
+              <Input
+                label="Telefone"
+                value={telefone}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTelefone(e.target.value)}
+                required
+                placeholder="(11) 98765-4321"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <Input
-            label="Cliente"
-            value={cliente}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCliente(e.target.value)}
-            required
-          />
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Configuração do Serviço</h3>
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <Select
+                label="Responsável"
+                value={responsavel}
+                onChange={(value) => setResponsavel(value)}
+                options={equipes.map((e) => ({
+                  value: e.id,
+                  label: e.nome ? `${e.nome} (${e.login})` : e.login,
+                }))}
+                required
+              />
 
-          <Input
-            label="Telefone"
-            value={telefone}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTelefone(e.target.value)}
-            required
-            placeholder="(11) 98765-4321"
-          />
-        </div>
+              <Select
+                label="Origem do Pedido"
+                value={tag}
+                onChange={(value) => setTag(value as 'INTERNO' | 'EXTERNO')}
+                options={[
+                  { value: 'INTERNO', label: 'Interno (da Loja)' },
+                  { value: 'EXTERNO', label: 'Externo (Fora da Loja)' },
+                ]}
+                required
+              />
+            </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <Select
-            label="Responsável"
-            value={responsavel}
-            onChange={(value) => setResponsavel(value)}
-            options={equipes.map((e) => ({ 
-              value: e.id, 
-              label: e.nome ? `${e.nome} (${e.login})` : e.login
-            }))}
-            required
-          />
+            <div className="grid md:grid-cols-2 gap-4">
+              <Select
+                label="Tipo de OS"
+                value={tipoOsId}
+                onChange={(value) => {
+                  setTipoOsId(value);
+                  setItemId('');
+                  setTipo('');
+                  setDuracaoEstimada(60);
+                }}
+                options={tiposOsList.map((t) => ({ value: t.id, label: t.nome }))}
+                required
+              />
 
-          <Select
-            label="Origem do Pedido"
-            value={tag}
-            onChange={(value) => setTag(value as 'INTERNO' | 'EXTERNO')}
-            options={[
-              { value: 'INTERNO', label: 'Interno (da Loja)' },
-              { value: 'EXTERNO', label: 'Externo (Fora da Loja)' },
-            ]}
-            required
-          />
-        </div>
+              {itensDisponiveis.length > 0 && (
+                <Select
+                  label="Item"
+                  value={itemId}
+                  onChange={(value) => setItemId(value)}
+                  options={itensDisponiveis.map((i) => ({
+                    value: i.id,
+                    label: `${i.nome} (${i.tipo === 'servico' ? 'Serviço' : 'Produto'})`,
+                  }))}
+                  required
+                />
+              )}
+            </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <Select
-            label="Tipo de OS"
-            value={tipoOsId}
-            onChange={(value) => {
-              setTipoOsId(value);
-              setItemId('');
-              setTipo('');
-              setDuracaoEstimada(60);
-            }}
-            options={tiposOsList.map((t) => ({ value: t.id, label: t.nome }))}
-            required
-          />
-
-          {itensDisponiveis.length > 0 && (
             <Select
-              label="Item"
-              value={itemId}
-              onChange={(value) => setItemId(value)}
-              options={itensDisponiveis.map((i) => ({
-                value: i.id,
-                label: `${i.nome} (${i.tipo === 'servico' ? 'Serviço' : 'Produto'})`,
-              }))}
+              label="Box"
+              value={boxId}
+              onChange={(value) => setBoxId(value)}
+              options={boxOptions}
               required
             />
-          )}
+            {dataIso && horario && duracaoEstimada && (
+              <p className="text-xs text-slate-700 dark:text-slate-400 -mt-2">
+                {boxesDisponiveis.length > 0
+                  ? `${boxesDisponiveis.length} box(es) disponível(is)`
+                  : 'Nenhum box disponível neste horário'}
+              </p>
+            )}
+          </div>
         </div>
 
-        <Select
-          label="Box"
-          value={boxId}
-          onChange={(value) => setBoxId(value)}
-          options={boxOptions}
-          required
-        />
-        {dataIso && horario && duracaoEstimada && (
-          <p className="text-xs text-slate-700 dark:text-slate-400 -mt-2">
-            {boxesDisponiveis.length > 0
-              ? `${boxesDisponiveis.length} box(es) disponível(is)`
-              : 'Nenhum box disponível neste horário'}
-          </p>
-        )}
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Data e Horário</h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            <Input
+              label="Data"
+              type="date"
+              value={dataIso}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDataIso(e.target.value)}
+              min={getBrasiliaTodayISO()}
+              required
+            />
 
-        <div className="grid md:grid-cols-3 gap-4">
-          <Input
-            label="Data"
-            type="date"
-            value={dataIso}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDataIso(e.target.value)}
-            min={getBrasiliaTodayISO()}
-            required
-          />
+            <Select
+              label="Horário"
+              value={horario}
+              onChange={(value) => setHorario(value)}
+              required
+              options={horarioOptionsDisponiveis}
+            />
 
-          <Select
-            label="Horário"
-            value={horario}
-            onChange={(value) => setHorario(value)}
-            required
-            options={horarioOptionsDisponiveis}
-          />
-
-          <Input
-            label="Duração Estimada (minutos)"
-            type="number"
-            value={duracaoEstimada.toString()}
-            onChange={() => undefined}
-            required
-            min={15}
-            step={15}
-            disabled
-          />
+            <Input
+              label="Duração Estimada (minutos)"
+              type="number"
+              value={duracaoEstimada.toString()}
+              onChange={() => undefined}
+              required
+              min={15}
+              step={15}
+              disabled
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Select
-            label="Meio de Pagamento"
-            value={meioPagamento}
-            onChange={(value) => setMeioPagamento(value)}
-            options={[
-              { value: 'TRANSFERENCIA_TED', label: 'TRANSFERENCIA/TED' },
-              { value: 'PIX', label: 'PIX' },
-              { value: 'DINHEIRO', label: 'DINHEIRO' },
-              { value: 'CHEQUE', label: 'CHEQUE' },
-              { value: 'A_COMBINAR', label: 'A COMBINAR' },
-              { value: 'CARTAO_DEBITO', label: 'CARTÃO DEBITO' },
-              { value: 'CARTAO_CREDITO', label: 'CARTÃO CRÉDITO' },
-              { value: 'GARANTIA', label: 'GARANTIA' },
-              { value: 'PERMUTA', label: 'PERMUTA' },
-            ]}
-            forceAbove
-          />
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Pagamento</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Select
+              label="Meio de Pagamento"
+              value={meioPagamento}
+              onChange={(value) => setMeioPagamento(value)}
+              options={[
+                { value: 'TRANSFERENCIA_TED', label: 'TRANSFERENCIA/TED' },
+                { value: 'PIX', label: 'PIX' },
+                { value: 'DINHEIRO', label: 'DINHEIRO' },
+                { value: 'CHEQUE', label: 'CHEQUE' },
+                { value: 'A_COMBINAR', label: 'A COMBINAR' },
+                { value: 'CARTAO_DEBITO', label: 'CARTÃO DEBITO' },
+                { value: 'CARTAO_CREDITO', label: 'CARTÃO CRÉDITO' },
+                { value: 'GARANTIA', label: 'GARANTIA' },
+                { value: 'PERMUTA', label: 'PERMUTA' },
+              ]}
+              forceAbove
+            />
 
-          <Select
-            label="Forma de Pagamento"
-            value={formaPagamento}
-            onChange={(value) => setFormaPagamento(value)}
-            options={[
-              { value: 'A_VISTA', label: 'A VISTA' },
-              { value: '2_VEZES', label: '2 VEZES' },
-              { value: '3_VEZES', label: '3 VEZES' },
-              { value: '4_VEZES', label: '4 VEZES' },
-              { value: '5_VEZES', label: '5 VEZES' },
-              { value: '6_VEZES', label: '6 VEZES' },
-            ]}
-            forceAbove
-          />
+            <Select
+              label="Forma de Pagamento"
+              value={formaPagamento}
+              onChange={(value) => setFormaPagamento(value)}
+              options={[
+                { value: 'A_VISTA', label: 'A VISTA' },
+                { value: '2_VEZES', label: '2 VEZES' },
+                { value: '3_VEZES', label: '3 VEZES' },
+                { value: '4_VEZES', label: '4 VEZES' },
+                { value: '5_VEZES', label: '5 VEZES' },
+                { value: '6_VEZES', label: '6 VEZES' },
+              ]}
+              forceAbove
+            />
+          </div>
         </div>
 
         {erroValidacao && (

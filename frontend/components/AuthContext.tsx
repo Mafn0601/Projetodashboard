@@ -85,7 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     console.log('🔄 AuthContext - Iniciando recuperação de sessão...');
     const savedUser = localStorage.getItem('user');
-    const savedToken = sessionStorage.getItem('token');
+    let savedToken = sessionStorage.getItem('token');
+    
+    // Se não tem token em sessionStorage, tenta recuperar de localStorage (fallback)
+    if (!savedToken) {
+      savedToken = localStorage.getItem('token');
+      console.log('📱 Token não encontrado em sessionStorage, recuperando de localStorage...');
+    }
     
     console.log('📦 Dados salvos:', {
       user: savedUser ? 'EXISTS' : 'NULL',
@@ -103,12 +109,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     if (savedToken) {
-      console.log('🔐 Token recuperado do sessionStorage');
+      console.log('🔐 Token recuperado');
       setToken(savedToken);
       setAuthTokenInAllServices(savedToken);
+      // Re-salva em sessionStorage para performance na sessão atual
+      sessionStorage.setItem('token', savedToken);
       console.log('✅ Token propagado para todos os serviços');
     } else {
-      console.warn('⚠️ Nenhum token encontrado no sessionStorage - usuário precisa fazer login');
+      console.warn('⚠️ Nenhum token encontrado - usuário precisa fazer login');
     }
     
     setIsLoading(false);
@@ -137,10 +145,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (data.token) {
           console.log('✅ Token recebido da API');
-          console.log('💾 Salvando token no sessionStorage...');
+          console.log('💾 Salvando token em sessionStorage e localStorage...');
           setToken(data.token);
           setAuthTokenInAllServices(data.token);
           sessionStorage.setItem('token', data.token);
+          localStorage.setItem('token', data.token);
           console.log('✅ Token salvo e propagado para todos os serviços');
         }
 
@@ -152,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: data.usuario.role || 'vendedor',
           };
           setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
           router.replace('/');
           return true;
         }
@@ -174,12 +184,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: foundUser.role,
         };
         
-        // Salvar token em memória e sessionStorage
+        // Salvar token em memória e em sessionStorage + localStorage
         console.log('⚠️ Usando usuário MOCK:', foundUser.login);
-        console.log('💾 Salvando token MOCK no sessionStorage...');
+        console.log('💾 Salvando token MOCK em sessionStorage e localStorage...');
         setToken(foundUser.token);
         setAuthTokenInAllServices(foundUser.token);
         sessionStorage.setItem('token', foundUser.token);
+        localStorage.setItem('token', foundUser.token);
         console.log('✅ Token MOCK salvo e propagado para todos os serviços');
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
@@ -208,10 +219,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         
         console.log('⚠️ Login fallback MOCK:', foundUser.login);
-        console.log('💾 Salvando token MOCK fallback no sessionStorage...');
+        console.log('💾 Salvando token MOCK fallback em sessionStorage e localStorage...');
         setToken(foundUser.token);
         setAuthTokenInAllServices(foundUser.token);
         sessionStorage.setItem('token', foundUser.token);
+        localStorage.setItem('token', foundUser.token);
         console.log('✅ Token MOCK fallback salvo e propagado');
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
@@ -224,14 +236,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    console.log('🚪 Logout function called');
+    console.log('🚪 Logout iniciado');
     setUser(null);
     setToken(null);
     setAuthTokenInAllServices(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
-    console.log('🚪 Authentication cleared, redirecting to /login');
+    console.log('🚪 Autenticação limpa de sessionStorage e localStorage');
     router.replace('/login');
   };
 

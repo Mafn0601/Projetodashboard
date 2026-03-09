@@ -53,7 +53,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     console.log('🔍 Verificando login ao montar...');
     console.log('localStorage keys:', Object.keys(localStorage));
-    console.log('token em localStorage:', localStorage.getItem('token'));
+    
+    let token = localStorage.getItem('token');
+    console.log('token em localStorage:', token);
+    
+    // Se não tiver em localStorage, tenta sessionStorage
+    if (!token) {
+      token = sessionStorage.getItem('token');
+      console.log('token em sessionStorage:', token);
+      
+      // Se achou em sessionStorage, move para localStorage
+      if (token) {
+        console.log('🔄 Movendo token do sessionStorage para localStorage');
+        localStorage.setItem('token', token);
+      }
+    }
+    
     const savedUser = localStorage.getItem('user');
     console.log('user em localStorage:', savedUser);
     if (savedUser) {
@@ -120,15 +135,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: foundUser.role,
         };
         
-        // Salvar token mock
-        console.log('💾 Salvando token MOCK:', foundUser.token);
-        localStorage.setItem('token', foundUser.token);
-        console.log('✅ Token salvo em localStorage');
-        console.log('🔍 Verificando:', localStorage.getItem('token'));
+        // Salvar token mock com verificação
+        try {
+          console.log('💾 Tentando salvar token MOCK:', foundUser.token);
+          localStorage.setItem('token', foundUser.token);
+          const tokenVerify = localStorage.getItem('token');
+          console.log('✅ Token verificado após salvar:', tokenVerify ? 'OK' : 'FALHOU');
+          
+          if (!tokenVerify) {
+            // Se localStorage falhar, tenta sessionStorage
+            console.warn('⚠️ localStorage.setItem falhou, usando sessionStorage');
+            sessionStorage.setItem('token', foundUser.token);
+          }
+        } catch (err) {
+          console.error('❌ Erro ao salvar token:', err);
+          sessionStorage.setItem('token', foundUser.token);
+        }
         
         // Salvar usuário
-        setUser(userData);
+        console.log('💾 Salvando usuário:', userData);
         localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
         router.replace('/');
         return true;
       }
@@ -153,7 +180,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: foundUser.role,
         };
         
-        localStorage.setItem('token', foundUser.token);
+        try {
+          console.log('💾 Salvando token MOCK (catch):', foundUser.token);
+          localStorage.setItem('token', foundUser.token);
+          const tokenVerify = localStorage.getItem('token');
+          console.log('✅ Token verificado (catch):', tokenVerify ? 'OK' : 'FALHOU');
+          
+          if (!tokenVerify) {
+            console.warn('⚠️ localStorage.setItem falhou no catch, usando sessionStorage');
+            sessionStorage.setItem('token', foundUser.token);
+          }
+        } catch (err) {
+          console.error('❌ Erro ao salvar token no catch:', err);
+          sessionStorage.setItem('token', foundUser.token);
+        }
+        
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         router.replace('/');

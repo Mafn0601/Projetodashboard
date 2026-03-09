@@ -21,19 +21,26 @@ interface FindAllResponse {
 }
 
 class ClienteServiceAPI {
+  private authToken: string | null = null;
+
+  // Método para setar o token (chamado pelo AuthContext após login)
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+    console.log('🔐 Token definido no serviço:', token ? `${token.substring(0, 20)}...` : 'null');
+  }
+
   private getAuthHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      console.log('🔐 Token obtido:', token ? `${token.substring(0, 20)}...` : 'NENHUM TOKEN');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      } else {
-        console.warn('⚠️ ATENÇÃO: Nenhum token encontrado no localStorage/sessionStorage!');
-      }
+    
+    if (this.authToken) {
+      console.log('🔐 Usando token do serviço:', `${this.authToken.substring(0, 20)}...`);
+      headers['Authorization'] = `Bearer ${this.authToken}`;
+    } else {
+      console.warn('⚠️ Nenhum token disponível!');
     }
+    
     return headers;
   }
 

@@ -81,9 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // verifica se tem login na sessão
+  // verifica se tem login e token na sessão
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
+    const savedToken = sessionStorage.getItem('token');
+    
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
@@ -91,6 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('user');
       }
     }
+    
+    if (savedToken) {
+      console.log('🔐 Token recuperado do sessionStorage');
+      setToken(savedToken);
+      setAuthTokenInAllServices(savedToken);
+    }
+    
     setIsLoading(false);
   }, []);
 
@@ -119,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('✅ Token recebido da API');
           setToken(data.token);
           setAuthTokenInAllServices(data.token);
+          sessionStorage.setItem('token', data.token);
         }
 
         if (data.usuario) {
@@ -151,10 +161,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: foundUser.role,
         };
         
-        // Salvar token em memória
+        // Salvar token em memória e sessionStorage
         console.log('⚠️ Usando usuário MOCK:', foundUser.login);
         setToken(foundUser.token);
         setAuthTokenInAllServices(foundUser.token);
+        sessionStorage.setItem('token', foundUser.token);
         setUser(userData);
         router.replace('/');
         return true;
@@ -183,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('⚠️ Login fallback MOCK:', foundUser.login);
         setToken(foundUser.token);
         setAuthTokenInAllServices(foundUser.token);
+        sessionStorage.setItem('token', foundUser.token);
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         router.replace('/');

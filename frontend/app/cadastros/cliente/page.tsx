@@ -28,7 +28,8 @@ export default function Page() {
         setLoading(true);
       }
       // Usar cache por padrão, exceto quando forçar refresh
-      const resultado = await clienteServiceAPI.findAll({ ativo: true }, { preferCache: true, forceRefresh });
+      const resultado = await clienteServiceAPI.findAll({ }, { preferCache: true, forceRefresh });
+      console.log('📊 Total de clientes carregados:', resultado?.length || 0);
       setClientes(resultado || []);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
@@ -45,13 +46,11 @@ export default function Page() {
     const cached = clienteServiceAPI.getCached();
     if (cached.length > 0) {
       // Tem cache - carregar instantaneamente do cache
-      const clientesFiltrados = cached.filter(c => c.ativo === true);
-      setClientes(clientesFiltrados);
+      setClientes(cached);
       setLoading(false);
       // Atualizar em background (sem aguardar)
-      clienteServiceAPI.findAll({ ativo: true }, { forceRefresh: true }).then(resultado => {
-        const clientesFiltrados = (resultado || []).filter(c => c.ativo === true);
-        setClientes(clientesFiltrados);
+      clienteServiceAPI.findAll({ }, { forceRefresh: true }).then(resultado => {
+        setClientes(resultado || []);
       }).catch(err => {
         console.error('Erro ao atualizar clientes em background:', err);
       });

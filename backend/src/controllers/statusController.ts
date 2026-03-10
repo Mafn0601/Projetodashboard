@@ -1,6 +1,21 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+async function resolveStatusCardByParam(param: string) {
+  if (isUuid(param)) {
+    return prisma.statusCard.findUnique({ where: { id: param } });
+  }
+
+  // Compatibilidade com chaves legadas que podem chegar como número/string não UUID.
+  return prisma.statusCard.findFirst({
+    where: { numero: param },
+  });
+}
+
 export class StatusController {
   async findAll(req: Request, res: Response) {
     try {
@@ -17,9 +32,7 @@ export class StatusController {
   async findById(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const statusCard = await prisma.statusCard.findUnique({
-        where: { id },
-      });
+      const statusCard = await resolveStatusCardByParam(id);
       
       if (!statusCard) {
         return res.status(404).json({ error: 'Status card não encontrado' });
@@ -129,12 +142,17 @@ export class StatusController {
         meioPagamento,
       } = req.body;
 
+      const existenteCard = await resolveStatusCardByParam(id);
+      if (!existenteCard) {
+        return res.status(404).json({ error: 'Status card não encontrado' });
+      }
+
       // Verificar se numero é único (se está sendo alterado)
       if (numero) {
         const existente = await prisma.statusCard.findFirst({
           where: {
             numero,
-            id: { not: id }, // Exclui o registro atual
+            id: { not: existenteCard.id }, // Exclui o registro atual
           },
         });
 
@@ -144,7 +162,7 @@ export class StatusController {
       }
 
       const statusCard = await prisma.statusCard.update({
-        where: { id },
+        where: { id: existenteCard.id },
         data: {
           ...(numero && { numero }),
           ...(veiculo && { veiculo }),
@@ -174,9 +192,11 @@ export class StatusController {
     try {
       const { id } = req.params;
 
-      await prisma.statusCard.delete({
-        where: { id },
-      });
+      if (isUuid(id)) {
+        await prisma.statusCard.deleteMany({ where: { id } });
+      } else {
+        await prisma.statusCard.deleteMany({ where: { numero: id } });
+      }
 
       return res.status(204).send();
     } catch (error) {
@@ -194,6 +214,11 @@ export class StatusController {
         return res.status(400).json({ error: 'Status é obrigatório' });
       }
 
+      const existenteCard = await resolveStatusCardByParam(id);
+      if (!existenteCard) {
+        return res.status(404).json({ error: 'Status card não encontrado' });
+      }
+
       // Se movendo para "entregue", registra o timestamp de finalização
       const updateData: any = { status };
       if (status === 'entregue') {
@@ -201,7 +226,7 @@ export class StatusController {
       }
 
       const statusCard = await prisma.statusCard.update({
-        where: { id },
+        where: { id: existenteCard.id },
         data: updateData,
       });
 

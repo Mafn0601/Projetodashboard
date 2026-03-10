@@ -190,6 +190,16 @@ function syncCreateCard(card: StatusCard): void {
 function ensureCardsLoaded(): void {
   if (mockCards.length > 0) return;
 
+  // Se a chave já existe no storage, deve respeitar inclusive lista vazia ([]).
+  if (typeof window !== 'undefined') {
+    const raw = window.localStorage.getItem(STATUS_STORAGE_KEY);
+    if (raw !== null) {
+      const saved = readArray<StatusCard>(STATUS_STORAGE_KEY);
+      mockCards = saved;
+      return;
+    }
+  }
+
   const saved = readArray<StatusCard>(STATUS_STORAGE_KEY);
   if (saved.length > 0) {
     mockCards = saved;

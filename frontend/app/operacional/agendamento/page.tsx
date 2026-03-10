@@ -3,9 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getNext7ValidDays, toDdMmFromISODate } from "@/lib/dateUtils";
-import {
-  AgendaItem,
-} from "@/services/agendaService";
+import { AgendaItem } from "@/services/agendaService";
 import { addStatusCardFromAgendamento } from "@/services/statusService";
 import { agendamentoServiceAPI, Agendamento } from "@/services/agendamentoServiceAPI";
 import { AgendaColumn } from "@/components/agenda/AgendaColumn";
@@ -201,7 +199,7 @@ export default function Page() {
       setIsModalOpen(false);
       setSelectedAgendamento(null);
       
-      // Pequeno delay para garantir que o localStorage foi atualizado
+      // Pequeno delay para garantir atualização de estado antes da navegação
       setTimeout(() => {
         console.log('🔄 Navegando para página de status...');
         router.push("/operacional/status");

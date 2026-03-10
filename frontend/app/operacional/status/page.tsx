@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useCallback, useEffect } from "react";
-import { getStatusColumns, moveCard, deleteCard, cleanupDeliveredCards, StatusCard as StatusCardType } from "@/services/statusService";
+import { getStatusColumns, moveCard, deleteCard, cleanupDeliveredCards, hydrateStatusCards, StatusCard as StatusCardType } from "@/services/statusService";
 import { StatusColumn } from "@/components/status/StatusColumn";
 import StatusDetailsModal from "@/components/status/StatusDetailsModal";
 import { Trash2 } from "lucide-react";
+import statusServiceAPI from "@/services/statusServiceAPI";
 
 export default function StatusPage() {
   // Estado para forçar atualização quando cards são movidos ou deletados
@@ -13,6 +14,57 @@ export default function StatusPage() {
   const [draggedCard, setDraggedCard] = useState<{ id: string; fromStatus: string } | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [detailsCard, setDetailsCard] = useState<StatusCardType | null>(null);
+
+  const toBrDate = (value?: string): string => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('pt-BR');
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadFromApi = async () => {
+      try {
+        const cards = await statusServiceAPI.findAll();
+        if (!mounted) return;
+
+        const mapped = cards.map((card) => ({
+          id: card.id,
+          numero: card.numero,
+          veiculo: card.veiculo,
+          dataAgendamento: toBrDate(card.dataAgendamento),
+          dataEntrega: toBrDate(card.dataEntrega),
+          cliente: card.cliente,
+          parceiro: card.parceiro,
+          responsavel: card.responsavel,
+          status: card.status,
+          boxId: card.boxId,
+          boxNome: card.boxNome,
+          agendamentoId: card.agendamentoId,
+          horaInicio: card.horaInicio,
+          horaFim: card.horaFim,
+          formaPagamento: card.formaPagamento,
+          meioPagamento: card.meioPagamento,
+          timestampFinalizacao: card.timestampFinalizacao
+            ? new Date(card.timestampFinalizacao).getTime()
+            : undefined,
+        }));
+
+        hydrateStatusCards(mapped);
+        setUpdateKey((prev) => prev + 1);
+      } catch (error) {
+        console.error('Erro ao hidratar status a partir da API:', error);
+      }
+    };
+
+    loadFromApi();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Limpar automaticamente cards "Entregues" a cada 10 segundos
   useEffect(() => {

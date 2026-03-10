@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
 import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
@@ -46,6 +46,7 @@ function formatAddress(parceiro: ParceiroAPI | null): string {
 export default function ParceiroDetalhePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [parceiro, setParceiro] = useState<ParceiroAPI | null>(null);
   const [equipes, setEquipes] = useState<EquipeAPI[]>([]);
@@ -55,6 +56,10 @@ export default function ParceiroDetalhePage() {
   const [loading, setLoading] = useState(true);
 
   const id = params.id as string;
+  const nomeParam = searchParams.get('nome') || '';
+
+  const isUuid = (value: string): boolean =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
   useEffect(() => {
     let mounted = true;
@@ -63,9 +68,29 @@ export default function ParceiroDetalhePage() {
       try {
         setLoading(true);
 
+        let parceiroIdResolvido = id;
+        let parceiroDataInicial: ParceiroAPI | null = null;
+
+        if (!isUuid(id)) {
+          const parceiros = await parceiroServiceAPI.findAll({ preferCache: true, forceRefresh: true });
+          const matchByNome = parceiros.find(
+            (p) => p.nome.trim().toLowerCase() === nomeParam.trim().toLowerCase()
+          );
+
+          if (matchByNome) {
+            parceiroIdResolvido = matchByNome.id;
+            parceiroDataInicial = matchByNome;
+            router.replace(`/cadastros/parceiro/${matchByNome.id}?nome=${encodeURIComponent(matchByNome.nome)}`);
+          } else {
+            if (!mounted) return;
+            setParceiro(null);
+            return;
+          }
+        }
+
         const [parceiroData, equipesData, ordensData, orcamentosData, agendamentosData] = await Promise.all([
-          parceiroServiceAPI.findById(id),
-          equipeServiceAPI.findAll(id, undefined, { preferCache: false, forceRefresh: true }),
+          parceiroDataInicial ? Promise.resolve(parceiroDataInicial) : parceiroServiceAPI.findById(parceiroIdResolvido),
+          equipeServiceAPI.findAll(parceiroIdResolvido, undefined, { preferCache: false, forceRefresh: true }),
           ordemServicoServiceAPI.findAll({ take: 200 }),
           orcamentoServiceAPI.findAll({ status: 'PENDENTE', take: 200 }),
           agendamentoServiceAPI.findAll({ take: 200 }),
@@ -75,13 +100,13 @@ export default function ParceiroDetalhePage() {
 
         setParceiro(parceiroData);
         setEquipes(equipesData || []);
-        setOrdens((ordensData || []).filter((os) => os.parceiroId === id));
+        setOrdens((ordensData || []).filter((os) => os.parceiroId === parceiroIdResolvido));
         setOrcamentos(
           (orcamentosData || []).filter((orc) =>
-            String(orc.observacoes || '').includes(`PARCEIRO_ID:${id}`)
+            String(orc.observacoes || '').includes(`PARCEIRO_ID:${parceiroIdResolvido}`)
           )
         );
-        setAgendamentos((agendamentosData || []).filter((item) => item.parceiroId === id));
+        setAgendamentos((agendamentosData || []).filter((item) => item.parceiroId === parceiroIdResolvido));
       } catch (error) {
         console.error('Erro ao carregar detalhes do parceiro:', error);
         if (mounted) {
@@ -99,7 +124,7 @@ export default function ParceiroDetalhePage() {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [id, nomeParam, router]);
 
   const osEmAndamento = useMemo(
     () => ordens.filter((os) => !['CONCLUIDO', 'ENTREGUE'].includes(os.status)).length,

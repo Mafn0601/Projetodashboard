@@ -54,6 +54,10 @@ interface UpdateEquipeData extends Partial<CreateEquipeData> {
 class EquipeServiceAPI {
   private authToken: string | null = null;
 
+  private isUuid(value: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  }
+
   setAuthToken(token: string | null): void {
     this.authToken = token;
   }
@@ -97,6 +101,11 @@ class EquipeServiceAPI {
     const forceRefresh = options?.forceRefresh ?? false;
 
     try {
+      if (parceiroId && !this.isUuid(parceiroId)) {
+        console.warn('⚠️ parceiroId inválido para API de equipes, ignorando filtro legado:', parceiroId);
+        return [];
+      }
+
       const canUseSharedCache = !parceiroId && !funcao;
       if (canUseSharedCache && preferCache && !forceRefresh) {
         const cached = this.getCached();

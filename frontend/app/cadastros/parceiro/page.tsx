@@ -55,7 +55,11 @@ export default function Page() {
         const localRaw = typeof window !== 'undefined' ? localStorage.getItem('parceiros') : null;
         const localParceiros = localRaw ? JSON.parse(localRaw) : [];
 
-        if (Array.isArray(localParceiros) && localParceiros.length > 0) {
+        const temIdLegado = Array.isArray(localParceiros)
+          ? localParceiros.some((p: { id?: unknown }) => String(p?.id || '').startsWith('parceiros_'))
+          : false;
+
+        if (Array.isArray(localParceiros) && localParceiros.length > 0 && !temIdLegado) {
           return;
         }
 

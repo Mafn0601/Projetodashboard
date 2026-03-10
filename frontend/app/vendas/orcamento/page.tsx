@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select, SelectOption } from '@/components/ui/Select';
 import { MaskedInput, currencyToNumber, numberToCurrency } from '@/components/ui/MaskedInput';
-import { readArray } from '@/lib/storage';
 import { mockFabricantes, mockModelos } from '@/lib/mockFormData';
 import type { ClienteCompleto } from '@/services/clienteService';
 import { clienteServiceAPI } from '@/services/clienteServiceAPI';
@@ -18,6 +17,7 @@ import { addStatusCardFromOrcamento } from '@/services/statusService';
 import { useRouter } from 'next/navigation';
 import AgendaOrcamentoModal from '@/components/agenda/AgendaOrcamentoModal';
 import { orcamentoServiceAPI } from '@/services/orcamentoServiceAPI';
+import tipoOSServiceAPI from '@/services/tipoOSServiceAPI';
 
 type Fabricante = {
   id: string;
@@ -184,32 +184,27 @@ export default function Page() {
     return true;
   };
 
-  // Carregar dados do localStorage e mockFabricantes
+  // Carregar dados da API ao montar
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        // Carregar dados da API em vez do localStorage
         const [tiposResponse, parceiroResponse, equipeResponse] = await Promise.all([
-          Promise.resolve(readArray<TipoOS>('tiposOs')),
+          tipoOSServiceAPI.findAll({ preferCache: true }),
           parceiroServiceAPI.findAll(),
-          equipeServiceAPI.findAll()
+          equipeServiceAPI.findAll(),
         ]);
 
-        const tiposOsCadastrados = tiposResponse || [];
-        
-        // Migrar dados antigos: mapper desconto -> descontoMaximo
-        const tiposOsMigrados = tiposOsCadastrados.map(tipo => ({
+        const tiposOsMigrados = (tiposResponse || []).map((tipo) => ({
           ...tipo,
-          itens: tipo.itens.map((item: any) => ({
+          itens: (tipo.itens || []).map((item: any) => ({
             ...item,
             descontoMaximo: item.descontoMaximo ?? item.desconto ?? 0,
-          }))
+          })),
         }));
-        
+
         setTiposOs(tiposOsMigrados);
         setTipoOptions(tiposOsMigrados.map(t => ({ value: t.id, label: t.nome })));
 
-        // Usar dados vindos da API
         const parceirosCadastrados = parceiroResponse || [];
         setParceiros(parceirosCadastrados);
         setParceiroOptions(parceirosCadastrados.map(p => ({ value: p.id, label: p.nome })));
@@ -217,29 +212,9 @@ export default function Page() {
         const equipesCadastradas = equipeResponse || [];
         setEquipes(equipesCadastradas);
 
-        // Usar mockFabricantes diretamente
         setFabricanteOptions(mockFabricantes);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        // Fallback para localStorage se API falhar
-        const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
-        const parceirosCadastrados = readArray<ParceiroAPI>('parceiros');
-        const equipesCadastradas = readArray<EquipeAPI>('equipes');
-        
-        const tiposOsMigrados = tiposOsCadastrados.map(tipo => ({
-          ...tipo,
-          itens: tipo.itens.map((item: any) => ({
-            ...item,
-            descontoMaximo: item.descontoMaximo ?? item.desconto ?? 0,
-          }))
-        }));
-        
-        setTiposOs(tiposOsMigrados);
-        setTipoOptions(tiposOsMigrados.map(t => ({ value: t.id, label: t.nome })));
-        setParceiros(parceirosCadastrados);
-        setParceiroOptions(parceirosCadastrados.map(p => ({ value: p.id, label: p.nome })));
-        setEquipes(equipesCadastradas);
-        setFabricanteOptions(mockFabricantes);
       }
     };
 

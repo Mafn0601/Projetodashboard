@@ -206,12 +206,18 @@ function ensureCardsLoaded(): void {
     return;
   }
 
-  mockCards = [...defaultCards];
+  // API-first: não semeia cards mock automaticamente.
+  mockCards = [];
   writeArray(STATUS_STORAGE_KEY, mockCards);
 }
 
 function persistCards(): void {
   writeArray(STATUS_STORAGE_KEY, mockCards);
+}
+
+export function hydrateStatusCards(cards: StatusCard[]): void {
+  mockCards = cards;
+  persistCards();
 }
 
 function getNextCardId(): string {

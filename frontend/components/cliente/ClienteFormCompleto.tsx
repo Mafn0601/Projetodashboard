@@ -14,9 +14,13 @@ import tipoOSServiceAPI from '@/services/tipoOSServiceAPI';
 import { veiculoServiceAPI } from '@/services/veiculoServiceAPI';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { addAgendamento, getAgendamentos } from '@/services/agendaService';
-import { getBoxes, getBoxesDisponiveis, getTipoBoxPreferidoPorServico } from '@/services/boxService';
+import {
+  convertBoxAPIToService,
+  getBoxesDisponivelsDaeArray,
+  getTipoBoxPreferidoPorServico,
+} from '@/services/boxService';
+import boxServiceAPI from '@/services/boxServiceAPI';
 import { validateForm } from '@/lib/validation';
-import { readArray } from '@/lib/storage';
 import {
   timeToMinutes,
   toDdMmFromISODate,
@@ -245,10 +249,11 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
     try {
       console.log('🔄 Carregando parceiros e equipes da API...');
       
-      // Carregar parceiros e equipes em paralelo
-      const [parceirosData, equipesData] = await Promise.all([
+      // Carregar parceiros, equipes e boxes em paralelo
+      const [parceirosData, equipesData, boxesApiData] = await Promise.all([
         parceiroServiceAPI.findAll(),
-        equipeServiceAPI.findAll()
+        equipeServiceAPI.findAll(),
+        boxServiceAPI.findAll({ ativo: true }),
       ]);
 
       console.log('✅ Dados carregados:', {
@@ -279,31 +284,10 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
       }));
       setTiposOsOptions(tiposOsOpts);
 
-      // Carregar Boxes
-      const boxesData = getBoxes().filter(b => b.ativo);
+      const boxesData = convertBoxAPIToService(boxesApiData);
       setBoxes(boxesData);
     } catch (error) {
       console.error('❌ Erro ao carregar dados da API:', error);
-      console.warn('⚠️ Tentando fallback para localStorage...');
-      try {
-        // Fallback para localStorage se API falhar
-        const parceiros = readArray<Parceiro>('parceiros');
-        setParceiroOptions(parceiros.map((p) => ({ value: p.id, label: p.nome })));
-        
-        const equipesData = readArray<Equipe>('equipes');
-        setEquipes(equipesData);
-        
-        const tiposOsData = readArray<TipoOS>('tiposOs');
-        setTiposOs(tiposOsData);
-        setTiposOsOptions(tiposOsData.map((t) => ({ value: t.id, label: t.nome })));
-        
-        console.log('📦 Dados carregados do localStorage:', {
-          parceiros: parceiros.length,
-          equipes: equipesData.length
-        });
-      } catch (storageError) {
-        console.error('❌ Erro ao carregar dados do localStorage:', storageError);
-      }
     }
   };
 
@@ -622,7 +606,8 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
               };
               const horaFim = calcularHoraFim(horarioNormalizado, duracao);
               const tipoBoxPreferido = getTipoBoxPreferidoPorServico(itemSelecionado.tipoNome);
-              const boxesLivres = getBoxesDisponiveis(
+              const boxesLivres = getBoxesDisponivelsDaeArray(
+                boxes,
                 dataCompleta,
                 horarioNormalizado,
                 dataCompleta,

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import ClienteModalCompleto from '@/components/cliente/ClienteModalCompleto';
-import * as clienteService from '@/services/clienteService';
+import type { ClienteCompleto } from '@/services/clienteService';
+import { clienteServiceAPI } from '@/services/clienteServiceAPI';
 
 function formatarDataAgendamento(data: string | undefined): string {
   if (!data) return '-';
@@ -18,30 +19,39 @@ function formatarDataAgendamento(data: string | undefined): string {
 }
 
 export default function ClienteCompletoPage() {
-  const [clientes, setClientes] = useState<clienteService.ClienteCompleto[]>([]);
+  const [clientes, setClientes] = useState<ClienteCompleto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCliente, setEditingCliente] = useState<clienteService.ClienteCompleto | undefined>();
+  const [editingCliente, setEditingCliente] = useState<ClienteCompleto | undefined>();
+
+  const carregarClientes = async () => {
+    try {
+      const all = await clienteServiceAPI.findAll({ ativo: true }, { forceRefresh: true });
+      setClientes(all || []);
+    } catch (error) {
+      console.error('Erro ao carregar clientes completos:', error);
+      setClientes([]);
+    }
+  };
 
   // Carregar clientes ao montar
   useEffect(() => {
-    const all = clienteService.getAllCompleto();
-    setClientes(all);
+    carregarClientes();
   }, []);
 
-  const handleSaved = (cliente: clienteService.ClienteCompleto) => {
-    const all = clienteService.getAllCompleto();
-    setClientes(all);
+  const handleSaved = async (_cliente: ClienteCompleto) => {
+    await carregarClientes();
     setEditingCliente(undefined);
   };
 
-  const handleEdit = (cliente: clienteService.ClienteCompleto) => {
+  const handleEdit = (cliente: ClienteCompleto) => {
     setEditingCliente(cliente);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    const remaining = clienteService.removeCompleto(id);
-    setClientes(remaining);
+  const handleDelete = async (id: string) => {
+    const sucesso = await clienteServiceAPI.delete(id);
+    if (!sucesso) return;
+    setClientes((prev) => prev.filter((cliente) => cliente.id !== id));
   };
 
   const handleOpenModal = () => {

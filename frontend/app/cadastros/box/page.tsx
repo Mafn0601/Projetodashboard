@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { 
+import {
   TipoBox,
   getOcupacoesBoxPorData,
-  initializeMockBoxes,
   OcupacaoBox
 } from "@/services/boxService";
 import boxServiceAPI, { BoxAPI } from "@/services/boxServiceAPI";
-import { readArray } from "@/lib/storage";
+import { parceiroServiceAPI } from "@/services/parceiroServiceAPI";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -20,7 +19,8 @@ import { Plus, Pencil, Trash2, Calendar, Clock } from "lucide-react";
 type Parceiro = {
   id: string;
   nome: string;
-  status: string;
+  status?: string;
+  ativo?: boolean;
 };
 
 const tipoBoxOptions = [
@@ -59,9 +59,8 @@ export default function BoxPage() {
   const [cor, setCor] = useState("#3b82f6");
 
   useEffect(() => {
-    initializeMockBoxes();
     carregarDados();
-    
+
     // Inicializar com data de hoje
     const dataHoje = toDdMmYyyyFromISODate(getBrasiliaTodayISO());
     setDataSelecionada(dataHoje);
@@ -70,11 +69,13 @@ export default function BoxPage() {
   const carregarDados = async () => {
     try {
       setIsLoading(true);
-      const boxesData = await boxServiceAPI.findAll({ ativo: true });
+      const [boxesData, parceirosData] = await Promise.all([
+        boxServiceAPI.findAll({ ativo: true }),
+        parceiroServiceAPI.findAll(),
+      ]);
+
       setBoxes(boxesData);
-      
-      const parceirosData = readArray<Parceiro>("parceiros");
-      setParceiros(parceirosData.filter(p => p.status === "ativo"));
+      setParceiros(parceirosData.filter((p) => p.ativo !== false));
     } catch (error) {
       console.error("Erro ao carregar boxes:", error);
       alert("Erro ao carregar boxes. Verifique sua conexão.");
@@ -119,8 +120,12 @@ export default function BoxPage() {
     try {
       setIsLoading(true);
       
-      // Gerar número sequencial baseado na quantidade atual de boxes
-      const numeroBox = (boxes.length + 1).toString().padStart(2, '0');
+      // Deriva próximo número com base no maior número existente para evitar colisões.
+      const maxNumero = boxes.reduce((max, boxAtual) => {
+        const parsed = Number.parseInt(String(boxAtual.numero || '').replace(/\D/g, ''), 10);
+        return Number.isNaN(parsed) ? max : Math.max(max, parsed);
+      }, 0);
+      const numeroBox = String(maxNumero + 1).padStart(2, '0');
 
       if (editandoId) {
         // Edição

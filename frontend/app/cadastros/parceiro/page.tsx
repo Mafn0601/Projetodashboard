@@ -155,6 +155,48 @@ export default function Page() {
     };
   };
 
+  const handleBeforeUpdateParceiro = async (id: string, entity: { [key: string]: unknown }) => {
+    const nome = String(entity.nome || '').trim();
+    const grupo = String(entity.grupo || '').trim();
+    const cidade = String(entity.cidade || '').trim();
+    const estado = String(entity.estado || '').trim();
+    const status = String(entity.status || 'ativo').trim().toLowerCase();
+    const cnpjLimpo = String(entity.cnpj || '').replace(/\D/g, '').trim();
+    const cepLimpo = String(entity.cep || '').replace(/\D/g, '').trim();
+    const endereco = [grupo, cidade, estado].filter(Boolean).join(' - ');
+
+    const parceiroAtualizado = await parceiroServiceAPI.update(id, {
+      nome,
+      cnpj: cnpjLimpo || undefined,
+      endereco: endereco || undefined,
+      cep: cepLimpo || undefined,
+      rua: String(entity.rua || '').trim() || undefined,
+      numero: String(entity.numero || '').trim() || undefined,
+      complemento: String(entity.complemento || '').trim() || undefined,
+      bairro: String(entity.bairro || '').trim() || undefined,
+      ativo: status !== 'inativo',
+    });
+
+    return {
+      id: parceiroAtualizado.id,
+      cnpj: parceiroAtualizado.cnpj || '',
+      nome: parceiroAtualizado.nome || nome,
+      grupo,
+      cidade,
+      estado,
+      status: parceiroAtualizado.ativo ? 'ativo' : 'inativo',
+      cep: parceiroAtualizado.cep || '',
+      rua: parceiroAtualizado.rua || '',
+      numero: parceiroAtualizado.numero || '',
+      complemento: parceiroAtualizado.complemento || '',
+      bairro: parceiroAtualizado.bairro || '',
+    };
+  };
+
+  const handleBeforeDeleteParceiro = async (id: string) => {
+    await parceiroServiceAPI.delete(id);
+  };
+
   const handleRowClick = (item: { id: string; nome?: unknown; [key: string]: unknown }) => {
     const nomeParceiro = item.nome as string || 'parceiro';
     const slug = nomeParceiro.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
@@ -179,6 +221,8 @@ export default function Page() {
       useModal={true}
       createModalMaxHeightClass="max-h-[94vh]"
       onBeforeCreate={handleBeforeCreateParceiro}
+      onBeforeUpdate={handleBeforeUpdateParceiro}
+      onBeforeDelete={handleBeforeDeleteParceiro}
       enableRowClick={true}
       onRowClick={handleRowClick}
       fields={[

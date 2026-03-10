@@ -32,6 +32,8 @@ interface CreateParceiroData {
   ativo?: boolean;
 }
 
+interface UpdateParceiroData extends Partial<CreateParceiroData> {}
+
 class ParceiroServiceAPI {
   private authToken: string | null = null;
 
@@ -137,6 +139,54 @@ class ParceiroServiceAPI {
       return await response.json();
     } catch (error) {
       console.error('❌ Erro ao buscar parceiro por ID:', error);
+      throw error;
+    }
+  }
+
+  async update(id: string, parceiro: UpdateParceiroData): Promise<ParceiroAPI> {
+    try {
+      const response = await fetch(`${API_URL}/api/parceiros/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
+        },
+        body: JSON.stringify(parceiro),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        const message = errorBody?.error || `Erro ao atualizar parceiro (HTTP ${response.status})`;
+        throw new Error(message);
+      }
+
+      const parceiroAtualizado = await response.json();
+      this.clearCache();
+      return parceiroAtualizado;
+    } catch (error) {
+      console.error('❌ Erro ao atualizar parceiro:', error);
+      throw error;
+    }
+  }
+
+  async delete(id: string): Promise<{ message: string }> {
+    try {
+      const response = await fetch(`${API_URL}/api/parceiros/${id}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        const message = errorBody?.error || `Erro ao deletar parceiro (HTTP ${response.status})`;
+        throw new Error(message);
+      }
+
+      const result = await response.json();
+      this.clearCache();
+      return result;
+    } catch (error) {
+      console.error('❌ Erro ao deletar parceiro:', error);
       throw error;
     }
   }

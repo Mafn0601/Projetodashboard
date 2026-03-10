@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { appendItem, readArray } from "@/lib/storage";
+import { appendItem, readArray, writeArray } from "@/lib/storage";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select, SelectOption } from "../ui/Select";
@@ -28,6 +28,8 @@ export interface CrudTemplateProps {
   useModal?: boolean;
   createModalMaxHeightClass?: string;
   onBeforeCreate?: (entity: GenericEntity) => Promise<GenericEntity | void>;
+  onBeforeUpdate?: (id: string, entity: GenericEntity) => Promise<GenericEntity | void>;
+  onBeforeDelete?: (id: string) => Promise<void>;
   enableRowClick?: boolean;
   onRowClick?: (item: GenericEntity) => void;
 }
@@ -48,6 +50,8 @@ export default function CrudTemplate({
   useModal = false,
   createModalMaxHeightClass = "max-h-[90vh]",
   onBeforeCreate,
+  onBeforeUpdate,
+  onBeforeDelete,
   enableRowClick = false,
   onRowClick
 }: CrudTemplateProps) {
@@ -261,7 +265,7 @@ export default function CrudTemplate({
     });
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nextErrors: Record<string, string> = {};
     fieldsWithOptions.forEach((field) => {
@@ -277,20 +281,52 @@ export default function CrudTemplate({
       return;
     }
 
+    if (!editingId) return;
+
+    const payload: GenericEntity = {
+      id: editingId,
+      ...editFormState,
+    };
+
+    let entityToPersist = payload;
+
+    if (onBeforeUpdate) {
+      try {
+        const updatedEntity = await onBeforeUpdate(editingId, payload);
+        if (updatedEntity && updatedEntity.id) {
+          entityToPersist = updatedEntity;
+        }
+      } catch (error) {
+        const mensagem = error instanceof Error ? error.message : 'Erro ao atualizar no servidor';
+        alert(mensagem);
+        return;
+      }
+    }
+
     const updated = items.map((item) =>
-      item.id === editingId ? { ...item, ...editFormState } : item
+      item.id === editingId ? { ...item, ...entityToPersist } : item
     );
     setItems(updated);
-    localStorage.setItem(entityKey, JSON.stringify(updated));
+    writeArray(entityKey, updated);
     setEditingId(null);
     setEditFormState({});
     setEditErrors({});
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    if (onBeforeDelete) {
+      try {
+        await onBeforeDelete(id);
+      } catch (error) {
+        const mensagem = error instanceof Error ? error.message : 'Erro ao deletar no servidor';
+        alert(mensagem);
+        return;
+      }
+    }
+
     const updated = items.filter((item) => item.id !== id);
     setItems(updated);
-    localStorage.setItem(entityKey, JSON.stringify(updated));
+    writeArray(entityKey, updated);
     setEditingId(null);
   };
 
@@ -471,9 +507,9 @@ export default function CrudTemplate({
           type="button"
           variant="danger"
           size="sm"
-          onClick={() => {
+          onClick={async () => {
             if (editingId) {
-              handleDelete(editingId);
+              await handleDelete(editingId);
             }
           }}
         >

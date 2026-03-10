@@ -549,7 +549,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         }
 
         if (clienteId && formData.dataAgendamento && horarioNormalizado && paresAgendamento.length > 0) {
-          const responsavelId = isUuid(user?.id) ? user?.id : (isUuid(formData.responsavel) ? formData.responsavel : undefined);
+          const responsavelId = isUuid(formData.responsavel) ? formData.responsavel : undefined;
           const parceiroId = isUuid(formData.parceiro) ? formData.parceiro : undefined;
 
           if (responsavelId) {

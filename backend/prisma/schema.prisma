@@ -28,7 +28,6 @@ model Usuario {
   updatedAt DateTime @updatedAt
   
   // Relações
-  agendamentos     Agendamento[]
   ordensServico    OrdemServico[]
   boxOcupacoes     BoxOcupacao[]
   leads            Lead[]
@@ -96,6 +95,9 @@ model Equipe {
   ativo                 Boolean  @default(true)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+  
+  // Relações
+  agendamentos          Agendamento[]
   
   @@map("equipes")
 }
@@ -166,7 +168,7 @@ model Agendamento {
   veiculo             Veiculo?        @relation(fields: [veiculoId], references: [id])
   
   responsavelId       String
-  responsavel         Usuario         @relation(fields: [responsavelId], references: [id])
+  responsavel         Equipe          @relation(fields: [responsavelId], references: [id])
   
   parceiroId          String?
   parceiro            Parceiro?       @relation(fields: [parceiroId], references: [id])

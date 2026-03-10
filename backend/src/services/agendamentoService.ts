@@ -134,7 +134,7 @@ export class AgendamentoService {
           responsavel: {
             select: {
               id: true,
-              nome: true,
+              login: true,
               email: true,
             },
           },
@@ -161,7 +161,7 @@ export class AgendamentoService {
         responsavel: {
           select: {
             id: true,
-            nome: true,
+            login: true,
             email: true,
           },
         },
@@ -197,7 +197,7 @@ export class AgendamentoService {
         responsavel: {
           select: {
             id: true,
-            nome: true,
+            login: true,
             email: true,
           },
         },
@@ -251,7 +251,7 @@ export class AgendamentoService {
         responsavel: {
           select: {
             id: true,
-            nome: true,
+            login: true,
             email: true,
           },
         },
@@ -289,3 +289,4 @@ export class AgendamentoService {
 }
 
 export default new AgendamentoService();
+

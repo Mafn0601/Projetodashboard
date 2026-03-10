@@ -187,8 +187,8 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
 
   const obterLabelResponsavel = (responsavelValor: unknown): string => {
     // Prioridade 1: Se tem ultimoAgendamento com responsavel, usa esse
-    if (ultimoAgendamento?.responsavel?.nome) {
-      return ultimoAgendamento.responsavel.nome;
+    if (ultimoAgendamento?.responsavel?.login) {
+      return ultimoAgendamento.responsavel.login;
     }
 
     // Prioridade 2: Se tem um valor direto no cliente

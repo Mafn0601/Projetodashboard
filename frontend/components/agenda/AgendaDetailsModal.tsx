@@ -58,9 +58,9 @@ export default function AgendaDetailsModal({
     
     const carregarResponsavel = async () => {
       try {
-        // Se responsavel é um objeto com nome, usar diretamente
-        if (typeof agendamento.responsavel === 'object' && agendamento.responsavel && 'nome' in agendamento.responsavel) {
-          setNomeResponsavel((agendamento.responsavel as any).nome || '-');
+        // Se responsavel é um objeto com login, usar diretamente
+        if (typeof agendamento.responsavel === 'object' && agendamento.responsavel && 'login' in agendamento.responsavel) {
+          setNomeResponsavel((agendamento.responsavel as any).login || '-');
           return;
         }
         

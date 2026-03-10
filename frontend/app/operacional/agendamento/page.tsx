@@ -67,7 +67,7 @@ export default function Page() {
       id: agendamento.id,
       titulo,
       placa: veiculo?.placa || '',
-      responsavel: responsavel?.nome || 'Sem responsável',
+      responsavel: responsavel?.login || 'Sem responsável',
       cliente: cliente?.nome || 'Sem cliente',
       telefone: cliente?.telefone || '',
       tipo: agendamento.tipoAgendamento,

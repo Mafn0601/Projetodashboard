@@ -44,6 +44,20 @@ export function errorHandler(
         details: error.meta,
       });
     }
+    // record not found (foreign key reference)
+    if (error.code === 'P2025') {
+      return res.status(422).json({
+        error: 'Registro relacionado não encontrado',
+        details: error.meta,
+      });
+    }
+    // foreign key constraint failed
+    if (error.code === 'P2003') {
+      return res.status(422).json({
+        error: 'Violação de chave estrangeira',
+        details: error.meta,
+      });
+    }
   }
 
   // qualquer outro erro não tratado

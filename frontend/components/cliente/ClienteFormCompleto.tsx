@@ -15,6 +15,7 @@ import { veiculoServiceAPI } from '@/services/veiculoServiceAPI';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { addAgendamento, getAgendamentos } from '@/services/agendaService';
 import {
+  Box as BoxLocal,
   convertBoxAPIToService,
   getBoxesDisponivelsDaeArray,
   getTipoBoxPreferidoPorServico,
@@ -137,7 +138,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
   const [tiposOsOptions, setTiposOsOptions] = useState<SelectOption[]>([]);
   const [tipoItemOptions, setTipoItemOptions] = useState<SelectOption[]>([]);
   const [agendamentosSelecionados, setAgendamentosSelecionados] = useState<AgendamentoSelecionado[]>([]);
-  const [boxes, setBoxes] = useState<Array<{id: string; nome: string; ativo: boolean; parceiro: string; tipo: 'lavagem' | 'servico_geral'}>>([]);
+  const [boxes, setBoxes] = useState<BoxLocal[]>([]);
 
   // Loading State
   const [isSubmitting, setIsSubmitting] = useState(false);

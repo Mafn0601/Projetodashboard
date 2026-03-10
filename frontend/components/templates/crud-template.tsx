@@ -27,7 +27,7 @@ export interface CrudTemplateProps {
   fields: CrudField[];
   useModal?: boolean;
   createModalMaxHeightClass?: string;
-  onBeforeCreate?: (entity: GenericEntity) => Promise<void>;
+  onBeforeCreate?: (entity: GenericEntity) => Promise<GenericEntity | void>;
   enableRowClick?: boolean;
   onRowClick?: (item: GenericEntity) => void;
 }
@@ -198,9 +198,14 @@ export default function CrudTemplate({
       ...formState
     };
 
+    let entityToPersist = entity;
+
     if (onBeforeCreate) {
       try {
-        await onBeforeCreate(entity);
+        const createdEntity = await onBeforeCreate(entity);
+        if (createdEntity && createdEntity.id) {
+          entityToPersist = createdEntity;
+        }
       } catch (error) {
         const mensagem = error instanceof Error ? error.message : 'Erro ao salvar no servidor';
         alert(mensagem);
@@ -208,7 +213,7 @@ export default function CrudTemplate({
       }
     }
 
-    const next = appendItem<GenericEntity>(entityKey, entity);
+    const next = appendItem<GenericEntity>(entityKey, entityToPersist);
     setItems(next);
     setFormState({});
     setErrors({});

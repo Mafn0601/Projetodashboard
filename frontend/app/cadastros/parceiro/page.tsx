@@ -138,6 +138,21 @@ export default function Page() {
     if (!parceiroCriado?.id) {
       throw new Error('Falha ao criar parceiro no Supabase');
     }
+
+    return {
+      id: parceiroCriado.id,
+      cnpj: parceiroCriado.cnpj || '',
+      nome: parceiroCriado.nome || nome,
+      grupo,
+      cidade,
+      estado,
+      status: parceiroCriado.ativo ? 'ativo' : 'inativo',
+      cep: parceiroCriado.cep || '',
+      rua: parceiroCriado.rua || '',
+      numero: parceiroCriado.numero || '',
+      complemento: parceiroCriado.complemento || '',
+      bairro: parceiroCriado.bairro || '',
+    };
   };
 
   const handleRowClick = (item: { id: string; nome?: unknown; [key: string]: unknown }) => {

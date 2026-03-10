@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select, SelectOption } from '@/components/ui/Select';
 import { MaskedInput } from '@/components/ui/MaskedInput';
-import { readArray, appendItem } from '@/lib/storage';
 import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
 
@@ -151,17 +150,7 @@ export default function Page() {
       setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
       setEquipes(equipesData as unknown as Equipe[]);
     } catch (error) {
-      console.warn('Erro ao carregar dados da API, usando localStorage:', error);
-      try {
-        const parceirosData = readArray<Parceiro>('parceiros');
-        setParceiros(parceirosData);
-        setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
-        
-        const equipesData = readArray<Equipe>('equipes');
-        setEquipes(equipesData);
-      } catch (storageError) {
-        console.error('Erro ao carregar dados do localStorage:', storageError);
-      }
+      console.warn('Erro ao carregar dados da API/cache da API:', error);
     } finally {
       if (!silent) {
         setIsLoading(false);

@@ -257,23 +257,31 @@ export function LeadDashboard() {
 
           <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px] xl:min-w-[540px]">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por nome, empresa, cargo ou responsável"
-                className="pl-10"
-              />
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
+                  <Search className="h-4 w-4 shrink-0" />
+                </span>
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Buscar por nome, empresa, cargo ou responsável"
+                  className="flex h-11 w-full rounded-lg border-2 border-slate-300 bg-white pl-10 pr-4 text-sm text-slate-900 shadow-sm outline-none transition-all duration-200 hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:shadow-md dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-500"
+                />
+              </div>
             </div>
-            <div className="relative">
-              <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                type="date"
-                value={createdAfter}
-                onChange={(event) => setCreatedAfter(event.target.value)}
-                className="pl-10"
-                helperText="Data de Criação"
-              />
+            <div className="space-y-2">
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">
+                  <CalendarDays className="h-4 w-4 shrink-0" />
+                </span>
+                <input
+                  type="date"
+                  value={createdAfter}
+                  onChange={(event) => setCreatedAfter(event.target.value)}
+                  className="flex h-11 w-full rounded-lg border-2 border-slate-300 bg-white pl-10 pr-4 text-sm text-slate-900 shadow-sm outline-none transition-all duration-200 hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:shadow-md dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-500"
+                />
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Data de Criação</p>
             </div>
           </div>
         </div>

@@ -1,16 +1,6 @@
-import CrudTemplate from "@/components/templates/crud-template";
+import { LeadDashboard } from '@/components/leads/LeadDashboard';
 
 export default function Page() {
-  return (
-    <CrudTemplate
-      title="Leads"
-      entityKey="leads"
-      fields={[
-        { name: "nome", label: "Nome do Lead" },
-        { name: "origem", label: "Origem" },
-        { name: "telefone", label: "Telefone" }
-      ]}
-    />
-  );
+  return <LeadDashboard />;
 }
 

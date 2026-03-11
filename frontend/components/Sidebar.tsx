@@ -81,12 +81,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: Package,
     section: "Operacional"
   },
-  {
-    label: "OS",
-    href: "/vendas/os",
-    icon: FileSpreadsheet,
-    section: "Operacional"
-  },
   // Cadastros
   {
     label: "Equipe",

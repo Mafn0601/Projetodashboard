@@ -12,6 +12,7 @@ import tipoOSRoutes from './tipoOSRoutes';
 import boxRoutes from './boxRoutes';
 import statusRoutes from './statusRoutes';
 import orcamentoRoutes from './orcamentoRoutes';
+import leadRoutes from './leadRoutes';
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.use('/tipos-os', tipoOSRoutes);
 router.use('/boxes', boxRoutes);
 router.use('/status', statusRoutes);
 router.use('/orcamentos', orcamentoRoutes);
+router.use('/leads', leadRoutes);
 
 export default router;

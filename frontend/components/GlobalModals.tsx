@@ -8,6 +8,7 @@ import { Button } from "./ui/Button";
 import { useModal } from "./ModalContext";
 import { appendItem } from "@/lib/storage";
 import { criarOS } from "@/lib/automation";
+import { leadServiceAPI } from '@/services/leadServiceAPI';
 
 type Cliente = {
   id: string;
@@ -16,15 +17,7 @@ type Cliente = {
   telefone?: string;
 };
 
-type Lead = {
-  id: string;
-  nome: string;
-  origem?: string;
-  telefone?: string;
-};
-
 const CLIENTES_KEY = "clientes";
-const LEADS_KEY = "leads";
 
 function generateId(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
@@ -34,6 +27,7 @@ export function GlobalModals() {
   const { state, closeModal } = useModal();
 
   const [formState, setFormState] = useState<Record<string, string>>({});
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false);
 
   const resetAndClose = () => {
     setFormState({});
@@ -56,16 +50,23 @@ export function GlobalModals() {
     resetAndClose();
   };
 
-  const handleSubmitLead = (e: FormEvent) => {
+  const handleSubmitLead = async (e: FormEvent) => {
     e.preventDefault();
-    const lead: Lead = {
-      id: generateId("lead"),
-      nome: formState.nome ?? "",
-      origem: formState.origem,
-      telefone: formState.telefone
-    };
-    appendItem<Lead>(LEADS_KEY, lead);
-    resetAndClose();
+
+    try {
+      setIsSubmittingLead(true);
+      await leadServiceAPI.create({
+        nome: formState.nome ?? '',
+        origem: formState.origem,
+        telefone: formState.telefone ?? '',
+      });
+      resetAndClose();
+    } catch (error) {
+      console.error('❌ Erro ao salvar lead rápido:', error);
+      alert('Não foi possível salvar o lead agora.');
+    } finally {
+      setIsSubmittingLead(false);
+    }
   };
 
   const handleSubmitOS = (e: FormEvent) => {
@@ -175,20 +176,23 @@ export function GlobalModals() {
               variant="ghost"
               size="sm"
               onClick={resetAndClose}
+              disabled={isSubmittingLead}
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               size="sm"
+              disabled={isSubmittingLead}
             >
-              Salvar Lead
+              {isSubmittingLead ? 'Salvando...' : 'Salvar Lead'}
             </Button>
           </div>
         </form>
       </Modal>
     );
   }
+
 
   if (state.type === "quickCreateOS") {
     return (

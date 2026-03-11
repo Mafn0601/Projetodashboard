@@ -176,6 +176,114 @@ export const veiculoParamsSchema = z.object({
   id: z.string().uuid('ID de veículo inválido'),
 });
 
+const optionalScoreInt = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((value) => {
+    const raw = Array.isArray(value) ? value[0] : value;
+
+    if (raw === undefined || raw === '') {
+      return undefined;
+    }
+
+    const parsed = Number(raw);
+
+    if (!Number.isInteger(parsed)) {
+      return NaN;
+    }
+
+    return parsed;
+  })
+  .refine((value) => value === undefined || Number.isInteger(value), {
+    message: 'Deve ser um número inteiro',
+  })
+  .refine((value) => value === undefined || (value >= 0 && value <= 100), {
+    message: 'Deve estar entre 0 e 100',
+  });
+
+const optionalSortBy = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((value) => (Array.isArray(value) ? value[0] : value))
+  .refine(
+    (value) =>
+      value === undefined ||
+      z.enum(['createdAt', 'score', 'ultimaInteracao', 'nome']).safeParse(value).success,
+    {
+      message: 'Campo de ordenação inválido',
+    }
+  );
+
+const optionalSortOrder = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((value) => (Array.isArray(value) ? value[0] : value))
+  .refine(
+    (value) => value === undefined || z.enum(['asc', 'desc']).safeParse(value).success,
+    {
+      message: 'Ordem de classificação inválida',
+    }
+  );
+
+const optionalStatusLead = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((value) => (Array.isArray(value) ? value[0] : value))
+  .refine(
+    (value) =>
+      value === undefined ||
+      z
+        .enum(['NOVO', 'CONTATO_REALIZADO', 'QUALIFICADO', 'CONVERTIDO', 'PERDIDO'])
+        .safeParse(value).success,
+    {
+      message: 'Status do lead inválido',
+    }
+  );
+
+// ==================== LEADS ====================
+
+export const createLeadSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  telefone: z.string().min(8, 'Telefone inválido'),
+  email: z.string().email('Email inválido').optional().or(z.literal('')).transform((value) => value || undefined),
+  empresa: z.string().optional(),
+  cargo: z.string().optional(),
+  clienteId: z.string().uuid('Cliente ID inválido').optional(),
+  origem: z.string().optional(),
+  status: z.enum(['NOVO', 'CONTATO_REALIZADO', 'QUALIFICADO', 'CONVERTIDO', 'PERDIDO']).optional(),
+  score: z.number().int().min(0).max(100).optional(),
+  ultimaInteracao: z.string().datetime('Data da última interação inválida').optional(),
+  emSequencia: z.boolean().optional(),
+  observacoes: z.string().optional(),
+  responsavelId: z.string().uuid('Responsável ID inválido').optional(),
+});
+
+export const updateLeadSchema = createLeadSchema.partial();
+
+export const leadParamsSchema = z.object({
+  id: z.string().uuid('ID de lead inválido'),
+});
+
+export const leadListQuerySchema = z
+  .object({
+    search: optionalText,
+    status: optionalStatusLead,
+    responsavelId: optionalUuid,
+    mine: optionalBooleanString,
+    minScore: optionalScoreInt,
+    emSequencia: optionalBooleanString,
+    createdAfter: optionalDateString,
+    createdBefore: optionalDateString,
+    sortBy: optionalSortBy,
+    sortOrder: optionalSortOrder,
+    skip: optionalNonNegativeInt,
+    take: optionalNonNegativeInt,
+  })
+  .transform((query) => ({
+    ...query,
+    take: query.take !== undefined ? Math.min(query.take, 100) : undefined,
+  }));
+
 // ==================== VEÍCULO ====================
 
 export const createVeiculoSchema = z.object({

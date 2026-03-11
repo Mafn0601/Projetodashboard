@@ -703,17 +703,6 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Informações Básicas</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
-            label="Responsável (Equipe)"
-            options={responsavelOptions}
-            value={formData.responsavel}
-            onChange={(value) => handleFieldChange('responsavel', value)}
-            error={errors.responsavel || undefined}
-            placeholder="Selecione um responsável"
-            required
-            disabled={!formData.parceiro}
-          />
-
-          <Select
             label="Parceiro"
             options={parceiroOptions}
             value={formData.parceiro}
@@ -722,6 +711,17 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
             placeholder="Selecione um parceiro"
             required
           />
+
+            <Select
+              label="Responsável (Equipe)"
+              options={responsavelOptions}
+              value={formData.responsavel}
+              onChange={(value) => handleFieldChange('responsavel', value)}
+              error={errors.responsavel || undefined}
+              placeholder="Selecione um responsável"
+              required
+              disabled={!formData.parceiro}
+            />
 
           <Input
             label="Nome do Cliente"

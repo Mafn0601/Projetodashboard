@@ -11,6 +11,7 @@ import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { orcamentoServiceAPI } from '@/services/orcamentoServiceAPI';
 import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 import boxServiceAPI from '@/services/boxServiceAPI';
+import { leadServiceAPI } from '@/services/leadServiceAPI';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -70,6 +71,7 @@ function setAuthTokenInAllServices(token: string | null): void {
   orcamentoServiceAPI.setAuthToken(token);
   equipeServiceAPI.setAuthToken(token);
   boxServiceAPI.setAuthToken(token);
+  leadServiceAPI.setAuthToken(token);
 }
 
 const AuthContext = createContext<AuthContextType>(defaultValue);

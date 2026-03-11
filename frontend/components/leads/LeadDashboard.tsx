@@ -181,8 +181,8 @@ export function LeadDashboard() {
       <section className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_35%),linear-gradient(135deg,_rgba(255,255,255,0.98),_rgba(248,250,252,0.94))] p-6 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.45)] dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
               CRM Performance Layer
             </div>
             <div>
@@ -195,11 +195,11 @@ export function LeadDashboard() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="outline" className="gap-2 rounded-2xl" onClick={() => void handleRefresh()} disabled={isRefreshing}>
-              <ArrowUpRight className="h-4 w-4" />
+              <ArrowUpRight className="h-4 w-4 shrink-0" />
               {isRefreshing ? 'Atualizando...' : 'Atualizar'}
             </Button>
             <Button className="gap-2 rounded-2xl bg-slate-950 text-white hover:bg-slate-800" onClick={() => setIsCreateOpen(true)}>
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 shrink-0" />
               Adicionar Novo Lead
             </Button>
           </div>
@@ -274,12 +274,12 @@ export function LeadDashboard() {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">Novos: {statusSnapshot.NOVO || 0}</span>
-          <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">Contato: {statusSnapshot.CONTATO_REALIZADO || 0}</span>
-          <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">Qualificados: {statusSnapshot.QUALIFICADO || 0}</span>
-          <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">Convertidos: {statusSnapshot.CONVERTIDO || 0}</span>
-          <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">Perdidos: {statusSnapshot.PERDIDO || 0}</span>
-          {user ? <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800">Usuário: {user.name}</span> : null}
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">Novos: {statusSnapshot.NOVO || 0}</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">Contato: {statusSnapshot.CONTATO_REALIZADO || 0}</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">Qualificados: {statusSnapshot.QUALIFICADO || 0}</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">Convertidos: {statusSnapshot.CONVERTIDO || 0}</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">Perdidos: {statusSnapshot.PERDIDO || 0}</span>
+          {user ? <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">Usuário: {user.name}</span> : null}
         </div>
       </section>
 
@@ -300,8 +300,8 @@ export function LeadDashboard() {
           <div className="p-6 text-sm text-slate-500 dark:text-slate-400">Carregando dashboard...</div>
         ) : leads.length === 0 ? (
           <div className="p-10 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-              <Building2 className="h-6 w-6" />
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <Building2 className="h-6 w-6 shrink-0" />
             </div>
             <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">Nenhum lead encontrado</h3>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Ajuste os filtros ou adicione um novo lead para começar.</p>
@@ -391,25 +391,25 @@ export function LeadDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="flex flex-wrap gap-2">
-                          <a href={`tel:${lead.telefone}`} className="inline-flex">
-                            <Button variant="outline" size="sm" className="gap-2 rounded-xl">
-                              <Phone className="h-4 w-4" />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <a href={`tel:${lead.telefone}`} className="inline-flex items-center">
+                            <Button variant="outline" size="sm" className="gap-2 rounded-xl items-center justify-center">
+                              <Phone className="h-4 w-4 shrink-0" />
                               Ligar
                             </Button>
                           </a>
-                          <a href={`mailto:${lead.email || ''}`} className="inline-flex">
-                            <Button variant="outline" size="sm" className="gap-2 rounded-xl" disabled={!lead.email}>
-                              <Mail className="h-4 w-4" />
+                          <a href={`mailto:${lead.email || ''}`} className="inline-flex items-center">
+                            <Button variant="outline" size="sm" className="gap-2 rounded-xl items-center justify-center" disabled={!lead.email}>
+                              <Mail className="h-4 w-4 shrink-0" />
                               Email
                             </Button>
                           </a>
-                          <Button variant="outline" size="sm" className="gap-2 rounded-xl" onClick={() => openNotes(lead)}>
-                            <StickyNote className="h-4 w-4" />
+                          <Button variant="outline" size="sm" className="gap-2 rounded-xl items-center justify-center" onClick={() => openNotes(lead)}>
+                            <StickyNote className="h-4 w-4 shrink-0" />
                             Criar Nota
                           </Button>
-                          <Button variant="outline" size="sm" className="gap-2 rounded-xl" onClick={() => void handleToggleSequence(lead)}>
-                            <Workflow className="h-4 w-4" />
+                          <Button variant="outline" size="sm" className="gap-2 rounded-xl items-center justify-center" onClick={() => void handleToggleSequence(lead)}>
+                            <Workflow className="h-4 w-4 shrink-0" />
                             {lead.emSequencia ? 'Na Sequência' : 'Adicionar à Sequência'}
                           </Button>
                         </div>

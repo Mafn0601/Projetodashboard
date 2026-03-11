@@ -40,6 +40,7 @@ type Equipe = {
 
 // Funções / Papéis da Equipe
 const funcoes = [
+  { value: "admin", label: "ADMIN" },
   { value: "consultor_vendas", label: "Consultor de Vendas" },
   { value: "gerente_vendas", label: "Gerente de Vendas" },
   { value: "gerente_comercial", label: "Gerente Comercial" },
@@ -380,6 +381,7 @@ export default function Page() {
 
   // Mapa de hierarquia das funções (menor número = maior hierarquia)
   const hierarquiaFuncoes: Record<string, number> = useMemo(() => ({
+    'admin': 0,
     'gerente_comercial': 1,
     'auxiliar_administrativo': 2,
     'tecnico': 3,

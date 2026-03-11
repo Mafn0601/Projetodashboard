@@ -206,8 +206,7 @@ function ensureCardsLoaded(): void {
     return;
   }
 
-  // API-first: não semeia cards mock automaticamente.
-  mockCards = [];
+  mockCards = [...defaultCards];
   writeArray(STATUS_STORAGE_KEY, mockCards);
 }
 

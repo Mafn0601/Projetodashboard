@@ -57,17 +57,21 @@ export default function ParceiroDetailsPage({ params }: PageProps) {
       setError(null);
 
       try {
-        // ✅ NOVO: Usar findByParceiro em vez de findAll + filter
-        // TODO: Implementar método findByParceiro em ordemServicoServiceAPI.ts
+        // ✅ Usa endpoint filtrado por parceiro para evitar carga desnecessária
         const skip = (currentPage - 1) * pageSize;
-        
-        // @ts-expect-error - Método ainda não implementado (exemplo de referência)
+
         const resposta = await ordemServicoServiceAPI.findByParceiro(id, {
           skip,
           take: pageSize,
         });
 
-        setResultado(resposta);
+        setResultado({
+          ordensServico: resposta,
+          total: resposta.length,
+          page: currentPage,
+          pageSize,
+          totalPages: Math.max(1, Math.ceil(resposta.length / pageSize)),
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar OSs');
       } finally {

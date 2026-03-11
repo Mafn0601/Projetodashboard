@@ -231,6 +231,7 @@ export const agendamentoListQuerySchema = z
       ),
     clienteId: optionalUuid,
     responsavelId: optionalUuid,
+    parceiroId: optionalUuid,
     dataInicio: optionalDateString,
     dataFim: optionalDateString,
     skip: optionalNonNegativeInt,

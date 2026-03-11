@@ -54,6 +54,7 @@ export default function ParceiroDetalhePage() {
   const [orcamentos, setOrcamentos] = useState<OrcamentoAPI[]>([]);
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingResumo, setLoadingResumo] = useState(false);
 
   const id = params.id as string;
   const nomeParam = searchParams.get('nome') || '';
@@ -64,6 +65,38 @@ export default function ParceiroDetalhePage() {
   useEffect(() => {
     let mounted = true;
 
+    const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 10000): Promise<T | null> => {
+      return new Promise((resolve) => {
+        const timer = setTimeout(() => resolve(null), timeoutMs);
+        promise
+          .then((data) => resolve(data))
+          .catch(() => resolve(null))
+          .finally(() => clearTimeout(timer));
+      });
+    };
+
+    const carregarResumo = async (parceiroIdResolvido: string) => {
+      if (!mounted) return;
+      setLoadingResumo(true);
+
+      const [ordensData, orcamentosData, agendamentosData] = await Promise.all([
+        withTimeout(ordemServicoServiceAPI.findByParceiro(parceiroIdResolvido, { take: 60 }), 12000),
+        withTimeout(orcamentoServiceAPI.findAll({ status: 'PENDENTE', take: 80 }), 12000),
+        withTimeout(agendamentoServiceAPI.findAll({ parceiroId: parceiroIdResolvido, take: 80 }), 12000),
+      ]);
+
+      if (!mounted) return;
+
+      setOrdens(ordensData || []);
+      setOrcamentos(
+        (orcamentosData || []).filter((orc) =>
+          String(orc.observacoes || '').includes(`PARCEIRO_ID:${parceiroIdResolvido}`)
+        )
+      );
+      setAgendamentos(agendamentosData || []);
+      setLoadingResumo(false);
+    };
+
     const carregarDetalhes = async () => {
       try {
         setLoading(true);
@@ -72,7 +105,7 @@ export default function ParceiroDetalhePage() {
         let parceiroDataInicial: ParceiroAPI | null = null;
 
         if (!isUuid(id)) {
-          const parceiros = await parceiroServiceAPI.findAll({ preferCache: true, forceRefresh: true });
+          const parceiros = await parceiroServiceAPI.findAll({ preferCache: true, forceRefresh: false });
           const matchByNome = parceiros.find(
             (p) => p.nome.trim().toLowerCase() === nomeParam.trim().toLowerCase()
           );
@@ -84,36 +117,27 @@ export default function ParceiroDetalhePage() {
           } else {
             if (!mounted) return;
             setParceiro(null);
+            setLoading(false);
             return;
           }
         }
 
-        const [parceiroData, equipesData, ordensData, orcamentosData, agendamentosData] = await Promise.all([
+        const [parceiroData, equipesData] = await Promise.all([
           parceiroDataInicial ? Promise.resolve(parceiroDataInicial) : parceiroServiceAPI.findById(parceiroIdResolvido),
-          equipeServiceAPI.findAll(parceiroIdResolvido, undefined, { preferCache: false, forceRefresh: true }),
-          ordemServicoServiceAPI.findAll({ take: 200 }),
-          orcamentoServiceAPI.findAll({ status: 'PENDENTE', take: 200 }),
-          agendamentoServiceAPI.findAll({ take: 200 }),
+          equipeServiceAPI.findAll(parceiroIdResolvido, undefined, { preferCache: true, forceRefresh: false }),
         ]);
 
         if (!mounted) return;
 
         setParceiro(parceiroData);
         setEquipes(equipesData || []);
-        setOrdens((ordensData || []).filter((os) => os.parceiroId === parceiroIdResolvido));
-        setOrcamentos(
-          (orcamentosData || []).filter((orc) =>
-            String(orc.observacoes || '').includes(`PARCEIRO_ID:${parceiroIdResolvido}`)
-          )
-        );
-        setAgendamentos((agendamentosData || []).filter((item) => item.parceiroId === parceiroIdResolvido));
+
+        setLoading(false);
+        void carregarResumo(parceiroIdResolvido);
       } catch (error) {
         console.error('Erro ao carregar detalhes do parceiro:', error);
         if (mounted) {
           setParceiro(null);
-        }
-      } finally {
-        if (mounted) {
           setLoading(false);
         }
       }
@@ -238,15 +262,15 @@ export default function ParceiroDetalhePage() {
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">Orçamentos ativos</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{orcamentos.length}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{loadingResumo ? '...' : orcamentos.length}</p>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">OS em andamento</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{osEmAndamento}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{loadingResumo ? '...' : osEmAndamento}</p>
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-2">Agendamentos vinculados</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{agendamentos.length}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{loadingResumo ? '...' : agendamentos.length}</p>
         </div>
       </div>
 

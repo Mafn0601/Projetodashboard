@@ -27,6 +27,7 @@ interface FindAllFilters {
   status?: string;
   clienteId?: string;
   responsavelId?: string;
+  parceiroId?: string;
   dataInicio?: string;
   dataFim?: string;
   skip?: number;
@@ -54,6 +55,7 @@ class OrdemServicoServiceAPI {
     if (filters.status) params.append('status', filters.status);
     if (filters.clienteId) params.append('clienteId', filters.clienteId);
     if (filters.responsavelId) params.append('responsavelId', filters.responsavelId);
+    if (filters.parceiroId) params.append('parceiroId', filters.parceiroId);
     if (filters.dataInicio) params.append('dataInicio', filters.dataInicio);
     if (filters.dataFim) params.append('dataFim', filters.dataFim);
     if (filters.skip !== undefined) params.append('skip', String(filters.skip));
@@ -102,6 +104,34 @@ class OrdemServicoServiceAPI {
     } catch (error) {
       console.error('❌ Erro ao buscar ordem de serviço:', error);
       return null;
+    }
+  }
+
+  async findByParceiro(parceiroId: string, filters: { status?: string; skip?: number; take?: number } = {}): Promise<OrdemServico[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.skip !== undefined) params.append('skip', String(filters.skip));
+      if (filters.take !== undefined) params.append('take', String(filters.take));
+
+      const queryString = params.toString();
+      const response = await fetch(
+        `${API_URL}/api/ordens-servico/by-parceiro/${parceiroId}${queryString ? `?${queryString}` : ''}`,
+        {
+          method: 'GET',
+          headers: this.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar ordens de serviço por parceiro: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return result.ordensServico || result.data || result;
+    } catch (error) {
+      console.error('❌ Erro ao buscar ordens por parceiro:', error);
+      return [];
     }
   }
 

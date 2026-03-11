@@ -65,6 +65,7 @@ export class AgendamentoService {
     status?: string;
     clienteId?: string;
     responsavelId?: string;
+    parceiroId?: string;
     dataInicio?: string;
     dataFim?: string;
     skip?: number;
@@ -98,6 +99,10 @@ export class AgendamentoService {
 
     if (filters?.responsavelId) {
       where.responsavelId = filters.responsavelId;
+    }
+
+    if (filters?.parceiroId) {
+      where.parceiroId = filters.parceiroId;
     }
 
     if (filters?.dataInicio || filters?.dataFim) {

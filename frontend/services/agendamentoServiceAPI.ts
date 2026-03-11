@@ -40,6 +40,7 @@ interface FindAllFilters {
   status?: string;
   clienteId?: string;
   responsavelId?: string;
+  parceiroId?: string;
   dataInicio?: string;
   dataFim?: string;
   skip?: number;
@@ -71,6 +72,7 @@ class AgendamentoServiceAPI {
     if (filters.status) params.append('status', filters.status);
     if (filters.clienteId) params.append('clienteId', filters.clienteId);
     if (filters.responsavelId) params.append('responsavelId', filters.responsavelId);
+    if (filters.parceiroId) params.append('parceiroId', filters.parceiroId);
     if (filters.dataInicio) params.append('dataInicio', filters.dataInicio);
     if (filters.dataFim) params.append('dataFim', filters.dataFim);
     if (filters.skip !== undefined) params.append('skip', String(filters.skip));

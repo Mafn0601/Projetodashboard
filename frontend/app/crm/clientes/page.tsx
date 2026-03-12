@@ -132,6 +132,15 @@ export default function Page() {
 
   return (
     <div className="space-y-6">
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">CRM - Clientes e Leads</h1>
+          <p className="text-sm text-slate-700 dark:text-slate-300">
+            Acompanhe relacionamento, conversao e base de clientes em um unico lugar.
+          </p>
+        </div>
+      </header>
+
       {/* Tabs */}
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
         <button
@@ -165,7 +174,7 @@ export default function Page() {
         <div className="space-y-6">
           <header className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Clientes</h1>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Clientes</h2>
               <p className="text-xs text-slate-700 dark:text-slate-400">
                 Gerencie seus clientes de forma centralizada.
               </p>

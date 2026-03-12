@@ -446,10 +446,10 @@ export default function Page() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 mb-2">
-              Cadastro de Equipes
+              Cadastro de Vendedores
             </h1>
             <p className="text-sm text-slate-700 dark:text-slate-300">
-              Gerencie os membros das equipes vinculados aos parceiros
+              Gerencie os vendedores vinculados as concessionarias
             </p>
           </div>
           <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -505,7 +505,7 @@ export default function Page() {
           <thead className="bg-slate-50 dark:bg-slate-900">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Parceiro
+                Concessionaria
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Login
@@ -527,7 +527,7 @@ export default function Page() {
           <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
             {Object.entries(groupedEquipes).map(([parceiroId, membros]) => {
               const isExpanded = expandedParceiros.includes(parceiroId);
-              const parceiroLabel = parceiroId === 'sem_parceiro' ? 'Sem parceiro' : obterLabelParceiro(parceiroId);
+              const parceiroLabel = parceiroId === 'sem_parceiro' ? 'Sem concessionaria' : obterLabelParceiro(parceiroId);
               return (
                 <Fragment key={parceiroId}>
                   <tr
@@ -538,7 +538,7 @@ export default function Page() {
                       <div className="flex items-center justify-between">
                         <span>{parceiroLabel}</span>
                         <span className="text-xs font-medium text-slate-700 dark:text-slate-400">
-                          {membros.length} membro(s)
+                          {membros.length} vendedor(es)
                         </span>
                       </div>
                     </td>
@@ -596,7 +596,7 @@ export default function Page() {
         <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-700">
           {Object.entries(groupedEquipes).map(([parceiroId, membros]) => {
             const isExpanded = expandedParceiros.includes(parceiroId);
-            const parceiroLabel = parceiroId === 'sem_parceiro' ? 'Sem parceiro' : obterLabelParceiro(parceiroId);
+            const parceiroLabel = parceiroId === 'sem_parceiro' ? 'Sem concessionaria' : obterLabelParceiro(parceiroId);
 
             return (
               <div key={parceiroId}>
@@ -608,7 +608,7 @@ export default function Page() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{parceiroLabel}</span>
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-400">
-                      {membros.length} membro(s)
+                      {membros.length} vendedor(es)
                     </span>
                   </div>
                 </button>
@@ -669,12 +669,12 @@ export default function Page() {
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
             <div className="p-6">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50 mb-6">
-                Detalhes do Cadastro
+                Detalhes do Vendedor
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Parceiro</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Concessionaria</p>
                   <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">
                     {obterLabelParceiro(selectedEquipe.parceiroId || '')}
                   </p>
@@ -738,7 +738,7 @@ export default function Page() {
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
             <div className="p-6">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50 mb-6">
-                {editingId ? 'Editar Cadastro' : 'Novo Cadastro'}
+                {editingId ? 'Editar Vendedor' : 'Novo Vendedor'}
               </h2>
 
               {/* Informações Básicas */}
@@ -748,7 +748,7 @@ export default function Page() {
                 </h3>
                 <div className="space-y-4">
                   <Select
-                    label="Parceiro *"
+                    label="Concessionaria *"
                     value={formData.parceiroId || ''}
                     onChange={(value) => handleChange('parceiroId', value)}
                     options={parceiroOptions}

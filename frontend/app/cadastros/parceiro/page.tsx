@@ -218,7 +218,7 @@ export default function Page() {
       <div className="space-y-6">
         <header className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Cadastro de Parceiros</h1>
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Cadastro de Concessionarias</h1>
             <p className="text-xs text-slate-700 dark:text-slate-400">Sincronizando dados...</p>
           </div>
         </header>
@@ -226,7 +226,7 @@ export default function Page() {
     ) : (
     <CrudTemplate
       key={crudVersion}
-      title="Cadastro de Parceiros"
+      title="Cadastro de Concessionarias"
       entityKey="parceiros"
       useModal={true}
       createModalMaxHeightClass="max-h-[94vh]"
@@ -237,7 +237,7 @@ export default function Page() {
       onRowClick={handleRowClick}
       fields={[
         { name: "cnpj", label: "CNPJ", type: "masked", mask: "cpfCnpj" },
-        { name: "nome", label: "Nome da Empresa" },
+        { name: "nome", label: "Nome da Concessionaria" },
         { name: "telefone", label: "Telefone", required: false },
         { name: "email", label: "E-mail", required: false },
         { name: "grupo", label: "Grupo", required: false },

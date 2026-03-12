@@ -12,6 +12,7 @@ import {
   Sparkles,
   StickyNote,
   TrendingUp,
+  UserPlus,
   UserSquare2,
   Users,
   Workflow,
@@ -20,6 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/components/AuthContext';
+import { clienteServiceAPI } from '@/services/clienteServiceAPI';
 import { CreateLeadPayload, LeadAPI, LeadStatus, leadServiceAPI, LeadSummary } from '@/services/leadServiceAPI';
 import { LeadCreateModal } from './LeadCreateModal';
 import { LeadMetricCard } from './LeadMetricCard';
@@ -85,6 +87,7 @@ export function LeadDashboard() {
   const [noteDraft, setNoteDraft] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [isRefreshing, startRefreshTransition] = useTransition();
+  const [convertingLeadId, setConvertingLeadId] = useState<string | null>(null);
 
   const filters = useMemo(() => ({
     search: deferredSearch || undefined,
@@ -176,6 +179,46 @@ export function LeadDashboard() {
     });
   };
 
+  const normalizePhone = (value?: string | null) => String(value || '').replace(/\D/g, '');
+
+  const handleConvertToClient = async (lead: LeadAPI) => {
+    if (lead.clienteId) return;
+
+    const phone = normalizePhone(lead.telefone);
+    if (phone.length < 10) {
+      window.alert('Nao foi possivel converter: telefone do lead invalido para cadastro de cliente.');
+      return;
+    }
+
+    try {
+      setConvertingLeadId(lead.id);
+
+      const novoCliente = await clienteServiceAPI.create({
+        nome: lead.nome,
+        telefone: phone,
+        email: lead.email || undefined,
+      });
+
+      if (!novoCliente?.id) {
+        window.alert('Falha ao criar cliente a partir do lead.');
+        return;
+      }
+
+      await leadServiceAPI.update(lead.id, {
+        clienteId: novoCliente.id,
+        status: 'CONVERTIDO',
+        ultimaInteracao: new Date().toISOString(),
+      });
+
+      await loadDashboard();
+    } catch (error) {
+      console.error('Erro ao converter lead em cliente:', error);
+      window.alert('Erro ao converter lead em cliente.');
+    } finally {
+      setConvertingLeadId(null);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-10">
       <section className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_35%),linear-gradient(135deg,_rgba(255,255,255,0.98),_rgba(248,250,252,0.94))] p-6 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.45)] dark:border-slate-800/80 dark:bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.12),_transparent_28%),linear-gradient(135deg,_rgba(15,23,42,0.98),_rgba(15,23,42,0.92))]">
@@ -186,9 +229,9 @@ export function LeadDashboard() {
               CRM Performance Layer
             </div>
             <div>
-              <h1 className="text-4xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">Leads Dashboard</h1>
+              <h1 className="text-4xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">CRM | Leads</h1>
               <p className="mt-3 max-w-xl text-base leading-7 text-slate-600 dark:text-slate-300">
-                Gestão visual do funil comercial com score, interação recente e ações rápidas ligadas ao backend.
+                Gestao visual do funil comercial com score, interacao recente e acoes rapidas ligadas ao backend.
               </p>
             </div>
           </div>
@@ -424,6 +467,21 @@ export function LeadDashboard() {
                           <Button variant="outline" size="sm" className="gap-2 rounded-xl items-center justify-center" onClick={() => void handleToggleSequence(lead)}>
                             <Workflow className="h-4 w-4 shrink-0" />
                             {lead.emSequencia ? 'Na Sequência' : 'Adicionar à Sequência'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 rounded-xl items-center justify-center"
+                            onClick={() => void handleConvertToClient(lead)}
+                            disabled={Boolean(lead.clienteId) || convertingLeadId === lead.id}
+                            title={lead.clienteId ? 'Lead ja vinculado a cliente' : 'Criar cliente com dados do lead'}
+                          >
+                            <UserPlus className="h-4 w-4 shrink-0" />
+                            {lead.clienteId
+                              ? 'Cliente vinculado'
+                              : convertingLeadId === lead.id
+                                ? 'Convertendo...'
+                                : 'Converter em Cliente'}
                           </Button>
                         </div>
                       </td>

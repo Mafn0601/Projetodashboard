@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Users, PhoneCall } from 'lucide-react';
 import { LeadDashboard } from '@/components/leads/LeadDashboard';
 import ClienteTable from '@/components/cliente/ClienteTable';
@@ -15,7 +16,18 @@ import { cn } from '@/lib/utils';
 type Tab = 'clientes' | 'leads';
 
 export default function Page() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>('clientes');
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'leads') {
+      setActiveTab('leads');
+      return;
+    }
+
+    setActiveTab('clientes');
+  }, [searchParams]);
 
   // --- estado da aba Clientes ---
   const [clientes, setClientes] = useState<ClienteCompleto[]>([]);

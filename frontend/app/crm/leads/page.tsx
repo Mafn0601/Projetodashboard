@@ -1,6 +1,5 @@
-import { LeadDashboard } from '@/components/leads/LeadDashboard';
+import { redirect } from 'next/navigation';
 
 export default function Page() {
-  return <LeadDashboard />;
+  redirect('/crm/clientes?tab=leads');
 }
-

@@ -84,13 +84,13 @@ const NAV_ITEMS: NavItem[] = [
   },
   // Cadastros
   {
-    label: "Equipe",
+    label: "Vendedores",
     href: "/cadastros/equipe",
     icon: UserCog,
-     section: "Cadastros"  // Vendedores da concessionária
+    section: "Cadastros"
   },
   {
-     label: "Concessionária",
+    label: "Concessionárias",
     href: "/cadastros/parceiro",
     icon: Handshake,
     section: "Cadastros"
@@ -109,12 +109,12 @@ const NAV_ITEMS: NavItem[] = [
   },
   // CRM
   {
-      label: "Clientes",
-      href: "/crm/clientes",
-      icon: Users,
-      section: "CRM"
-    },
-    {
+    label: "Clientes e Leads",
+    href: "/crm/clientes",
+    icon: Users,
+    section: "CRM"
+  },
+  {
     label: "Pesquisa",
     href: "/crm/pesquisa",
     icon: Search,
@@ -122,7 +122,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   // Vendas
   {
-      label: "Orçamento",
+    label: "Orçamento",
     href: "/vendas/orcamento",
     icon: FileText,
     section: "Vendas"
@@ -143,13 +143,13 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: "Relatórios",
     href: "/inteligencia/relatorios",
-      icon: LineChart,
+    icon: LineChart,
     section: "Inteligência"
   },
   {
     label: "Comissões",
     href: "/inteligencia/comissoes",
-      icon: TrendingUp,
+    icon: TrendingUp,
     section: "Inteligência"
   },
   {

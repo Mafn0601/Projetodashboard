@@ -14,12 +14,13 @@ import {
   Handshake,
   FileDigit,
   Target,
-  PhoneCall,
   Search,
   FileText,
   FileSpreadsheet,
   Receipt,
   BadgeCheck,
+  LineChart,
+  TrendingUp,
   ChevronLeft,
   Menu,
   ChevronDown,
@@ -86,10 +87,10 @@ const NAV_ITEMS: NavItem[] = [
     label: "Equipe",
     href: "/cadastros/equipe",
     icon: UserCog,
-    section: "Cadastros"
+     section: "Cadastros"  // Vendedores da concessionária
   },
   {
-    label: "Parceiro",
+     label: "Concessionária",
     href: "/cadastros/parceiro",
     icon: Handshake,
     section: "Cadastros"
@@ -108,12 +109,12 @@ const NAV_ITEMS: NavItem[] = [
   },
   // CRM
   {
-    label: "Leads",
-    href: "/crm/leads",
-    icon: PhoneCall,
-    section: "CRM"
-  },
-  {
+      label: "Clientes",
+      href: "/crm/clientes",
+      icon: Users,
+      section: "CRM"
+    },
+    {
     label: "Pesquisa",
     href: "/crm/pesquisa",
     icon: Search,
@@ -121,13 +122,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   // Vendas
   {
-    label: "Cliente",
-    href: "/cadastros/cliente",
-    icon: Users,
-    section: "Vendas"
-  },
-  {
-    label: "Orçamento",
+      label: "Orçamento",
     href: "/vendas/orcamento",
     icon: FileText,
     section: "Vendas"
@@ -148,13 +143,13 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: "Relatórios",
     href: "/inteligencia/relatorios",
-    icon: BarChart3,
+      icon: LineChart,
     section: "Inteligência"
   },
   {
     label: "Comissões",
     href: "/inteligencia/comissoes",
-    icon: Target,
+      icon: TrendingUp,
     section: "Inteligência"
   },
   {

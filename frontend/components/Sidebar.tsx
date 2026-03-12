@@ -13,13 +13,9 @@ import {
   UserCog,
   Handshake,
   FileDigit,
-  Target,
-  Search,
   FileText,
-  FileSpreadsheet,
   Receipt,
   BadgeCheck,
-  LineChart,
   TrendingUp,
   ChevronLeft,
   Menu,
@@ -46,127 +42,121 @@ type NavItem = {
 // TODO: talvez adicionar badges com contadores nos itens?
 const NAV_ITEMS: NavItem[] = [
   {
-    label: "Dashboard Comercial",
-    href: "/",
+    label: "Dashboard",
+    href: "/dashboard",
     icon: LayoutDashboard,
     section: "Root"
   },
-  // se\u00e7\u00e3o operacional
+  // Operação
   {
-    label: "Tarefas",
-    href: "/operacional/tarefas",
-    icon: ClipboardList,
-    section: "Operacional"
-  },
-  {
-    label: "Agendamento",
-    href: "/operacional/agendamento",
+    label: "Agenda",
+    href: "/operacao/agenda",
     icon: CalendarCheck,
-    section: "Operacional"
+    section: "Operação"
   },
   {
     label: "Boxes",
-    href: "/operacional/box",
+    href: "/operacao/boxes",
     icon: BoxIcon,
-    section: "Operacional"
+    section: "Operação"
   },
   {
     label: "Status",
-    href: "/operacional/status",
+    href: "/operacao/status",
     icon: BarChart3,
-    section: "Operacional"
+    section: "Operação"
   },
   {
-    label: "Estoque",
-    href: "/operacional/estoque",
-    icon: Package,
-    section: "Operacional"
-  },
-  // Cadastros
-  {
-    label: "Vendedores",
-    href: "/cadastros/equipe",
-    icon: UserCog,
-    section: "Cadastros"
-  },
-  {
-    label: "Concessionárias",
-    href: "/cadastros/parceiro",
-    icon: Handshake,
-    section: "Cadastros"
-  },
-  {
-    label: "Tipo de OS",
-    href: "/cadastros/tipo-os",
-    icon: FileDigit,
-    section: "Cadastros"
-  },
-  {
-    label: "Meta de Comissão",
-    href: "/cadastros/meta-comissao",
-    icon: Target,
-    section: "Cadastros"
+    label: "Tarefas",
+    href: "/operacao/tarefas",
+    icon: ClipboardList,
+    section: "Operação"
   },
   // CRM
   {
-    label: "Clientes e Leads",
+    label: "Clientes",
     href: "/crm/clientes",
     icon: Users,
     section: "CRM"
   },
   {
-    label: "Pesquisa",
-    href: "/crm/pesquisa",
-    icon: Search,
+    label: "Vendedores",
+    href: "/crm/vendedores",
+    icon: UserCog,
+    section: "CRM"
+  },
+  {
+    label: "Concessionárias",
+    href: "/crm/concessionarias",
+    icon: Handshake,
     section: "CRM"
   },
   // Vendas
   {
-    label: "Orçamento",
-    href: "/vendas/orcamento",
+    label: "Orçamentos",
+    href: "/vendas/orcamentos",
     icon: FileText,
     section: "Vendas"
   },
   {
-    label: "Fatura",
-    href: "/vendas/fatura",
-    icon: Receipt,
+    label: "Ordens de Serviço",
+    href: "/vendas/ordens-servico",
+    icon: FileDigit,
     section: "Vendas"
   },
   {
-    label: "Certificados",
-    href: "/vendas/certificados",
+    label: "Contratos",
+    href: "/vendas/contratos",
     icon: BadgeCheck,
     section: "Vendas"
   },
-  // Inteligência
+  // Gestão
   {
-    label: "Relatórios",
-    href: "/inteligencia/relatorios",
-    icon: LineChart,
-    section: "Inteligência"
+    label: "Estoque",
+    href: "/gestao/estoque",
+    icon: Package,
+    section: "Gestão"
+  },
+  {
+    label: "Financeiro",
+    href: "/gestao/financeiro",
+    icon: Receipt,
+    section: "Gestão"
   },
   {
     label: "Comissões",
-    href: "/inteligencia/comissoes",
+    href: "/gestao/comissoes",
     icon: TrendingUp,
-    section: "Inteligência"
+    section: "Gestão"
+  },
+  // Configurações
+  {
+    label: "Usuários",
+    href: "/configuracoes/usuarios",
+    icon: Users,
+    section: "Configurações"
   },
   {
-    label: "Excel",
-    href: "/inteligencia/excel",
-    icon: FileSpreadsheet,
-    section: "Inteligência"
+    label: "Serviços",
+    href: "/configuracoes/servicos",
+    icon: Settings,
+    section: "Configurações"
+  },
+  {
+    label: "Tipos de OS",
+    href: "/configuracoes/tipos-os",
+    icon: FileDigit,
+    section: "Configurações"
   }
 ];
 
 const SECTIONS_ORDER = [
   "Root",
-  "Operacional",
-  "Cadastros",
+  "Operação",
   "CRM",
   "Vendas",
-  "Inteligência"
+  "Gestão",
+  "Configurações"
 ];
 
 interface SidebarProps {

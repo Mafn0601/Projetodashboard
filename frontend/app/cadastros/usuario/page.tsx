@@ -233,7 +233,6 @@ export default function Page() {
               <table className="w-full text-left text-xs">
                 <thead className="sticky top-0 bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                   <tr>
-                    <th className="px-3 py-2 font-medium">Concessionária</th>
                     <th className="px-3 py-2 font-medium">CPF</th>
                     <th className="px-3 py-2 font-medium">E-mail</th>
                     <th className="px-3 py-2 font-medium">Login</th>
@@ -245,7 +244,6 @@ export default function Page() {
                 <tbody>
                   {usuarios.map((usuario) => (
                     <tr key={usuario.id} className="border-t border-slate-200 odd:bg-slate-50 even:bg-slate-100 dark:border-slate-800 dark:odd:bg-slate-950/60 dark:even:bg-slate-900/40">
-                      <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.parceiroNome}</td>
                       <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{formatCpf(usuario.cpf)}</td>
                       <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.email}</td>
                       <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.login}</td>

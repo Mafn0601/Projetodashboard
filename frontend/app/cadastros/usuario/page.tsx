@@ -187,8 +187,6 @@ export default function Page() {
       await equipeServiceAPI.create({
         parceiroId: normalizeText(form.parceiroId),
         email: normalizeText(form.email).toLowerCase(),
-        login: normalizeText(form.login).toLowerCase(),
-        senha: form.senha,
         cpf: normalizeDigits(form.cpf),
         funcao: normalizeText(form.funcao),
         telefone: normalizeDigits(form.telefone),

@@ -180,8 +180,11 @@ export default function ContasReceberPage() {
   };
 
   const cancelarFatura = async (row: ContaReceber) => {
-    await financeiroServiceAPI.atualizarFatura(row.id, { status: 'CANCELADO' });
-    setActionMessage(`Fatura ${row.codigoFatura} marcada como cancelada.`);
+    const confirmed = window.confirm(`Deseja realmente excluir a fatura ${row.codigoFatura}? Esta ação não pode ser desfeita.`);
+    if (!confirmed) return;
+
+    await financeiroServiceAPI.deletarFatura(row.id);
+    setActionMessage(`Fatura ${row.codigoFatura} excluída com sucesso.`);
     await load();
   };
 

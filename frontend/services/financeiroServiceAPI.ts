@@ -200,6 +200,20 @@ class FinanceiroServiceAPI {
     return result;
   }
 
+  async deletarFatura(id: string) {
+    const response = await fetch(`${API_URL}/api/financeiro/faturas/${id}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.error || `Erro HTTP ${response.status}`);
+    }
+
+    this.invalidateCache();
+  }
+
   async atualizarPagamento(id: string, payload: Record<string, unknown>) {
     const response = await fetch(`${API_URL}/api/financeiro/pagamentos/${id}`, {
       method: 'PATCH',

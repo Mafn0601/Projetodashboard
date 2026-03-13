@@ -71,6 +71,20 @@ export class FinanceiroController {
     }
   }
 
+  async deleteFatura(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = financeiroContaParamsSchema.parse(req.params);
+      const deleted = await financeiroService.deleteFatura(id);
+      if (!deleted) {
+        return res.status(404).json({ error: 'Fatura não encontrada' });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async createPagamento(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const payload = financeiroPagamentoSchema.parse(req.body);

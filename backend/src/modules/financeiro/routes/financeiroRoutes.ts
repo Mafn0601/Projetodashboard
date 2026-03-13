@@ -16,6 +16,7 @@ router.get('/configuracoes', financeiroController.configuracoes);
 
 router.post('/faturas', financeiroController.createFatura);
 router.patch('/faturas/:id', financeiroController.updateFatura);
+router.delete('/faturas/:id', financeiroController.deleteFatura);
 
 router.post('/pagamentos', financeiroController.createPagamento);
 router.patch('/pagamentos/:id', financeiroController.updatePagamento);

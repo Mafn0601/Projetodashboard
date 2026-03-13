@@ -514,6 +514,14 @@ export class FinanceiroRepository {
     });
   }
 
+  async deleteFatura(id: string) {
+    const exists = await db.fatura.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) return false;
+
+    await db.fatura.delete({ where: { id } });
+    return true;
+  }
+
   async createPagamento(payload: Omit<Pagamento, 'id' | 'createdAt' | 'updatedAt'>) {
     return db.pagamentoFin.create({
       data: {

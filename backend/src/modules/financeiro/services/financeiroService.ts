@@ -55,6 +55,10 @@ export class FinanceiroService {
     return financeiroRepository.updateFatura(id, payload as never);
   }
 
+  async deleteFatura(id: string) {
+    return financeiroRepository.deleteFatura(id);
+  }
+
   async createPagamento(payload: {
     tipo: 'RECEBER' | 'PAGAR';
     alvoId: string;

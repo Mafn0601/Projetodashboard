@@ -174,6 +174,15 @@ export default function ContasPagarPage() {
     await load();
   };
 
+  const cancelarConta = async (row: ContaPagar) => {
+    const confirmed = window.confirm(`Deseja realmente excluir a conta ${row.codigoFatura}? Esta ação não pode ser desfeita.`);
+    if (!confirmed) return;
+
+    await financeiroServiceAPI.deletarFatura(row.id);
+    setActionMessage(`Conta ${row.codigoFatura} excluída com sucesso.`);
+    await load();
+  };
+
   const handleRowAction = async (row: ContaPagar, action: string) => {
     if (action === 'visualizar') {
       openDrawer(row);
@@ -202,6 +211,11 @@ export default function ContasPagarPage() {
 
     if (action === 'agendar') {
       await agendarPagamento(row);
+      return;
+    }
+
+    if (action === 'cancelar') {
+      await cancelarConta(row);
     }
   };
 
@@ -422,6 +436,7 @@ export default function ContasPagarPage() {
                   <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { setActionMenu(null); void handleRowAction(row, 'anexar'); }}>Anexar comprovante</button>
                   <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { setActionMenu(null); void handleRowAction(row, 'aprovar'); }}>Aprovar</button>
                   <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { setActionMenu(null); void handleRowAction(row, 'agendar'); }}>Agendar</button>
+                  <button className="w-full rounded px-2 py-1.5 text-left text-xs text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={() => { setActionMenu(null); void handleRowAction(row, 'cancelar'); }}>Cancelar (excluir)</button>
                 </>
               );
             })()}

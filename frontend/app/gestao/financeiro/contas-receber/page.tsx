@@ -30,6 +30,9 @@ export default function ContasReceberPage() {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [searchInput, setSearchInput] = useState('');
   const [actionMenu, setActionMenu] = useState<{ rowId: string; x: number; y: number } | null>(null);
+  const [showNovaFatura, setShowNovaFatura] = useState(false);
+  const [novaFatura, setNovaFatura] = useState({ nome: '', documento: '', dataVencimento: '', formaPagamento: 'PIX', valorBruto: '', desconto: '', responsavel: '', observacoes: '' });
+  const [salvandoNova, setSalvandoNova] = useState(false);
 
   const [filters, setFilters] = useState({
     page: 1,
@@ -241,6 +244,31 @@ export default function ContasReceberPage() {
     }
   };
 
+  const criarNovaFatura = async () => {
+    if (!novaFatura.nome || !novaFatura.dataVencimento || !novaFatura.valorBruto) return;
+    setSalvandoNova(true);
+    try {
+      await financeiroServiceAPI.criarFatura({
+        tipo: 'RECEBER',
+        nome: novaFatura.nome,
+        documento: novaFatura.documento || undefined,
+        dataEmissao: new Date().toISOString(),
+        dataVencimento: new Date(`${novaFatura.dataVencimento}T12:00:00`).toISOString(),
+        formaPagamento: novaFatura.formaPagamento,
+        valorBruto: Number(novaFatura.valorBruto),
+        desconto: novaFatura.desconto ? Number(novaFatura.desconto) : undefined,
+        responsavel: novaFatura.responsavel || undefined,
+        observacoes: novaFatura.observacoes || undefined,
+      });
+      setNovaFatura({ nome: '', documento: '', dataVencimento: '', formaPagamento: 'PIX', valorBruto: '', desconto: '', responsavel: '', observacoes: '' });
+      setShowNovaFatura(false);
+      setActionMessage('Conta a receber criada com sucesso.');
+      await load();
+    } finally {
+      setSalvandoNova(false);
+    }
+  };
+
   const openActionMenu = (event: MouseEvent<HTMLButtonElement>, rowId: string) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const menuWidth = 208;
@@ -258,11 +286,18 @@ export default function ContasReceberPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => setShowNovaFatura(true)}
+            className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+          >
+            + Nova conta a receber
+          </button>
+          <button
+            type="button"
             onClick={handleBulkCobrar}
             disabled={selectedIds.length === 0}
             className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
           >
-            Enviar cobranca em lote
+            Enviar cobrança em lote
           </button>
           <button
             type="button"
@@ -466,6 +501,58 @@ export default function ContasReceberPage() {
             })()}
           </div>
         </>
+      ) : null}
+
+      {showNovaFatura ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Nova conta a receber</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Cliente *</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Nome do cliente" value={novaFatura.nome} onChange={(e) => setNovaFatura((prev) => ({ ...prev, nome: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">CNPJ / CPF</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Documento" value={novaFatura.documento} onChange={(e) => setNovaFatura((prev) => ({ ...prev, documento: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Vencimento *</label>
+                <input type="date" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" value={novaFatura.dataVencimento} onChange={(e) => setNovaFatura((prev) => ({ ...prev, dataVencimento: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Valor bruto *</label>
+                <input type="number" min="0" step="0.01" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="0,00" value={novaFatura.valorBruto} onChange={(e) => setNovaFatura((prev) => ({ ...prev, valorBruto: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Desconto</label>
+                <input type="number" min="0" step="0.01" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="0,00" value={novaFatura.desconto} onChange={(e) => setNovaFatura((prev) => ({ ...prev, desconto: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Forma de pagamento</label>
+                <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" value={novaFatura.formaPagamento} onChange={(e) => setNovaFatura((prev) => ({ ...prev, formaPagamento: e.target.value }))}>
+                  <option value="PIX">PIX</option>
+                  <option value="BOLETO">Boleto</option>
+                  <option value="TRANSFERENCIA">Transferência</option>
+                  <option value="CARTAO">Cartão</option>
+                  <option value="DINHEIRO">Dinheiro</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Responsável</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Nome do responsável" value={novaFatura.responsavel} onChange={(e) => setNovaFatura((prev) => ({ ...prev, responsavel: e.target.value }))} />
+              </div>
+              <div className="col-span-2">
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Observações</label>
+                <textarea rows={2} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Observações opcionais" value={novaFatura.observacoes} onChange={(e) => setNovaFatura((prev) => ({ ...prev, observacoes: e.target.value }))} />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" onClick={() => setShowNovaFatura(false)}>Cancelar</button>
+              <button type="button" disabled={salvandoNova} className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60" onClick={() => void criarNovaFatura()}>{ salvandoNova ? 'Salvando...' : 'Salvar' }</button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       <FinanceiroDrawer title={selected ? `Detalhes da fatura ${selected.codigoFatura}` : 'Detalhes da fatura'} isOpen={Boolean(selected)} onClose={() => setSelected(null)}>

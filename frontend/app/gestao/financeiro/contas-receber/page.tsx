@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { type MouseEvent, useEffect, useMemo, useState } from 'react';
 import { FinanceiroDrawer } from '@/components/financeiro/FinanceiroDrawer';
 import { FinanceiroNav } from '@/components/financeiro/FinanceiroNav';
 import { StatusPill } from '@/components/financeiro/StatusPill';
@@ -29,6 +29,7 @@ export default function ContasReceberPage() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [searchInput, setSearchInput] = useState('');
+  const [actionMenu, setActionMenu] = useState<{ rowId: string; x: number; y: number } | null>(null);
 
   const [filters, setFilters] = useState({
     page: 1,
@@ -240,6 +241,13 @@ export default function ContasReceberPage() {
     }
   };
 
+  const openActionMenu = (event: MouseEvent<HTMLButtonElement>, rowId: string) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuWidth = 208;
+    const left = Math.min(rect.left, window.innerWidth - menuWidth - 12);
+    setActionMenu((prev) => (prev?.rowId === rowId ? null : { rowId, x: Math.max(12, left), y: rect.bottom + 6 }));
+  };
+
   return (
     <div className="space-y-5 pb-10">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -375,24 +383,13 @@ export default function ContasReceberPage() {
                     />
                   </td>
                   <td className="px-3 py-2">
-                    <select
-                      defaultValue=""
-                      className="h-8 w-36 rounded-md border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        event.target.value = '';
-                        void handleRowAction(row, value);
-                      }}
+                    <button
+                      type="button"
+                      className="h-8 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                      onClick={(event) => openActionMenu(event, row.id)}
                     >
-                      <option value="" disabled>Ações</option>
-                      <option value="visualizar">Visualizar</option>
-                      <option value="editar">Editar</option>
-                      <option value="registrar">Registrar pagamento</option>
-                      <option value="cobranca">Enviar cobrança</option>
-                      <option value="boleto">Gerar boleto</option>
-                      <option value="duplicar">Duplicar</option>
-                      <option value="cancelar">Cancelar</option>
-                    </select>
+                      Ações
+                    </button>
                   </td>
                   <td className="px-3 py-2"><StatusPill status={row.status} /></td>
                   <td className="px-3 py-2">{row.codigoFatura}</td>
@@ -438,6 +435,38 @@ export default function ContasReceberPage() {
           </button>
         </div>
       </footer>
+
+      {actionMenu ? (
+        <>
+          <button
+            type="button"
+            aria-label="Fechar menu de ações"
+            className="fixed inset-0 z-30 cursor-default bg-transparent"
+            onClick={() => setActionMenu(null)}
+          />
+          <div
+            className="fixed z-40 w-52 rounded-md border border-slate-200 bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+            style={{ left: actionMenu.x, top: actionMenu.y }}
+          >
+            {(() => {
+              const row = rows.find((item) => item.id === actionMenu.rowId);
+              if (!row) return null;
+
+              return (
+                <>
+                  <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { setActionMenu(null); void handleRowAction(row, 'visualizar'); }}>Visualizar</button>
+                  <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { setActionMenu(null); void handleRowAction(row, 'editar'); }}>Editar</button>
+                  <button className="w-full rounded px-2 py-1.5 text-left text-xs text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30" onClick={() => { setActionMenu(null); void handleRowAction(row, 'registrar'); }}>Registrar pagamento</button>
+                  <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { setActionMenu(null); void handleRowAction(row, 'cobranca'); }}>Enviar cobrança</button>
+                  <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { setActionMenu(null); void handleRowAction(row, 'boleto'); }}>Gerar boleto</button>
+                  <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { setActionMenu(null); void handleRowAction(row, 'duplicar'); }}>Duplicar</button>
+                  <button className="w-full rounded px-2 py-1.5 text-left text-xs text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30" onClick={() => { setActionMenu(null); void handleRowAction(row, 'cancelar'); }}>Cancelar</button>
+                </>
+              );
+            })()}
+          </div>
+        </>
+      ) : null}
 
       <FinanceiroDrawer title={selected ? `Detalhes da fatura ${selected.codigoFatura}` : 'Detalhes da fatura'} isOpen={Boolean(selected)} onClose={() => setSelected(null)}>
         {selected ? (

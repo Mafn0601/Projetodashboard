@@ -1,6 +1,8 @@
 import prisma from '../../../lib/prisma';
 
 const db: any = prisma;
+const CACHE_TTL_MS = 15000;
+const financeiroCache = new Map<string, { expiresAt: number; value: unknown }>();
 
 type FinanceiroStatus = 'EM_ABERTO' | 'PAGO' | 'PARCIALMENTE_PAGO' | 'ATRASADO' | 'CANCELADO';
 type FinanceiroTipo = 'RECEBER' | 'PAGAR';
@@ -89,6 +91,30 @@ type FaturaSelecionada = {
   categoria: string | null;
   centroCusto: string | null;
 };
+
+function getCacheKey(prefix: string, payload?: unknown): string {
+  return `${prefix}:${JSON.stringify(payload || {})}`;
+}
+
+function getCached<T>(key: string): T | null {
+  const cached = financeiroCache.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    financeiroCache.delete(key);
+    return null;
+  }
+
+  return cached.value as T;
+}
+
+function setCached<T>(key: string, value: T, ttlMs = CACHE_TTL_MS): T {
+  financeiroCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+  return value;
+}
+
+function invalidateFinanceiroCache() {
+  financeiroCache.clear();
+}
 
 function normalizeText(value: string): string {
   return value
@@ -312,6 +338,10 @@ async function nextCodigoFatura(tipo: FinanceiroTipo): Promise<string> {
 
 export class FinanceiroRepository {
   async listContasReceber(query: ListQuery): Promise<{ data: ContaReceber[]; total: number }> {
+    const cacheKey = getCacheKey('contasReceber', query);
+    const cached = getCached<{ data: ContaReceber[]; total: number }>(cacheKey);
+    if (cached) return cached;
+
     const now = new Date();
     const where = buildFaturaWhere('RECEBER', query);
     const computedSortFields = new Set(['status', 'valorLiquido', 'valorRecebido', 'saldoAberto', 'diasAtraso']);
@@ -350,7 +380,7 @@ export class FinanceiroRepository {
       const ids = faturas.map((item: any) => item.id);
       const pagamentos = await getPagamentoSums(ids, 'RECEBER');
       const data = faturas.map((item: any) => toContaReceber({ ...item, valorBruto: Number(item.valorBruto), desconto: Number(item.desconto || 0) }, pagamentos.get(item.id) || 0, now));
-      return { data, total };
+      return setCached(cacheKey, { data, total });
     }
 
     const faturas = await db.fatura.findMany({
@@ -380,10 +410,14 @@ export class FinanceiroRepository {
     const pagamentos = await getPagamentoSums(faturas.map((item: any) => item.id), 'RECEBER');
     const rows = faturas.map((item: any) => toContaReceber({ ...item, valorBruto: Number(item.valorBruto), desconto: Number(item.desconto || 0) }, pagamentos.get(item.id) || 0, now));
     const filtered = applyListFilters<ContaReceber>(rows, query, (item) => `${item.codigoFatura} ${item.cliente} ${item.cnpjCpf} ${item.responsavel} ${item.observacoes}`);
-    return applySortAndPagination(filtered, query);
+    return setCached(cacheKey, applySortAndPagination(filtered, query));
   }
 
   async listContasPagar(query: ListQuery): Promise<{ data: ContaPagar[]; total: number }> {
+    const cacheKey = getCacheKey('contasPagar', query);
+    const cached = getCached<{ data: ContaPagar[]; total: number }>(cacheKey);
+    if (cached) return cached;
+
     const now = new Date();
     const where = buildFaturaWhere('PAGAR', query);
     const computedSortFields = new Set(['status', 'valorLiquido', 'valorPago', 'saldoAberto', 'diasAtraso']);
@@ -422,7 +456,7 @@ export class FinanceiroRepository {
       const ids = faturas.map((item: any) => item.id);
       const pagamentos = await getPagamentoSums(ids, 'PAGAR');
       const data = faturas.map((item: any) => toContaPagar({ ...item, valorBruto: Number(item.valorBruto), desconto: Number(item.desconto || 0) }, pagamentos.get(item.id) || 0, now));
-      return { data, total };
+      return setCached(cacheKey, { data, total });
     }
 
     const faturas = await db.fatura.findMany({
@@ -452,7 +486,7 @@ export class FinanceiroRepository {
     const pagamentos = await getPagamentoSums(faturas.map((item: any) => item.id), 'PAGAR');
     const rows = faturas.map((item: any) => toContaPagar({ ...item, valorBruto: Number(item.valorBruto), desconto: Number(item.desconto || 0) }, pagamentos.get(item.id) || 0, now));
     const filtered = applyListFilters<ContaPagar>(rows, query, (item) => `${item.codigoFatura} ${item.fornecedor} ${item.centroCusto} ${item.categoriaDespesa} ${item.responsavel} ${item.observacoes}`);
-    return applySortAndPagination(filtered, query);
+    return setCached(cacheKey, applySortAndPagination(filtered, query));
   }
 
   async createFatura(payload: {
@@ -471,7 +505,7 @@ export class FinanceiroRepository {
   }) {
     const codigoFatura = await nextCodigoFatura(payload.tipo);
 
-    return db.fatura.create({
+    const created = await db.fatura.create({
       data: {
         codigoFatura,
         tipo: payload.tipo,
@@ -489,13 +523,15 @@ export class FinanceiroRepository {
         centroCusto: payload.centroCusto,
       },
     });
+    invalidateFinanceiroCache();
+    return created;
   }
 
   async updateFatura(id: string, payload: Record<string, unknown>) {
     const exists = await db.fatura.findUnique({ where: { id }, select: { id: true } });
     if (!exists) return null;
 
-    return db.fatura.update({
+    const updated = await db.fatura.update({
       where: { id },
       data: {
         status: typeof payload.status === 'string' ? payload.status : undefined,
@@ -512,6 +548,8 @@ export class FinanceiroRepository {
         centroCusto: typeof payload.centroCusto === 'string' ? payload.centroCusto : undefined,
       },
     });
+    invalidateFinanceiroCache();
+    return updated;
   }
 
   async deleteFatura(id: string) {
@@ -519,11 +557,12 @@ export class FinanceiroRepository {
     if (!exists) return false;
 
     await db.fatura.delete({ where: { id } });
+    invalidateFinanceiroCache();
     return true;
   }
 
   async createPagamento(payload: Omit<Pagamento, 'id' | 'createdAt' | 'updatedAt'>) {
-    return db.pagamentoFin.create({
+    const created = await db.pagamentoFin.create({
       data: {
         tipo: payload.tipo,
         alvoId: payload.alvoId,
@@ -535,13 +574,15 @@ export class FinanceiroRepository {
         aprovado: payload.aprovado || false,
       },
     });
+    invalidateFinanceiroCache();
+    return created;
   }
 
   async updatePagamento(id: string, payload: Partial<Pagamento>) {
     const exists = await db.pagamentoFin.findUnique({ where: { id }, select: { id: true } });
     if (!exists) return null;
 
-    return db.pagamentoFin.update({
+    const updated = await db.pagamentoFin.update({
       where: { id },
       data: {
         tipo: payload.tipo,
@@ -554,9 +595,15 @@ export class FinanceiroRepository {
         aprovado: payload.aprovado,
       },
     });
+    invalidateFinanceiroCache();
+    return updated;
   }
 
   async dashboard(): Promise<Record<string, unknown>> {
+    const cacheKey = getCacheKey('dashboard');
+    const cached = getCached<Record<string, unknown>>(cacheKey);
+    if (cached) return cached;
+
     const [receber, pagar] = await Promise.all([
       this.listContasReceber({ page: 1, pageSize: 1000 }),
       this.listContasPagar({ page: 1, pageSize: 1000 }),
@@ -636,7 +683,7 @@ export class FinanceiroRepository {
 
     const fluxo = await this.fluxoCaixa({});
 
-    return {
+    return setCached(cacheKey, {
       cards: {
         totalReceber,
         totalPagar,
@@ -657,10 +704,14 @@ export class FinanceiroRepository {
         recebimentosPorCategoria: Object.entries(recebimentosPorCategoria).map(([categoria, valor]) => ({ categoria, valor })),
         pagamentosPorCategoria: Object.entries(pagamentosPorCategoria).map(([categoria, valor]) => ({ categoria, valor })),
       },
-    };
+    });
   }
 
   async fluxoCaixa(payload: { dataInicial?: string; dataFinal?: string; categoria?: string; contaBancaria?: string }) {
+    const cacheKey = getCacheKey('fluxoCaixa', payload);
+    const cached = getCached<any>(cacheKey);
+    if (cached) return cached;
+
     const final = payload.dataFinal ? new Date(payload.dataFinal) : new Date();
     const inicial = payload.dataInicial
       ? new Date(payload.dataInicial)
@@ -720,7 +771,7 @@ export class FinanceiroRepository {
         })
       : [];
 
-    const map = new Map<string, { data: string; entradas: number; saidas: number; saldoDiario: number; saldoAcumulado: number }>();
+    const map = new Map<string, { data: string; entradas: number; saidas: number; saldoDiario: number; saldoAcumulado: number; volume: number; ticks: number }>();
 
     let cursor = new Date(inicial);
     while (cursor <= final) {
@@ -731,6 +782,8 @@ export class FinanceiroRepository {
         saidas: 0,
         saldoDiario: 0,
         saldoAcumulado: 0,
+        volume: 0,
+        ticks: 0,
       });
       cursor = new Date(cursor.getTime() + 86400000);
     }
@@ -746,6 +799,8 @@ export class FinanceiroRepository {
         row.saidas += Number(item.valor);
       }
 
+      row.volume += Number(item.valor);
+      row.ticks += 1;
       row.saldoDiario = row.entradas - row.saidas;
     }
 
@@ -762,6 +817,8 @@ export class FinanceiroRepository {
           row.saidas += valorLiquido;
         }
 
+        row.volume += valorLiquido;
+        row.ticks += 1;
         row.saldoDiario = row.entradas - row.saidas;
       }
     }
@@ -775,7 +832,7 @@ export class FinanceiroRepository {
       };
     });
 
-    return {
+    return setCached(cacheKey, {
       filtrosAplicados: payload,
       resumo: {
         entradas: serie.reduce((acc, row) => acc + row.entradas, 0),
@@ -783,7 +840,7 @@ export class FinanceiroRepository {
         saldo: serie.reduce((acc, row) => acc + row.saldoDiario, 0),
       },
       serie,
-    };
+    });
   }
 }
 

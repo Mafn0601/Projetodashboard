@@ -11,6 +11,7 @@ import {
   Search,
   Sparkles,
   StickyNote,
+  Trash2,
   TrendingUp,
   UserPlus,
   UserSquare2,
@@ -88,6 +89,7 @@ export function LeadDashboard() {
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [isRefreshing, startRefreshTransition] = useTransition();
   const [convertingLeadId, setConvertingLeadId] = useState<string | null>(null);
+  const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
 
   const filters = useMemo(() => ({
     search: deferredSearch || undefined,
@@ -216,6 +218,22 @@ export function LeadDashboard() {
       window.alert('Erro ao converter lead em cliente.');
     } finally {
       setConvertingLeadId(null);
+    }
+  };
+
+  const handleDeleteLead = async (lead: LeadAPI) => {
+    const confirmed = window.confirm(`Deseja excluir o lead ${lead.nome}?`);
+    if (!confirmed) return;
+
+    try {
+      setDeletingLeadId(lead.id);
+      await leadServiceAPI.delete(lead.id);
+      await loadDashboard();
+    } catch (error) {
+      console.error('Erro ao excluir lead:', error);
+      window.alert('Erro ao excluir lead.');
+    } finally {
+      setDeletingLeadId(null);
     }
   };
 
@@ -447,31 +465,31 @@ export function LeadDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:w-[340px]">
                           <a href={`tel:${lead.telefone}`} className="inline-flex items-center">
-                            <Button variant="outline" size="sm" className="gap-2 rounded-xl items-center justify-center">
+                            <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl items-center justify-center">
                               <Phone className="h-4 w-4 shrink-0" />
                               Ligar
                             </Button>
                           </a>
                           <a href={`mailto:${lead.email || ''}`} className="inline-flex items-center">
-                            <Button variant="outline" size="sm" className="gap-2 rounded-xl items-center justify-center" disabled={!lead.email}>
+                            <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl items-center justify-center" disabled={!lead.email}>
                               <Mail className="h-4 w-4 shrink-0" />
                               Email
                             </Button>
                           </a>
-                          <Button variant="outline" size="sm" className="gap-2 rounded-xl items-center justify-center" onClick={() => openNotes(lead)}>
+                          <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl items-center justify-center" onClick={() => openNotes(lead)}>
                             <StickyNote className="h-4 w-4 shrink-0" />
                             Criar Nota
                           </Button>
-                          <Button variant="outline" size="sm" className="gap-2 rounded-xl items-center justify-center" onClick={() => void handleToggleSequence(lead)}>
+                          <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl items-center justify-center" onClick={() => void handleToggleSequence(lead)}>
                             <Workflow className="h-4 w-4 shrink-0" />
                             {lead.emSequencia ? 'Na Sequência' : 'Adicionar à Sequência'}
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="gap-2 rounded-xl items-center justify-center"
+                            className="w-full gap-2 rounded-xl items-center justify-center"
                             onClick={() => void handleConvertToClient(lead)}
                             disabled={Boolean(lead.clienteId) || convertingLeadId === lead.id}
                             title={lead.clienteId ? 'Lead ja vinculado a cliente' : 'Criar cliente com dados do lead'}
@@ -482,6 +500,16 @@ export function LeadDashboard() {
                               : convertingLeadId === lead.id
                                 ? 'Convertendo...'
                                 : 'Converter em Cliente'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full gap-2 rounded-xl border-rose-200 text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950/40 items-center justify-center"
+                            onClick={() => void handleDeleteLead(lead)}
+                            disabled={deletingLeadId === lead.id}
+                          >
+                            <Trash2 className="h-4 w-4 shrink-0" />
+                            {deletingLeadId === lead.id ? 'Excluindo...' : 'Excluir'}
                           </Button>
                         </div>
                       </td>

@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import ClienteModalCompleto from '@/components/cliente/ClienteModalCompleto';
 
+type CrmTab = 'leads' | 'clientes';
+
 export default function Page() {
   const [clientes, setClientes] = useState<ClienteCompleto[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,6 +19,8 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [isCreating, setIsCreating] = useState(false);
+  const [activeTab, setActiveTab] = useState<CrmTab>('leads');
+  const [leadCreateNonce, setLeadCreateNonce] = useState(0);
 
   const carregarClientes = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
     const silent = options?.silent ?? false;
@@ -103,90 +107,104 @@ export default function Page() {
     }, 200);
   };
 
+  const handleNovoCadastro = () => {
+    if (activeTab === 'leads') {
+      setLeadCreateNonce((prev) => prev + 1);
+      return;
+    }
+
+    handleOpenModal();
+  };
+
   return (
-    <div className="space-y-8">
-      {/* CabeÃ§alho unificado */}
-      <header>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">CRM â€” Clientes & Leads</h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Gerencie seu funil comercial, leads e base de clientes em uma Ãºnica visÃ£o.
-        </p>
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">CRM - Clientes e Leads</h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Gestao comercial em uma tela unica com abas para leads e clientes.
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={handleNovoCadastro}
+          disabled={isCreating}
+          className={isCreating ? 'opacity-70 cursor-not-allowed' : ''}
+        >
+          {isCreating ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              Abrindo...
+            </span>
+          ) : (
+            'Novo Cadastro'
+          )}
+        </Button>
       </header>
 
-      {/* â”€â”€ SeÃ§Ã£o Leads â”€â”€ */}
-      <LeadDashboard compact />
-
-      {/* Divisor */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t border-slate-200 dark:border-slate-700" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-white dark:bg-slate-950 px-4 text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500">
-            Clientes
-          </span>
-        </div>
+      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+        <button
+          type="button"
+          onClick={() => setActiveTab('leads')}
+          className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+            activeTab === 'leads'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+          }`}
+        >
+          Leads
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('clientes')}
+          className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+            activeTab === 'clientes'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+          }`}
+        >
+          Clientes
+        </button>
       </div>
 
-      {/* â”€â”€ SeÃ§Ã£o Clientes â”€â”€ */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Clientes Cadastrados</h2>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Base de clientes ativos. Leads convertidos aparecem aqui automaticamente.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={handleOpenModal}
-            disabled={isCreating}
-            className={isCreating ? 'opacity-70 cursor-not-allowed' : ''}
-          >
-            {isCreating ? (
-              <span className="inline-flex items-center gap-2">
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Abrindo...
-              </span>
-            ) : (
-              'Novo Cliente'
-            )}
-          </Button>
-        </div>
-
-        <div className="w-full max-w-xs">
-          <Input
-            placeholder="Buscar por nome, email, telefone ou CPF..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
-        </div>
-
-        <ClienteModalCompleto
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setEditingCompleto(undefined);
-          }}
-          onSaved={handleSaved}
-          initial={editingCompleto}
-        />
-
-        <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-4">
-          {loading ? (
-            <p className="text-xs text-slate-600 dark:text-slate-400">Carregando clientes...</p>
-          ) : clientes.length === 0 ? (
-            <p className="text-xs text-slate-600 dark:text-slate-400">Nenhum cliente cadastrado.</p>
-          ) : (
-            <ClienteTable
-              clientes={clientesFiltrados}
-              onDelete={handleDelete}
-              deletingIds={deletingIds}
+      {activeTab === 'leads' ? (
+        <LeadDashboard compact hideCreateButton openCreateNonce={leadCreateNonce} />
+      ) : (
+        <div className="space-y-4">
+          <div className="w-full max-w-xs">
+            <Input
+              placeholder="Buscar por nome, email, telefone ou CPF..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
             />
-          )}
-        </section>
-      </div>
+          </div>
+
+          <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-4">
+            {loading ? (
+              <p className="text-xs text-slate-600 dark:text-slate-400">Carregando clientes...</p>
+            ) : clientes.length === 0 ? (
+              <p className="text-xs text-slate-600 dark:text-slate-400">Nenhum cliente cadastrado.</p>
+            ) : (
+              <ClienteTable
+                clientes={clientesFiltrados}
+                onDelete={handleDelete}
+                deletingIds={deletingIds}
+              />
+            )}
+          </section>
+        </div>
+      )}
+
+      <ClienteModalCompleto
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingCompleto(undefined);
+        }}
+        onSaved={handleSaved}
+        initial={editingCompleto}
+      />
     </div>
   );
 }

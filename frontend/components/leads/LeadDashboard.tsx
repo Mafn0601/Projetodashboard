@@ -67,7 +67,11 @@ function getInitials(name: string): string {
     .join('');
 }
 
-export function LeadDashboard() {
+interface LeadDashboardProps {
+  compact?: boolean;
+}
+
+export function LeadDashboard({ compact = false }: LeadDashboardProps) {
   const { user } = useAuth();
   const [leads, setLeads] = useState<LeadAPI[]>([]);
   const [summary, setSummary] = useState<LeadSummary>({
@@ -244,62 +248,108 @@ export function LeadDashboard() {
 
   return (
     <div className="space-y-6 pb-10">
-      <section className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_35%),linear-gradient(135deg,_rgba(255,255,255,0.98),_rgba(248,250,252,0.94))] p-6 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.45)] dark:border-slate-800/80 dark:bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.12),_transparent_28%),linear-gradient(135deg,_rgba(15,23,42,0.98),_rgba(15,23,42,0.92))]">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
-              <Sparkles className="h-3.5 w-3.5 shrink-0" />
-              CRM Performance Layer
-            </div>
-            <div>
-              <h1 className="text-4xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">CRM | Leads</h1>
-              <p className="mt-3 max-w-xl text-base leading-7 text-slate-600 dark:text-slate-300">
-                Gestao visual do funil comercial com score, interacao recente e acoes rapidas ligadas ao backend.
-              </p>
+      {compact ? (
+        /* ── modo embutido: cabeçalho compacto ── */
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Leads</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => void handleRefresh()}
+                disabled={isRefreshing}
+              >
+                <ArrowUpRight className="h-4 w-4 shrink-0" />
+                {isRefreshing ? 'Atualizando...' : 'Atualizar'}
+              </Button>
+              <Button className="gap-2" onClick={() => setIsCreateOpen(true)}>
+                <Plus className="h-4 w-4 shrink-0" />
+                Novo Lead
+              </Button>
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="outline"
-              className="gap-2 rounded-2xl border-slate-300 bg-white/70 text-slate-900 hover:bg-white dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-800"
-              onClick={() => void handleRefresh()}
-              disabled={isRefreshing}
-            >
-              <ArrowUpRight className="h-4 w-4 shrink-0" />
-              {isRefreshing ? 'Atualizando...' : 'Atualizar'}
-            </Button>
-            <Button className="gap-2 rounded-2xl bg-slate-950 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100" onClick={() => setIsCreateOpen(true)}>
-              <Plus className="h-4 w-4 shrink-0" />
-              Adicionar Novo Lead
-            </Button>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <LeadMetricCard
+              title="Total de Leads"
+              value={String(summary.totalLeads)}
+              subtitle={`${leads.length} exibidos`}
+              icon={Users}
+              tone="amber"
+            />
+            <LeadMetricCard
+              title="Leads Ativos"
+              value={String(summary.activeLeads)}
+              subtitle="Novo, contato e qualificado"
+              icon={TrendingUp}
+              tone="sky"
+            />
+            <LeadMetricCard
+              title="Média de Score"
+              value={`${summary.averageScore}`}
+              subtitle="Saúde geral da base"
+              icon={UserSquare2}
+              tone="emerald"
+            />
           </div>
         </div>
-
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          <LeadMetricCard
-            title="Total de Leads"
-            value={String(summary.totalLeads)}
-            subtitle={`${leads.length} exibidos na visão atual`}
-            icon={Users}
-            tone="amber"
-          />
-          <LeadMetricCard
-            title="Leads Ativos"
-            value={String(summary.activeLeads)}
-            subtitle="Abertos entre novo, contato e qualificado"
-            icon={TrendingUp}
-            tone="sky"
-          />
-          <LeadMetricCard
-            title="Média de Score"
-            value={`${summary.averageScore}`}
-            subtitle="Saúde geral da base filtrada agora"
-            icon={UserSquare2}
-            tone="emerald"
-          />
-        </div>
-      </section>
+      ) : (
+        /* ── modo standalone: hero decorativo ── */
+        <section className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_35%),linear-gradient(135deg,_rgba(255,255,255,0.98),_rgba(248,250,252,0.94))] p-6 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.45)] dark:border-slate-800/80 dark:bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.12),_transparent_28%),linear-gradient(135deg,_rgba(15,23,42,0.98),_rgba(15,23,42,0.92))]">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div className="max-w-2xl space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
+                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                CRM Performance Layer
+              </div>
+              <div>
+                <h1 className="text-4xl font-semibold tracking-tight text-slate-950 dark:text-slate-50">CRM | Leads</h1>
+                <p className="mt-3 max-w-xl text-base leading-7 text-slate-600 dark:text-slate-300">
+                  Gestao visual do funil comercial com score, interacao recente e acoes rapidas ligadas ao backend.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="outline"
+                className="gap-2 rounded-2xl border-slate-300 bg-white/70 text-slate-900 hover:bg-white dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-800"
+                onClick={() => void handleRefresh()}
+                disabled={isRefreshing}
+              >
+                <ArrowUpRight className="h-4 w-4 shrink-0" />
+                {isRefreshing ? 'Atualizando...' : 'Atualizar'}
+              </Button>
+              <Button className="gap-2 rounded-2xl bg-slate-950 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100" onClick={() => setIsCreateOpen(true)}>
+                <Plus className="h-4 w-4 shrink-0" />
+                Adicionar Novo Lead
+              </Button>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            <LeadMetricCard
+              title="Total de Leads"
+              value={String(summary.totalLeads)}
+              subtitle={`${leads.length} exibidos na visão atual`}
+              icon={Users}
+              tone="amber"
+            />
+            <LeadMetricCard
+              title="Leads Ativos"
+              value={String(summary.activeLeads)}
+              subtitle="Abertos entre novo, contato e qualificado"
+              icon={TrendingUp}
+              tone="sky"
+            />
+            <LeadMetricCard
+              title="Média de Score"
+              value={`${summary.averageScore}`}
+              subtitle="Saúde geral da base filtrada agora"
+              icon={UserSquare2}
+              tone="emerald"
+            />
+          </div>
+        </section>
+      )}
 
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)] dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">

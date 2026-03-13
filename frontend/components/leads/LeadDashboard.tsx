@@ -69,9 +69,11 @@ function getInitials(name: string): string {
 
 interface LeadDashboardProps {
   compact?: boolean;
+  hideCreateButton?: boolean;
+  openCreateNonce?: number;
 }
 
-export function LeadDashboard({ compact = false }: LeadDashboardProps) {
+export function LeadDashboard({ compact = false, hideCreateButton = false, openCreateNonce = 0 }: LeadDashboardProps) {
   const { user } = useAuth();
   const [leads, setLeads] = useState<LeadAPI[]>([]);
   const [summary, setSummary] = useState<LeadSummary>({
@@ -137,6 +139,12 @@ export function LeadDashboard({ compact = false }: LeadDashboardProps) {
   useEffect(() => {
     void loadDashboard();
   }, [filters]);
+
+  useEffect(() => {
+    if (openCreateNonce > 0) {
+      setIsCreateOpen(true);
+    }
+  }, [openCreateNonce]);
 
   const handleCreateLead = async (payload: CreateLeadPayload) => {
     try {
@@ -263,10 +271,12 @@ export function LeadDashboard({ compact = false }: LeadDashboardProps) {
                 <ArrowUpRight className="h-4 w-4 shrink-0" />
                 {isRefreshing ? 'Atualizando...' : 'Atualizar'}
               </Button>
-              <Button className="gap-2" onClick={() => setIsCreateOpen(true)}>
-                <Plus className="h-4 w-4 shrink-0" />
-                Novo Lead
-              </Button>
+              {!hideCreateButton && (
+                <Button className="gap-2" onClick={() => setIsCreateOpen(true)}>
+                  <Plus className="h-4 w-4 shrink-0" />
+                  Novo Lead
+                </Button>
+              )}
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">

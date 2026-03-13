@@ -63,12 +63,61 @@ export class AuthService {
     return { usuario, token };
   }
 
-  async login(email: string, senha: string) {
-    const normalizedEmail = email.trim().toLowerCase();
+  async login(identifier: string, senha: string) {
+    const normalizedIdentifier = identifier.trim().toLowerCase();
 
-    const usuario = await prisma.usuario.findUnique({
-      where: { email: normalizedEmail },
+    let usuario = await prisma.usuario.findFirst({
+      where: {
+        OR: [
+          { email: normalizedIdentifier },
+          { login: normalizedIdentifier },
+        ],
+      },
     });
+
+    // Compatibilidade: equipes antigas podiam existir sem registro em "usuarios".
+    if (!usuario) {
+      const equipe = await prisma.equipe.findFirst({
+        where: {
+          ativo: true,
+          OR: [
+            { email: normalizedIdentifier },
+            { login: normalizedIdentifier },
+          ],
+        },
+      });
+
+      if (equipe) {
+        const senhaEquipeValida = await comparePassword(senha, equipe.senha);
+        if (senhaEquipeValida && equipe.email) {
+          const emailEquipe = equipe.email.trim().toLowerCase();
+          const loginEquipe = equipe.login.trim().toLowerCase();
+
+          const usuarioComMesmoEmail = await prisma.usuario.findUnique({ where: { email: emailEquipe } });
+          const usuarioComMesmoLogin = await prisma.usuario.findUnique({ where: { login: loginEquipe } });
+
+          if (!usuarioComMesmoEmail && !usuarioComMesmoLogin) {
+            await prisma.usuario.create({
+              data: {
+                nome: loginEquipe,
+                login: loginEquipe,
+                email: emailEquipe,
+                senha: equipe.senha,
+                role: 'PARCEIRO',
+                ativo: equipe.ativo,
+                parceiroId: equipe.parceiroId,
+              },
+            });
+          }
+
+          usuario = await prisma.usuario.findFirst({
+            where: {
+              OR: [{ email: normalizedIdentifier }, { login: normalizedIdentifier }],
+            },
+          });
+        }
+      }
+    }
 
     if (!usuario) {
       throw new AppError('Credenciais inválidas', 401);

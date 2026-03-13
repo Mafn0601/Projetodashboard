@@ -58,7 +58,7 @@ export class LeadController {
       const validatedData = createLeadSchema.parse(req.body);
       const lead = await leadService.create({
         ...validatedData,
-        responsavelId: validatedData.responsavelId || req.user?.userId,
+        responsavelId: validatedData.responsavelId || undefined,
       });
       res.status(201).json(lead);
     } catch (error) {

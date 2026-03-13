@@ -137,9 +137,14 @@ export function LeadDashboard() {
   const handleCreateLead = async (payload: CreateLeadPayload) => {
     try {
       setIsSubmittingCreate(true);
+      setError(null);
       await leadServiceAPI.create(payload);
       setIsCreateOpen(false);
       await loadDashboard();
+    } catch (createError) {
+      const message = createError instanceof Error ? createError.message : 'Erro ao criar lead';
+      setError(message);
+      throw createError;
     } finally {
       setIsSubmittingCreate(false);
     }

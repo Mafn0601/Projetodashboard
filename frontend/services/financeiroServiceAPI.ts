@@ -60,6 +60,8 @@ function formatCurrency(value: number): string {
 }
 
 class FinanceiroServiceAPI {
+  private cache = new Map<string, { expiresAt: number; value: unknown }>();
+
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -96,58 +98,52 @@ class FinanceiroServiceAPI {
     return response.json();
   }
 
-  async dashboard() {
-    const response = await fetch(`${API_URL}/api/financeiro/dashboard`, {
+  private async getWithCache<T>(url: string, ttlMs = 15000): Promise<T> {
+    const token = this.getToken() || '';
+    const cacheKey = `${token}::${url}`;
+    const cached = this.cache.get(cacheKey);
+    const now = Date.now();
+
+    if (cached && cached.expiresAt > now) {
+      return cached.value as T;
+    }
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: this.getHeaders(),
     });
 
-    return this.parse<any>(response);
+    const parsed = await this.parse<T>(response);
+    this.cache.set(cacheKey, { value: parsed, expiresAt: now + ttlMs });
+    return parsed;
+  }
+
+  private invalidateCache() {
+    this.cache.clear();
+  }
+
+  async dashboard() {
+    return this.getWithCache<any>(`${API_URL}/api/financeiro/dashboard`, 12000);
   }
 
   async contasReceber(query: ListQuery) {
-    const response = await fetch(`${API_URL}/api/financeiro/contas-receber${this.buildQuery(query)}`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    return this.parse<{ data: ContaReceber[]; total: number }>(response);
+    return this.getWithCache<{ data: ContaReceber[]; total: number }>(`${API_URL}/api/financeiro/contas-receber${this.buildQuery(query)}`, 10000);
   }
 
   async contasPagar(query: ListQuery) {
-    const response = await fetch(`${API_URL}/api/financeiro/contas-pagar${this.buildQuery(query)}`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    return this.parse<{ data: ContaPagar[]; total: number }>(response);
+    return this.getWithCache<{ data: ContaPagar[]; total: number }>(`${API_URL}/api/financeiro/contas-pagar${this.buildQuery(query)}`, 10000);
   }
 
   async fluxoCaixa(query?: { dataInicial?: string; dataFinal?: string; categoria?: string; contaBancaria?: string }) {
-    const response = await fetch(`${API_URL}/api/financeiro/fluxo-caixa${this.buildQuery(query)}`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    return this.parse<any>(response);
+    return this.getWithCache<any>(`${API_URL}/api/financeiro/fluxo-caixa${this.buildQuery(query)}`, 10000);
   }
 
   async relatorios(query: { tipo: string; dataInicial?: string; dataFinal?: string }) {
-    const response = await fetch(`${API_URL}/api/financeiro/relatorios${this.buildQuery(query)}`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    return this.parse<any>(response);
+    return this.getWithCache<any>(`${API_URL}/api/financeiro/relatorios${this.buildQuery(query)}`, 10000);
   }
 
   async configuracoes() {
-    const response = await fetch(`${API_URL}/api/financeiro/configuracoes`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-
-    return this.parse<any>(response);
+    return this.getWithCache<any>(`${API_URL}/api/financeiro/configuracoes`, 30000);
   }
 
   async criarFatura(payload: {
@@ -169,8 +165,9 @@ class FinanceiroServiceAPI {
       headers: this.getHeaders(),
       body: JSON.stringify(payload),
     });
-
-    return this.parse<any>(response);
+    const result = await this.parse<any>(response);
+    this.invalidateCache();
+    return result;
   }
 
   async registrarPagamento(payload: {
@@ -187,8 +184,9 @@ class FinanceiroServiceAPI {
       headers: this.getHeaders(),
       body: JSON.stringify(payload),
     });
-
-    return this.parse<any>(response);
+    const result = await this.parse<any>(response);
+    this.invalidateCache();
+    return result;
   }
 
   async atualizarFatura(id: string, payload: Record<string, unknown>) {
@@ -197,8 +195,9 @@ class FinanceiroServiceAPI {
       headers: this.getHeaders(),
       body: JSON.stringify(payload),
     });
-
-    return this.parse<any>(response);
+    const result = await this.parse<any>(response);
+    this.invalidateCache();
+    return result;
   }
 
   async atualizarPagamento(id: string, payload: Record<string, unknown>) {
@@ -207,8 +206,9 @@ class FinanceiroServiceAPI {
       headers: this.getHeaders(),
       body: JSON.stringify(payload),
     });
-
-    return this.parse<any>(response);
+    const result = await this.parse<any>(response);
+    this.invalidateCache();
+    return result;
   }
 
   toCurrency(value: number): string {

@@ -73,6 +73,23 @@ type ListQuery = {
   sortOrder?: 'asc' | 'desc';
 };
 
+type FaturaSelecionada = {
+  id: string;
+  codigoFatura: string;
+  status: string;
+  nome: string;
+  documento: string | null;
+  dataEmissao: Date;
+  dataVencimento: Date;
+  formaPagamento: string;
+  valorBruto: number;
+  desconto: number;
+  responsavel: string | null;
+  observacoes: string | null;
+  categoria: string | null;
+  centroCusto: string | null;
+};
+
 function normalizeText(value: string): string {
   return value
     .normalize('NFD')
@@ -151,6 +168,124 @@ function applySortAndPagination<T extends Record<string, unknown>>(rows: T[], qu
   return { data, total };
 }
 
+function buildFaturaWhere(tipo: FinanceiroTipo, query: ListQuery): any {
+  const where: any = { tipo };
+
+  if (query.search?.trim()) {
+    const search = query.search.trim();
+    where.OR = [
+      { codigoFatura: { contains: search, mode: 'insensitive' } },
+      { nome: { contains: search, mode: 'insensitive' } },
+      { documento: { contains: search, mode: 'insensitive' } },
+      { responsavel: { contains: search, mode: 'insensitive' } },
+      { observacoes: { contains: search, mode: 'insensitive' } },
+      { categoria: { contains: search, mode: 'insensitive' } },
+      { centroCusto: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
+  if (query.formaPagamento?.trim()) {
+    where.formaPagamento = { contains: query.formaPagamento.trim(), mode: 'insensitive' };
+  }
+
+  if (query.dataInicial || query.dataFinal) {
+    where.dataVencimento = {};
+    if (query.dataInicial) where.dataVencimento.gte = new Date(`${query.dataInicial}T00:00:00`);
+    if (query.dataFinal) where.dataVencimento.lte = new Date(`${query.dataFinal}T23:59:59`);
+  }
+
+  if (query.status === 'CANCELADO') {
+    where.status = 'CANCELADO';
+  }
+
+  return where;
+}
+
+function buildFaturaOrderBy(query: ListQuery): any {
+  const sortMap: Record<string, string> = {
+    dataVencimento: 'dataVencimento',
+    dataEmissao: 'dataEmissao',
+    codigoFatura: 'codigoFatura',
+    formaPagamento: 'formaPagamento',
+    valorBruto: 'valorBruto',
+    desconto: 'desconto',
+    createdAt: 'createdAt',
+  };
+
+  const sortBy = sortMap[query.sortBy || 'dataVencimento'] || 'dataVencimento';
+  const sortOrder = query.sortOrder || 'asc';
+  return { [sortBy]: sortOrder };
+}
+
+async function getPagamentoSums(ids: string[], tipo: FinanceiroTipo): Promise<Map<string, number>> {
+  if (ids.length === 0) return new Map();
+
+  const grouped = await db.pagamentoFin.groupBy({
+    by: ['alvoId'],
+    where: {
+      tipo,
+      alvoId: { in: ids },
+    },
+    _sum: { valor: true },
+  });
+
+  return new Map(grouped.map((item: any) => [item.alvoId, Number(item._sum?.valor || 0)]));
+}
+
+function toContaReceber(item: FaturaSelecionada, valorRecebido: number, now: Date): ContaReceber {
+  const valorLiquido = Math.max(0, item.valorBruto - item.desconto);
+  const saldoAberto = Math.max(0, valorLiquido - valorRecebido);
+  const dataVencimento = item.dataVencimento.toISOString();
+  const status = buildStatus(valorLiquido, valorRecebido, dataVencimento, item.status);
+
+  return {
+    id: item.id,
+    codigoFatura: item.codigoFatura,
+    status,
+    cliente: item.nome,
+    cnpjCpf: item.documento || '-',
+    dataEmissao: item.dataEmissao.toISOString(),
+    dataVencimento,
+    diasAtraso: status === 'ATRASADO' ? diffDays(now, dataVencimento) : 0,
+    formaPagamento: item.formaPagamento,
+    valorBruto: item.valorBruto,
+    desconto: item.desconto,
+    valorLiquido,
+    valorRecebido,
+    saldoAberto,
+    responsavel: item.responsavel || '-',
+    observacoes: item.observacoes || '-',
+    origem: 'MANUAL',
+  };
+}
+
+function toContaPagar(item: FaturaSelecionada, valorPago: number, now: Date): ContaPagar {
+  const valorLiquido = Math.max(0, item.valorBruto - item.desconto);
+  const saldoAberto = Math.max(0, valorLiquido - valorPago);
+  const dataVencimento = item.dataVencimento.toISOString();
+  const status = buildStatus(valorLiquido, valorPago, dataVencimento, item.status);
+
+  return {
+    id: item.id,
+    codigoFatura: item.codigoFatura,
+    status,
+    fornecedor: item.nome,
+    centroCusto: item.centroCusto || 'Geral',
+    categoriaDespesa: item.categoria || 'Outros',
+    dataEmissao: item.dataEmissao.toISOString(),
+    dataVencimento,
+    diasAtraso: status === 'ATRASADO' ? diffDays(now, dataVencimento) : 0,
+    formaPagamento: item.formaPagamento,
+    valorBruto: item.valorBruto,
+    desconto: item.desconto,
+    valorLiquido,
+    valorPago,
+    saldoAberto,
+    responsavel: item.responsavel || '-',
+    observacoes: item.observacoes || '-',
+  };
+}
+
 async function nextCodigoFatura(tipo: FinanceiroTipo): Promise<string> {
   const prefixo = tipo === 'RECEBER' ? 'FR' : 'FP';
   const ano = new Date().getFullYear();
@@ -177,106 +312,146 @@ async function nextCodigoFatura(tipo: FinanceiroTipo): Promise<string> {
 
 export class FinanceiroRepository {
   async listContasReceber(query: ListQuery): Promise<{ data: ContaReceber[]; total: number }> {
-    const faturas = await db.fatura.findMany({
-      where: { tipo: 'RECEBER' },
-      include: {
-        pagamentos: {
+    const now = new Date();
+    const where = buildFaturaWhere('RECEBER', query);
+    const computedSortFields = new Set(['status', 'valorLiquido', 'valorRecebido', 'saldoAberto', 'diasAtraso']);
+    const requiresPostProcess =
+      Boolean(query.minValor !== undefined || query.maxValor !== undefined) ||
+      Boolean(query.status && query.status !== 'CANCELADO') ||
+      computedSortFields.has(query.sortBy || '');
+
+    if (!requiresPostProcess) {
+      const [total, faturas] = await Promise.all([
+        db.fatura.count({ where }),
+        db.fatura.findMany({
+          where,
           select: {
-            valor: true,
+            id: true,
+            codigoFatura: true,
+            status: true,
+            nome: true,
+            documento: true,
+            dataEmissao: true,
+            dataVencimento: true,
+            formaPagamento: true,
+            valorBruto: true,
+            desconto: true,
+            responsavel: true,
+            observacoes: true,
+            categoria: true,
+            centroCusto: true,
           },
-        },
+          orderBy: buildFaturaOrderBy(query),
+          skip: (query.page - 1) * query.pageSize,
+          take: query.pageSize,
+        }),
+      ]);
+
+      const ids = faturas.map((item: any) => item.id);
+      const pagamentos = await getPagamentoSums(ids, 'RECEBER');
+      const data = faturas.map((item: any) => toContaReceber({ ...item, valorBruto: Number(item.valorBruto), desconto: Number(item.desconto || 0) }, pagamentos.get(item.id) || 0, now));
+      return { data, total };
+    }
+
+    const faturas = await db.fatura.findMany({
+      where,
+      select: {
+        id: true,
+        codigoFatura: true,
+        status: true,
+        nome: true,
+        documento: true,
+        dataEmissao: true,
+        dataVencimento: true,
+        formaPagamento: true,
+        valorBruto: true,
+        desconto: true,
+        responsavel: true,
+        observacoes: true,
+        categoria: true,
+        centroCusto: true,
       },
       orderBy: {
         createdAt: 'desc',
       },
-      take: 2000,
+      take: 4000,
     });
 
-    const now = new Date();
-
-    const rows: ContaReceber[] = faturas.map((item: any) => {
-      const valorBruto = Number(item.valorBruto);
-      const desconto = Number(item.desconto || 0);
-      const valorLiquido = Math.max(0, valorBruto - desconto);
-      const valorRecebido = item.pagamentos.reduce((acc: number, pag: any) => acc + Number(pag.valor), 0);
-      const saldoAberto = Math.max(0, valorLiquido - valorRecebido);
-      const dataVencimento = item.dataVencimento.toISOString();
-      const status = buildStatus(valorLiquido, valorRecebido, dataVencimento, item.status);
-
-      return {
-        id: item.id,
-        codigoFatura: item.codigoFatura,
-        status,
-        cliente: item.nome,
-        cnpjCpf: item.documento || '-',
-        dataEmissao: item.dataEmissao.toISOString(),
-        dataVencimento,
-        diasAtraso: status === 'ATRASADO' ? diffDays(now, dataVencimento) : 0,
-        formaPagamento: item.formaPagamento,
-        valorBruto,
-        desconto,
-        valorLiquido,
-        valorRecebido,
-        saldoAberto,
-        responsavel: item.responsavel || '-',
-        observacoes: item.observacoes || '-',
-        origem: 'MANUAL',
-      };
-    });
-
-    const filtered = applyListFilters(rows, query, (item) => `${item.codigoFatura} ${item.cliente} ${item.cnpjCpf} ${item.responsavel} ${item.observacoes}`);
+    const pagamentos = await getPagamentoSums(faturas.map((item: any) => item.id), 'RECEBER');
+    const rows = faturas.map((item: any) => toContaReceber({ ...item, valorBruto: Number(item.valorBruto), desconto: Number(item.desconto || 0) }, pagamentos.get(item.id) || 0, now));
+    const filtered = applyListFilters<ContaReceber>(rows, query, (item) => `${item.codigoFatura} ${item.cliente} ${item.cnpjCpf} ${item.responsavel} ${item.observacoes}`);
     return applySortAndPagination(filtered, query);
   }
 
   async listContasPagar(query: ListQuery): Promise<{ data: ContaPagar[]; total: number }> {
-    const faturas = await db.fatura.findMany({
-      where: { tipo: 'PAGAR' },
-      include: {
-        pagamentos: {
+    const now = new Date();
+    const where = buildFaturaWhere('PAGAR', query);
+    const computedSortFields = new Set(['status', 'valorLiquido', 'valorPago', 'saldoAberto', 'diasAtraso']);
+    const requiresPostProcess =
+      Boolean(query.minValor !== undefined || query.maxValor !== undefined) ||
+      Boolean(query.status && query.status !== 'CANCELADO') ||
+      computedSortFields.has(query.sortBy || '');
+
+    if (!requiresPostProcess) {
+      const [total, faturas] = await Promise.all([
+        db.fatura.count({ where }),
+        db.fatura.findMany({
+          where,
           select: {
-            valor: true,
+            id: true,
+            codigoFatura: true,
+            status: true,
+            nome: true,
+            documento: true,
+            dataEmissao: true,
+            dataVencimento: true,
+            formaPagamento: true,
+            valorBruto: true,
+            desconto: true,
+            responsavel: true,
+            observacoes: true,
+            categoria: true,
+            centroCusto: true,
           },
-        },
+          orderBy: buildFaturaOrderBy(query),
+          skip: (query.page - 1) * query.pageSize,
+          take: query.pageSize,
+        }),
+      ]);
+
+      const ids = faturas.map((item: any) => item.id);
+      const pagamentos = await getPagamentoSums(ids, 'PAGAR');
+      const data = faturas.map((item: any) => toContaPagar({ ...item, valorBruto: Number(item.valorBruto), desconto: Number(item.desconto || 0) }, pagamentos.get(item.id) || 0, now));
+      return { data, total };
+    }
+
+    const faturas = await db.fatura.findMany({
+      where,
+      select: {
+        id: true,
+        codigoFatura: true,
+        status: true,
+        nome: true,
+        documento: true,
+        dataEmissao: true,
+        dataVencimento: true,
+        formaPagamento: true,
+        valorBruto: true,
+        desconto: true,
+        responsavel: true,
+        observacoes: true,
+        categoria: true,
+        centroCusto: true,
       },
       orderBy: {
         createdAt: 'desc',
       },
-      take: 2000,
+      take: 4000,
     });
 
-    const now = new Date();
-
-    const rows: ContaPagar[] = faturas.map((item: any) => {
-      const valorBruto = Number(item.valorBruto);
-      const desconto = Number(item.desconto || 0);
-      const valorLiquido = Math.max(0, valorBruto - desconto);
-      const valorPago = item.pagamentos.reduce((acc: number, pag: any) => acc + Number(pag.valor), 0);
-      const saldoAberto = Math.max(0, valorLiquido - valorPago);
-      const dataVencimento = item.dataVencimento.toISOString();
-      const status = buildStatus(valorLiquido, valorPago, dataVencimento, item.status);
-
-      return {
-        id: item.id,
-        codigoFatura: item.codigoFatura,
-        status,
-        fornecedor: item.nome,
-        centroCusto: item.centroCusto || 'Geral',
-        categoriaDespesa: item.categoria || 'Outros',
-        dataEmissao: item.dataEmissao.toISOString(),
-        dataVencimento,
-        diasAtraso: status === 'ATRASADO' ? diffDays(now, dataVencimento) : 0,
-        formaPagamento: item.formaPagamento,
-        valorBruto,
-        desconto,
-        valorLiquido,
-        valorPago,
-        saldoAberto,
-        responsavel: item.responsavel || '-',
-        observacoes: item.observacoes || '-',
-      };
-    });
-
-    const filtered = applyListFilters(rows, query, (item) => `${item.codigoFatura} ${item.fornecedor} ${item.centroCusto} ${item.categoriaDespesa} ${item.responsavel} ${item.observacoes}`);
+    const pagamentos = await getPagamentoSums(faturas.map((item: any) => item.id), 'PAGAR');
+    const rows = faturas.map((item: any) => toContaPagar({ ...item, valorBruto: Number(item.valorBruto), desconto: Number(item.desconto || 0) }, pagamentos.get(item.id) || 0, now));
+    const filtered = applyListFilters<ContaPagar>(rows, query, (item) => `${item.codigoFatura} ${item.fornecedor} ${item.centroCusto} ${item.categoriaDespesa} ${item.responsavel} ${item.observacoes}`);
     return applySortAndPagination(filtered, query);
   }
 

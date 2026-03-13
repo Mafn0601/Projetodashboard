@@ -7,7 +7,16 @@ export const BUSINESS_END_MINUTES = 18 * 60; // 18:00
 export const LUNCH_START_MINUTES = 12 * 60; // 12:00
 export const LUNCH_END_MINUTES = 13 * 60 + 30; // 13:30
 
-function getDatePartsInTimeZone(date: Date, timeZone: string) {
+type DateParts = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+};
+
+function getDatePartsInTimeZone(date: Date, timeZone: string): DateParts {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
@@ -32,6 +41,53 @@ function getDatePartsInTimeZone(date: Date, timeZone: string) {
   };
 }
 
+function getTimeZoneOffsetMs(date: Date, timeZone: string): number {
+  const parts = getDatePartsInTimeZone(date, timeZone);
+  const utcTimestamp = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour,
+    parts.minute,
+    parts.second,
+    0
+  );
+  return utcTimestamp - date.getTime();
+}
+
+function parseIsoDateParts(isoDate: string): { year: number; month: number; day: number } | null {
+  const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  return {
+    year: Number(match[1]),
+    month: Number(match[2]),
+    day: Number(match[3]),
+  };
+}
+
+function parseTimeParts(time: string): { hour: number; minute: number; second: number } {
+  const [rawHour = '0', rawMinute = '0', rawSecond = '0'] = time.split(':');
+  return {
+    hour: Number(rawHour),
+    minute: Number(rawMinute),
+    second: Number(rawSecond),
+  };
+}
+
+function zonedDateTimeToUtcDate(parts: {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+}): Date {
+  const utcGuess = new Date(Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second, 0));
+  const offset = getTimeZoneOffsetMs(utcGuess, BRASILIA_TIME_ZONE);
+  return new Date(utcGuess.getTime() - offset);
+}
+
 // pega a data/hora atual de Brasília
 export function getBrasiliaNow(): Date {
   const now = new Date();
@@ -48,6 +104,75 @@ export function getBrasiliaTodayISO(): string {
   const now = new Date();
   const parts = getDatePartsInTimeZone(now, BRASILIA_TIME_ZONE);
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+}
+
+export function getBrasiliaNowISO(): string {
+  return zonedDateTimeToUtcDate(getDatePartsInTimeZone(new Date(), BRASILIA_TIME_ZONE)).toISOString();
+}
+
+export function getBrasiliaDateInputValue(): string {
+  return getBrasiliaTodayISO();
+}
+
+export function toBrasiliaISODate(value?: string | Date | null): string {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const parts = getDatePartsInTimeZone(date, BRASILIA_TIME_ZONE);
+  return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
+}
+
+export function buildBrasiliaDateTimeISOString(isoDate: string, time = '12:00:00'): string {
+  const dateParts = parseIsoDateParts(isoDate);
+  if (!dateParts) return getBrasiliaNowISO();
+
+  const timeParts = parseTimeParts(time);
+  return zonedDateTimeToUtcDate({ ...dateParts, ...timeParts }).toISOString();
+}
+
+export function addDaysToBrasiliaISODate(isoDate: string, days: number): string {
+  const dateParts = parseIsoDateParts(isoDate);
+  if (!dateParts) return getBrasiliaTodayISO();
+
+  const base = new Date(Date.UTC(dateParts.year, dateParts.month - 1, dateParts.day + days, 12, 0, 0, 0));
+  return toBrasiliaISODate(base);
+}
+
+export function formatDateInBrasilia(
+  value?: string | Date | null,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  if (!value) return '-';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: BRASILIA_TIME_ZONE,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    ...options,
+  }).format(date);
+}
+
+export function formatDateTimeInBrasilia(
+  value?: string | Date | null,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  if (!value) return '-';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: BRASILIA_TIME_ZONE,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    ...options,
+  }).format(date);
 }
 
 // converte ISO pra dd/mm

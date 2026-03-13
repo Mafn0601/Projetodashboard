@@ -8,6 +8,7 @@ import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
 import { ordemServicoServiceAPI, OrdemServico } from '@/services/ordemServicoServiceAPI';
 import { orcamentoServiceAPI, OrcamentoAPI } from '@/services/orcamentoServiceAPI';
 import { agendamentoServiceAPI, Agendamento } from '@/services/agendamentoServiceAPI';
+import { formatDateTimeInBrasilia } from '@/lib/dateUtils';
 
 type AtividadeRecente = {
   id: string;
@@ -18,9 +19,7 @@ type AtividadeRecente = {
 
 function formatDateTime(value?: string): string {
   if (!value) return '-';
-  const dt = new Date(value);
-  if (Number.isNaN(dt.getTime())) return '-';
-  return dt.toLocaleString('pt-BR');
+  return formatDateTimeInBrasilia(value);
 }
 
 function formatAddress(parceiro: ParceiroAPI | null): string {

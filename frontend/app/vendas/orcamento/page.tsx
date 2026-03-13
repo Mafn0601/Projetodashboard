@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import AgendaOrcamentoModal from '@/components/agenda/AgendaOrcamentoModal';
 import { orcamentoServiceAPI } from '@/services/orcamentoServiceAPI';
 import tipoOSServiceAPI from '@/services/tipoOSServiceAPI';
+import { addDaysToBrasiliaISODate, formatDateInBrasilia, getBrasiliaNowISO, getBrasiliaTodayISO, getBrasiliaYear } from '@/lib/dateUtils';
 
 type Fabricante = {
   id: string;
@@ -126,7 +127,7 @@ export default function Page() {
 
     const anoFab = parseInt(numeros.slice(0, 4), 10);
     const anoMod = parseInt(numeros.slice(4, 8), 10);
-    const anoAtual = new Date().getFullYear();
+    const anoAtual = getBrasiliaYear();
 
     if (anoFab < 1900 || anoFab > anoAtual + 1) {
       setErroAnoFabMod(`Ano de fabricação deve estar entre 1900 e ${anoAtual + 1}`);
@@ -386,7 +387,7 @@ export default function Page() {
 
   // Salvar cliente na tabela via API
   const salvarCliente = async () => {
-    const agora = new Date().toISOString();
+    const agora = getBrasiliaNowISO();
     
     // Encontrar o nome do tipo de OS
     const tipoSelecionado = tiposOs.find(t => t.id === tipo);
@@ -472,7 +473,7 @@ export default function Page() {
         descricao: tipoOptions.find((t) => t.value === tipo)?.label || tipo || 'Orçamento',
         valorTotal: precoTotal,
         desconto: descontoTotal,
-        validade: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        validade: addDaysToBrasiliaISODate(getBrasiliaTodayISO(), 7),
         status: 'PENDENTE',
         observacoes: payloadObservacoes || undefined,
         itens,
@@ -684,7 +685,7 @@ export default function Page() {
           </div>
           <div className="text-right">
             <p className="text-sm font-semibold">
-              Data de Emissão: {new Date().toLocaleDateString('pt-BR', { 
+              Data de Emissão: {formatDateInBrasilia(new Date(), {
                 day: '2-digit', 
                 month: '2-digit', 
                 year: 'numeric' 

@@ -1,6 +1,6 @@
 import { readArray, appendItem, updateItemById, writeArray } from '@/lib/storage';
 import { addAgendamento } from './agendaService';
-import { formatDate, getBrasiliaNow, getBrasiliaYear } from '@/lib/dateUtils';
+import { formatDate, getBrasiliaNow, getBrasiliaNowISO, getBrasiliaYear } from '@/lib/dateUtils';
 import {
   mockResponsaveis,
   mockFabricantes,
@@ -252,7 +252,7 @@ export function updateCompleto(id: string, data: Partial<ClienteCompleto>): Clie
   const resultado = updateItemById<ClienteCompleto>(KEY_COMPLETO, id, (item) => ({ 
     ...item, 
     ...data,
-    dataAtualizacao: new Date().toISOString()
+    dataAtualizacao: getBrasiliaNowISO()
   }));
   
   // Atualizar agendamento se houver mudanças relevantes

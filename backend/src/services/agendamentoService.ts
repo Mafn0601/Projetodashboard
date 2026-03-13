@@ -2,6 +2,7 @@ import prisma from '../lib/prisma';
 import { supabase } from '../lib/supabase';
 import { AppError } from '../middlewares/errorHandler';
 import { Prisma } from '@prisma/client';
+import { endOfBrasiliaDay, parseBrasiliaInput, startOfBrasiliaDay } from '../lib/brasiliaTime';
 
 function extractBoxName(observacoes?: string | null): string | null {
   if (!observacoes) return null;
@@ -12,10 +13,8 @@ function extractBoxName(observacoes?: string | null): string | null {
 }
 
 function getDayRange(date: Date): { start: Date; end: Date } {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  const start = startOfBrasiliaDay(date);
+  const end = new Date(endOfBrasiliaDay(date).getTime() + 1);
   return { start, end };
 }
 
@@ -108,7 +107,7 @@ export class AgendamentoService {
     if (filters?.dataInicio || filters?.dataFim) {
       where.dataAgendamento = {};
       if (filters.dataInicio) {
-        const dataInicio = new Date(filters.dataInicio);
+        const dataInicio = startOfBrasiliaDay(filters.dataInicio);
 
         if (Number.isNaN(dataInicio.getTime())) {
           throw new AppError('Data inicial inválida', 400);
@@ -117,7 +116,7 @@ export class AgendamentoService {
         where.dataAgendamento.gte = dataInicio;
       }
       if (filters.dataFim) {
-        const dataFim = new Date(filters.dataFim);
+        const dataFim = endOfBrasiliaDay(filters.dataFim);
 
         if (Number.isNaN(dataFim.getTime())) {
           throw new AppError('Data final inválida', 400);
@@ -229,7 +228,7 @@ export class AgendamentoService {
       data.dataAgendamento instanceof Date
         ? data.dataAgendamento
         : data.dataAgendamento
-        ? new Date(data.dataAgendamento as string)
+        ? parseBrasiliaInput(data.dataAgendamento as string)
         : exists.dataAgendamento;
 
     const nextHorario =

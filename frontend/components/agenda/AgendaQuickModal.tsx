@@ -15,7 +15,7 @@ import { addAgendamento, getAgendamentos } from '@/services/agendaService';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { readArray } from '@/lib/storage';
 import { mockFabricantes, getModelosPorFabricante } from '@/lib/mockFormData';
-import { getBrasiliaYear, getBrasiliaTodayISO, getBrasiliaNow, getBusinessTimeOptions, isPastBrasiliaISODate, isSundayISODate, isWithinBusinessHours, timeToMinutes, toDdMmFromISODate, toDdMmYyyyFromISODate } from '@/lib/dateUtils';
+import { buildBrasiliaDateTimeISOString, getBrasiliaYear, getBrasiliaTodayISO, getBrasiliaNow, getBusinessTimeOptions, isPastBrasiliaISODate, isSundayISODate, isWithinBusinessHours, timeToMinutes, toDdMmFromISODate, toDdMmYyyyFromISODate } from '@/lib/dateUtils';
 
 type TipoOSItem = {
   id: string;
@@ -451,7 +451,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
 
     try {
       // Salvar agendamentos na API para cada tipo/item selecionado
-      const dataAgendamentoISO = new Date(dataIso + 'T' + horario + ':00.000Z').toISOString();
+      const dataAgendamentoISO = buildBrasiliaDateTimeISOString(dataIso, `${horario}:00`);
       
       let sucessoAgendamentos = 0;
       for (const tipoItem of tiposItens) {

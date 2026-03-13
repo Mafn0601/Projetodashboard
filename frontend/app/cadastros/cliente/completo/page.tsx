@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import ClienteModalCompleto from '@/components/cliente/ClienteModalCompleto';
 import type { ClienteCompleto } from '@/services/clienteService';
 import { clienteServiceAPI } from '@/services/clienteServiceAPI';
+import { formatDateInBrasilia } from '@/lib/dateUtils';
 
 function formatarDataAgendamento(data: string | undefined): string {
   if (!data) return '-';
@@ -15,7 +16,7 @@ function formatarDataAgendamento(data: string | undefined): string {
   }
   const parsed = new Date(data);
   if (isNaN(parsed.getTime())) return data;
-  return parsed.toLocaleDateString('pt-BR');
+  return formatDateInBrasilia(parsed);
 }
 
 export default function ClienteCompletoPage() {

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getNext7ValidDays, toDdMmFromISODate } from "@/lib/dateUtils";
+import { buildBrasiliaDateTimeISOString, formatDateTimeInBrasilia, getBrasiliaYear, getNext7ValidDays, toDdMmFromISODate } from "@/lib/dateUtils";
 import { AgendaItem } from "@/services/agendaService";
 import { addStatusCardFromAgendamento } from "@/services/statusService";
 import { agendamentoServiceAPI, Agendamento } from "@/services/agendamentoServiceAPI";
@@ -140,9 +140,9 @@ export default function Page() {
       
       // Converter dd/mm para ISO date (assume ano atual)
       const [dia, mes] = newDate.split('/');
-      const ano = new Date().getFullYear();
+      const ano = getBrasiliaYear();
       const horario = agendamento.horarioAgendamento || '09:00';
-      const novaDataISO = new Date(`${ano}-${mes}-${dia}T${horario}:00`).toISOString();
+      const novaDataISO = buildBrasiliaDateTimeISOString(`${ano}-${mes}-${dia}`, `${horario}:00`);
 
       await agendamentoServiceAPI.update(itemId, {
         dataAgendamento: novaDataISO,
@@ -160,7 +160,7 @@ export default function Page() {
   const handleReschedule = useCallback(
     async (agendamentoId: string, dataISO: string, horario: string) => {
       try {
-        const novaDataISO = new Date(`${dataISO}T${horario}:00`).toISOString();
+        const novaDataISO = buildBrasiliaDateTimeISOString(dataISO, `${horario}:00`);
 
         await agendamentoServiceAPI.update(agendamentoId, {
           dataAgendamento: novaDataISO,
@@ -181,7 +181,7 @@ export default function Page() {
   const handleChegou = useCallback(async (agendamento: AgendaItem) => {
     try {
       console.log('📤 Marcando agendamento como chegado...', agendamento);
-      const chegadaInfo = `Cliente chegou em ${new Date().toLocaleString('pt-BR')}`;
+      const chegadaInfo = `Cliente chegou em ${formatDateTimeInBrasilia(new Date())}`;
       
       // Atualizar status para EXECUTANDO
       await agendamentoServiceAPI.update(agendamento.id, {

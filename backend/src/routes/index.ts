@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { formatDateTimeInBrasilia, getBrasiliaNow } from '../lib/brasiliaTime';
 import authRoutes from './authRoutes';
 import clienteRoutes from './clienteRoutes';
 import parceiroRoutes from './parceiroRoutes';
@@ -19,7 +20,8 @@ const router = Router();
 
 // Health check
 router.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  const now = getBrasiliaNow();
+  res.json({ status: 'OK', timestamp: now.toISOString(), timestampBrasilia: formatDateTimeInBrasilia(now) });
 });
 
 // Rotas da API

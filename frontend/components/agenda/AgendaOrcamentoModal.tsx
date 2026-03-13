@@ -15,6 +15,7 @@ import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import boxServiceAPI from '@/services/boxServiceAPI';
 import { getAgendamentos } from '@/services/agendaService';
 import {
+  buildBrasiliaDateTimeISOString,
   getBrasiliaTodayISO,
   getBrasiliaNow,
   getBusinessTimeOptions,
@@ -243,7 +244,7 @@ export default function AgendaOrcamentoModal({
 
       // Criar agendamento via API
       console.log('📤 Criando agendamento via API...');
-      const dataAgendamentoISO = new Date(`${dataIso}T${horario}:00`).toISOString();
+      const dataAgendamentoISO = buildBrasiliaDateTimeISOString(dataIso, `${horario}:00`);
       const novoAgendamento = await agendamentoServiceAPI.create({
         clienteId: dadosOrcamento.clienteId,
         veiculoId: dadosOrcamento.veiculoId, // Vincular veículo se disponível

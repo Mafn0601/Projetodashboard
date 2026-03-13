@@ -30,6 +30,7 @@ import { CreateLeadPayload, LeadAPI, LeadStatus, leadServiceAPI, LeadSummary } f
 import { LeadCreateModal } from './LeadCreateModal';
 import { LeadMetricCard } from './LeadMetricCard';
 import { cn } from '@/lib/utils';
+import { formatDateTimeInBrasilia, getBrasiliaNowISO } from '@/lib/dateUtils';
 
 const stageOrder: LeadStatus[] = ['NOVO', 'CONTATO_REALIZADO', 'QUALIFICADO', 'CONVERTIDO'];
 
@@ -49,11 +50,8 @@ const filterChips = [
 
 function formatDateTime(value?: string | null): string {
   if (!value) return 'Sem interação';
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Sem interação';
-
-  return date.toLocaleString('pt-BR', {
+  return formatDateTimeInBrasilia(value, {
+    year: undefined,
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
@@ -277,7 +275,7 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
   const handleToggleSequence = async (lead: LeadAPI) => {
     await leadServiceAPI.update(lead.id, {
       emSequencia: !lead.emSequencia,
-      ultimaInteracao: new Date().toISOString(),
+      ultimaInteracao: getBrasiliaNowISO(),
     });
     await loadDashboard();
   };
@@ -294,7 +292,7 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
       setIsSavingNote(true);
       await leadServiceAPI.update(selectedLead.id, {
         observacoes: noteDraft,
-        ultimaInteracao: new Date().toISOString(),
+        ultimaInteracao: getBrasiliaNowISO(),
       });
       setSelectedLead(null);
       setNoteDraft('');
@@ -338,7 +336,7 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
       await leadServiceAPI.update(lead.id, {
         clienteId: novoCliente.id,
         status: 'CONVERTIDO',
-        ultimaInteracao: new Date().toISOString(),
+        ultimaInteracao: getBrasiliaNowISO(),
       });
 
       await loadDashboard();

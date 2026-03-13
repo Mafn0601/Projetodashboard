@@ -4,10 +4,18 @@ import { type MouseEvent, useEffect, useMemo, useState } from 'react';
 import { FinanceiroDrawer } from '@/components/financeiro/FinanceiroDrawer';
 import { FinanceiroNav } from '@/components/financeiro/FinanceiroNav';
 import { StatusPill } from '@/components/financeiro/StatusPill';
+import {
+  buildBrasiliaDateTimeISOString,
+  formatDateInBrasilia,
+  formatDateTimeInBrasilia,
+  getBrasiliaDateInputValue,
+  getBrasiliaNowISO,
+  toBrasiliaISODate,
+} from '@/lib/dateUtils';
 import { ContaPagar, FinanceiroStatus, financeiroServiceAPI } from '@/services/financeiroServiceAPI';
 
 function toDate(value: string): string {
-  return new Date(value).toLocaleDateString('pt-BR');
+  return formatDateInBrasilia(value);
 }
 
 function toCurrency(value: number): string {
@@ -33,7 +41,7 @@ export default function ContasPagarPage() {
   const [actionMenu, setActionMenu] = useState<{ rowId: string; x: number; y: number } | null>(null);
   const [showNovaConta, setShowNovaConta] = useState(false);
   const [novaConta, setNovaConta] = useState({
-    data: new Date().toISOString().slice(0, 10),
+    data: getBrasiliaDateInputValue(),
     grupo: '',
     fornecedor: '',
     numeroDocto: '',
@@ -99,7 +107,7 @@ export default function ContasPagarPage() {
       tipo: 'PAGAR',
       alvoId: row.id,
       valor,
-      dataPagamento: new Date().toISOString(),
+      dataPagamento: getBrasiliaNowISO(),
       formaPagamento: row.formaPagamento || 'PIX',
       observacoes: 'Pagamento realizado pela tela de contas a pagar',
     });
@@ -111,7 +119,7 @@ export default function ContasPagarPage() {
     setSelected(row);
     setIsEditingSelected(edit);
     setSelectedObservacoes(row.observacoes || '');
-    setSelectedVencimento(row.dataVencimento.slice(0, 10));
+    setSelectedVencimento(toBrasiliaISODate(row.dataVencimento));
     setSelectedFormaPagamento(row.formaPagamento || '');
     setSelectedCentroCusto(row.centroCusto || '');
     setSelectedCategoria(row.categoriaDespesa || '');
@@ -122,7 +130,7 @@ export default function ContasPagarPage() {
 
     await financeiroServiceAPI.atualizarFatura(selected.id, {
       observacoes: selectedObservacoes,
-      dataVencimento: selectedVencimento ? new Date(`${selectedVencimento}T12:00:00`).toISOString() : undefined,
+      dataVencimento: selectedVencimento ? buildBrasiliaDateTimeISOString(selectedVencimento) : undefined,
       formaPagamento: selectedFormaPagamento,
       centroCusto: selectedCentroCusto,
       categoria: selectedCategoria,
@@ -147,7 +155,7 @@ export default function ContasPagarPage() {
 
   const aprovarPagamento = async (row: ContaPagar) => {
     await financeiroServiceAPI.atualizarFatura(row.id, {
-      observacoes: `${row.observacoes || '-'} | Aprovado em ${new Date().toLocaleString('pt-BR')}`,
+      observacoes: `${row.observacoes || '-'} | Aprovado em ${formatDateTimeInBrasilia(new Date())}`,
     });
 
     setActionMessage(`Pagamento aprovado para ${row.codigoFatura}.`);
@@ -155,7 +163,7 @@ export default function ContasPagarPage() {
   };
 
   const agendarPagamento = async (row: ContaPagar) => {
-    const data = window.prompt('Data para agendar pagamento (AAAA-MM-DD)', new Date().toISOString().slice(0, 10));
+    const data = window.prompt('Data para agendar pagamento (AAAA-MM-DD)', getBrasiliaDateInputValue());
     if (!data) return;
 
     const valor = Number(window.prompt('Valor para agendar', String(row.saldoAberto || 0)) || 0);
@@ -165,7 +173,7 @@ export default function ContasPagarPage() {
       tipo: 'PAGAR',
       alvoId: row.id,
       valor,
-      dataPagamento: new Date(`${data}T12:00:00`).toISOString(),
+      dataPagamento: buildBrasiliaDateTimeISOString(data),
       formaPagamento: row.formaPagamento || 'PIX',
       observacoes: 'Pagamento agendado via contas a pagar',
     });
@@ -227,8 +235,8 @@ export default function ContasPagarPage() {
         tipo: 'PAGAR',
         nome: novaConta.fornecedor,
         documento: novaConta.numeroDocto || undefined,
-        dataEmissao: new Date(`${novaConta.data}T12:00:00`).toISOString(),
-        dataVencimento: new Date(`${novaConta.data}T12:00:00`).toISOString(),
+        dataEmissao: buildBrasiliaDateTimeISOString(novaConta.data),
+        dataVencimento: buildBrasiliaDateTimeISOString(novaConta.data),
         formaPagamento: novaConta.pagto,
         valorBruto: Number(novaConta.valor),
         centroCusto: novaConta.grupo || undefined,
@@ -241,7 +249,7 @@ export default function ContasPagarPage() {
       }
 
       setNovaConta({
-        data: new Date().toISOString().slice(0, 10),
+        data: getBrasiliaDateInputValue(),
         grupo: '',
         fornecedor: '',
         numeroDocto: '',

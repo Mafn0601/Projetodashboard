@@ -1,5 +1,6 @@
 import { Prisma, StatusLead } from '@prisma/client';
 import prisma from '../lib/prisma';
+import { endOfBrasiliaDay, startOfBrasiliaDay } from '../lib/brasiliaTime';
 import { AppError } from '../middlewares/errorHandler';
 
 type LeadFilters = {
@@ -59,8 +60,8 @@ export class LeadService {
 
     if (filters?.createdAfter || filters?.createdBefore) {
       where.createdAt = {
-        ...(filters.createdAfter ? { gte: new Date(filters.createdAfter) } : {}),
-        ...(filters.createdBefore ? { lte: new Date(filters.createdBefore) } : {}),
+            ...(filters.createdAfter ? { gte: startOfBrasiliaDay(filters.createdAfter) } : {}),
+            ...(filters.createdBefore ? { lte: endOfBrasiliaDay(filters.createdBefore) } : {}),
       };
     }
 

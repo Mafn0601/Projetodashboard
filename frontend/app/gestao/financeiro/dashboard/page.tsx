@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Area, Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, CartesianGrid, ComposedChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { FinanceiroKpiCard } from '@/components/financeiro/FinanceiroKpiCard';
 import { FinanceiroNav } from '@/components/financeiro/FinanceiroNav';
 import { StatusPill } from '@/components/financeiro/StatusPill';
@@ -42,8 +42,6 @@ export default function FinanceiroDashboardPage() {
       Entradas: item.entradas,
       Saidas: item.saidas,
       Saldo: item.saldoDiario,
-      Volume: item.volume || Math.abs((item.entradas || 0) + (item.saidas || 0)),
-      Ticks: item.ticks || 0,
     }));
   }, [data]);
 
@@ -82,11 +80,7 @@ export default function FinanceiroDashboardPage() {
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Fluxo de caixa — ultimos 30 dias</h2>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Entradas, saídas e saldo diário com volume financeiro e ticks por dia no mesmo chart.</p>
-            </div>
-            <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-400">
-              <span>Volume total: <strong className="text-slate-900 dark:text-slate-100">{toCurrency(fluxoSerie.reduce((acc: number, item: any) => acc + Number(item.Volume || 0), 0))}</strong></span>
-              <span>Ticks: <strong className="text-slate-900 dark:text-slate-100">{fluxoSerie.reduce((acc: number, item: any) => acc + Number(item.Ticks || 0), 0)}</strong></span>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Entradas, saídas e saldo diário com escala ampliada para leitura mais clara.</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={380}>
@@ -108,15 +102,12 @@ export default function FinanceiroDashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.45} vertical={false} />
               <XAxis dataKey="data" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} minTickGap={24} />
               <YAxis yAxisId="financeiro" tickFormatter={formatCurrency} tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={76} />
-              <YAxis yAxisId="volume" orientation="right" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={44} />
               <Tooltip
                 formatter={(value, name) => [financeiroServiceAPI.toCurrency(Number(value ?? 0)), String(name)]}
                 labelStyle={{ fontSize: 12, fontWeight: 700 }}
                 contentStyle={{ fontSize: 13, borderRadius: 12, border: '1px solid #1e293b', background: '#020617', color: '#e2e8f0' }}
               />
               <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
-              <Bar yAxisId="volume" dataKey="Volume" name="Volume" fill="#38bdf8" fillOpacity={0.24} radius={[4, 4, 0, 0]} barSize={14} />
-              <Line yAxisId="volume" type="monotone" dataKey="Ticks" name="Ticks" stroke="#f59e0b" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
               <Area yAxisId="financeiro" type="monotone" dataKey="Entradas" stroke="#10b981" strokeWidth={3} fill="url(#gradEntradas)" dot={false} />
               <Area yAxisId="financeiro" type="monotone" dataKey="Saidas" stroke="#f43f5e" strokeWidth={3} fill="url(#gradSaidas)" dot={false} />
               <Area yAxisId="financeiro" type="monotone" dataKey="Saldo" stroke="#6366f1" strokeWidth={3} fill="url(#gradSaldo)" dot={false} strokeDasharray="6 3" />

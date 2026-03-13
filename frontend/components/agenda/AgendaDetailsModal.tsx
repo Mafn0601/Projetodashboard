@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Trash2 } from 'lucide-react';
 import { readArray } from '@/lib/storage';
 import { equipeServiceAPI } from '@/services/equipeServiceAPI';
+import { formatDateInBrasilia, getBrasiliaYear } from '@/lib/dateUtils';
 
 type Props = {
   isOpen: boolean;
@@ -34,8 +35,8 @@ function formatarData(data: string): string {
   // Esperado formato dd/mm
   if (!data) return "-";
   const [day, month] = data.split("/");
-  const date = new Date(2026, parseInt(month) - 1, parseInt(day));
-  return date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit" });
+  const date = new Date(getBrasiliaYear(), parseInt(month) - 1, parseInt(day));
+  return formatDateInBrasilia(date, { weekday: "long", day: "2-digit", month: "2-digit" });
 }
 
 export default function AgendaDetailsModal({
@@ -88,7 +89,7 @@ export default function AgendaDetailsModal({
     }
 
     const [dia, mes] = agendamento.data.split('/');
-    const ano = new Date().getFullYear();
+    const ano = getBrasiliaYear();
     setNovaData(`${ano}-${mes}-${dia}`);
     setNovoHorario(agendamento.horario || '09:00');
   }, [agendamento]);

@@ -7,7 +7,7 @@ import {
   updateOcupacao,
   addOcupacao 
 } from "@/services/boxService";
-import { getBrasiliaNow, getBrasiliaYear, toDdMmYyyyFromISODate, getBrasiliaTodayISO } from "@/lib/dateUtils";
+import { buildBrasiliaDateTimeISOString, getBrasiliaNow, getBrasiliaNowISO, getBrasiliaYear, toDdMmYyyyFromISODate, getBrasiliaTodayISO } from "@/lib/dateUtils";
 import { readArray, writeArray } from "@/lib/storage";
 import statusServiceAPI from "@/services/statusServiceAPI";
 
@@ -148,8 +148,8 @@ let mockCards: StatusCard[] = [];
 function toIsoDateFromBrazilianDate(value: string): string {
   const [datePart] = value.split(' ');
   const [day, month, year] = datePart.split('/');
-  if (!day || !month || !year) return new Date().toISOString();
-  return new Date(`${year}-${month}-${day}T00:00:00`).toISOString();
+  if (!day || !month || !year) return getBrasiliaNowISO();
+  return buildBrasiliaDateTimeISOString(`${year}-${month}-${day}`, '00:00:00');
 }
 
 function getNextCardUuid(): string {
@@ -169,7 +169,7 @@ function syncCreateCard(card: StatusCard): void {
       dataEntrega:
         card.dataEntrega && card.dataEntrega !== '-'
           ? toIsoDateFromBrazilianDate(card.dataEntrega)
-          : new Date().toISOString(),
+          : getBrasiliaNowISO(),
       cliente: card.cliente,
       parceiro: card.parceiro,
       responsavel: card.responsavel,

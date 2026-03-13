@@ -8,6 +8,7 @@ import AgendaQuickModal from '@/components/agenda/AgendaQuickModal';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
 import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
+import { formatDateInBrasilia } from '@/lib/dateUtils';
 import {
   mockFabricantes,
   mockModelos,
@@ -81,7 +82,7 @@ function formatarDataAgendamento(data: string | undefined): string {
   }
   const parsed = new Date(data);
   if (isNaN(parsed.getTime())) return data;
-  return parsed.toLocaleDateString('pt-BR');
+  return formatDateInBrasilia(parsed);
 }
 
 export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props) {
@@ -314,7 +315,7 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
                 <p className="text-slate-700 dark:text-slate-400 mb-1">Criado em</p>
                 <p className="text-slate-600 dark:text-slate-300">
                   {cliente.createdAt || cliente.dataCriacao 
-                    ? new Date(cliente.createdAt || cliente.dataCriacao!).toLocaleDateString('pt-BR')
+                    ? formatDateInBrasilia(cliente.createdAt || cliente.dataCriacao!)
                     : '-'
                   }
                 </p>
@@ -323,7 +324,7 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
                  <p className="text-slate-700 dark:text-slate-400 mb-1">Atualizado em</p>
                 <p className="text-slate-600 dark:text-slate-300">
                   {cliente.updatedAt || cliente.dataAtualizacao 
-                    ? new Date(cliente.updatedAt || cliente.dataAtualizacao!).toLocaleDateString('pt-BR')
+                    ? formatDateInBrasilia(cliente.updatedAt || cliente.dataAtualizacao!)
                     : '-'
                   }
                 </p>

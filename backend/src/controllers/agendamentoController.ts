@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import agendamentoService from '../services/agendamentoService';
+import { parseBrasiliaInput } from '../lib/brasiliaTime';
 import {
   agendamentoListQuerySchema,
   agendamentoParamsSchema,
@@ -41,7 +42,7 @@ export class AgendamentoController {
         parceiro: validatedData.parceiroId ? { connect: { id: validatedData.parceiroId } } : undefined,
         tipoOS: validatedData.tipoOSId ? { connect: { id: validatedData.tipoOSId } } : undefined,
         itemOS: validatedData.itemOSId ? { connect: { id: validatedData.itemOSId } } : undefined,
-        dataAgendamento: new Date(validatedData.dataAgendamento),
+        dataAgendamento: parseBrasiliaInput(validatedData.dataAgendamento),
         horarioAgendamento: validatedData.horarioAgendamento,
         tipoAgendamento: validatedData.tipoAgendamento,
         descricaoServico: validatedData.descricaoServico,
@@ -77,7 +78,7 @@ export class AgendamentoController {
         updateData.parceiro = { connect: { id: validatedData.parceiroId } };
       }
       if (validatedData.dataAgendamento) {
-        updateData.dataAgendamento = new Date(validatedData.dataAgendamento);
+        updateData.dataAgendamento = parseBrasiliaInput(validatedData.dataAgendamento);
       }
       
       Object.assign(updateData, {

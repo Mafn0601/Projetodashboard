@@ -8,6 +8,7 @@ import {
   updateOrdemServicoStatusSchema,
 } from '../validators/schemas';
 import { StatusOS } from '@prisma/client';
+import { parseBrasiliaInput } from '../lib/brasiliaTime';
 
 export class OrdemServicoController {
   async findAll(req: Request, res: Response, next: NextFunction) {
@@ -86,7 +87,7 @@ export class OrdemServicoController {
         descricao: validatedData.descricao,
         observacoes: validatedData.observacoes,
         quilometragem: validatedData.quilometragem,
-        dataPrevisao: validatedData.dataPrevisao ? new Date(validatedData.dataPrevisao) : undefined,
+            dataPrevisao: validatedData.dataPrevisao ? parseBrasiliaInput(validatedData.dataPrevisao) : undefined,
         formaPagamento: validatedData.formaPagamento,
         meioPagamento: validatedData.meioPagamento,
         origemPedido: validatedData.origemPedido,
@@ -120,10 +121,10 @@ export class OrdemServicoController {
         updateData.parceiro = { connect: { id: validatedData.parceiroId } };
       }
       if (validatedData.dataPrevisao) {
-        updateData.dataPrevisao = new Date(validatedData.dataPrevisao);
+            updateData.dataPrevisao = parseBrasiliaInput(validatedData.dataPrevisao);
       }
       if (validatedData.dataFinalizacao) {
-        updateData.dataFinalizacao = new Date(validatedData.dataFinalizacao);
+            updateData.dataFinalizacao = parseBrasiliaInput(validatedData.dataFinalizacao);
       }
       
       Object.assign(updateData, {

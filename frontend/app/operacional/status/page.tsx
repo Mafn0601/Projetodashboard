@@ -6,6 +6,7 @@ import { StatusColumn } from "@/components/status/StatusColumn";
 import StatusDetailsModal from "@/components/status/StatusDetailsModal";
 import { Trash2 } from "lucide-react";
 import statusServiceAPI from "@/services/statusServiceAPI";
+import { formatDateInBrasilia } from "@/lib/dateUtils";
 
 export default function StatusPage() {
   // Estado para forçar atualização quando cards são movidos ou deletados
@@ -17,9 +18,7 @@ export default function StatusPage() {
 
   const toBrDate = (value?: string): string => {
     if (!value) return '-';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '-';
-    return date.toLocaleDateString('pt-BR');
+    return formatDateInBrasilia(value);
   };
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { OrcamentoAPI, orcamentoServiceAPI } from '@/services/orcamentoServiceAPI';
+import { formatDateInBrasilia } from '@/lib/dateUtils';
 
 export default function OrcamentosRecentesPage() {
   const router = useRouter();
@@ -78,7 +79,7 @@ export default function OrcamentosRecentesPage() {
                       </td>
                       <td className="px-4 py-2 text-slate-900 dark:text-slate-100">{orc.status}</td>
                       <td className="px-4 py-2 text-slate-900 dark:text-slate-100">
-                        {orc.validade ? new Date(orc.validade).toLocaleDateString('pt-BR') : '-'}
+                        {orc.validade ? formatDateInBrasilia(orc.validade) : '-'}
                       </td>
                     </tr>
                   ))}

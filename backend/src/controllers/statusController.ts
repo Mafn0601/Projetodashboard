@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { getBrasiliaNow, parseBrasiliaInput } from '../lib/brasiliaTime';
 
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -99,8 +100,8 @@ export class StatusController {
           ...(id && { id }),
           numero,
           veiculo,
-          dataAgendamento: new Date(dataAgendamento),
-          dataEntrega: new Date(dataEntrega),
+          dataAgendamento: parseBrasiliaInput(dataAgendamento),
+          dataEntrega: parseBrasiliaInput(dataEntrega),
           cliente,
           parceiro,
           responsavel,
@@ -166,8 +167,8 @@ export class StatusController {
         data: {
           ...(numero && { numero }),
           ...(veiculo && { veiculo }),
-          ...(dataAgendamento && { dataAgendamento: new Date(dataAgendamento) }),
-          ...(dataEntrega && { dataEntrega: new Date(dataEntrega) }),
+          ...(dataAgendamento && { dataAgendamento: parseBrasiliaInput(dataAgendamento) }),
+          ...(dataEntrega && { dataEntrega: parseBrasiliaInput(dataEntrega) }),
           ...(cliente && { cliente }),
           ...(parceiro && { parceiro }),
           ...(responsavel && { responsavel }),
@@ -222,7 +223,7 @@ export class StatusController {
       // Se movendo para "entregue", registra o timestamp de finalização
       const updateData: any = { status };
       if (status === 'entregue') {
-        updateData.timestampFinalizacao = new Date();
+        updateData.timestampFinalizacao = getBrasiliaNow();
       }
 
       const statusCard = await prisma.statusCard.update({

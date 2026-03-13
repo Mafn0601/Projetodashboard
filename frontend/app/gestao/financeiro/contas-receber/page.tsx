@@ -4,10 +4,11 @@ import { type MouseEvent, useEffect, useMemo, useState } from 'react';
 import { FinanceiroDrawer } from '@/components/financeiro/FinanceiroDrawer';
 import { FinanceiroNav } from '@/components/financeiro/FinanceiroNav';
 import { StatusPill } from '@/components/financeiro/StatusPill';
+import { buildBrasiliaDateTimeISOString, formatDateInBrasilia, getBrasiliaNowISO, toBrasiliaISODate } from '@/lib/dateUtils';
 import { ContaReceber, FinanceiroStatus, financeiroServiceAPI } from '@/services/financeiroServiceAPI';
 
 function toDate(value: string): string {
-  return new Date(value).toLocaleDateString('pt-BR');
+  return formatDateInBrasilia(value);
 }
 
 function toCurrency(value: number): string {
@@ -121,7 +122,7 @@ export default function ContasReceberPage() {
       tipo: 'RECEBER',
       alvoId: row.id,
       valor,
-      dataPagamento: new Date().toISOString(),
+      dataPagamento: getBrasiliaNowISO(),
       formaPagamento: row.formaPagamento || 'PIX',
       observacoes: 'Pagamento registrado pela tela de contas a receber',
     });
@@ -166,7 +167,7 @@ export default function ContasReceberPage() {
       tipo: 'RECEBER',
       nome: row.cliente,
       documento: row.cnpjCpf,
-      dataEmissao: new Date().toISOString(),
+      dataEmissao: getBrasiliaNowISO(),
       dataVencimento: row.dataVencimento,
       formaPagamento: row.formaPagamento,
       valorBruto: row.valorBruto,
@@ -192,7 +193,7 @@ export default function ContasReceberPage() {
     setSelected(row);
     setIsEditingSelected(false);
     setSelectedObservacoes(row.observacoes || '');
-    setSelectedVencimento(row.dataVencimento.slice(0, 10));
+    setSelectedVencimento(toBrasiliaISODate(row.dataVencimento));
     setSelectedFormaPagamento(row.formaPagamento || '');
   };
 
@@ -201,7 +202,7 @@ export default function ContasReceberPage() {
 
     await financeiroServiceAPI.atualizarFatura(selected.id, {
       observacoes: selectedObservacoes,
-      dataVencimento: selectedVencimento ? new Date(`${selectedVencimento}T12:00:00`).toISOString() : undefined,
+      dataVencimento: selectedVencimento ? buildBrasiliaDateTimeISOString(selectedVencimento) : undefined,
       formaPagamento: selectedFormaPagamento,
     });
 
@@ -255,8 +256,8 @@ export default function ContasReceberPage() {
         tipo: 'RECEBER',
         nome: novaFatura.nome,
         documento: novaFatura.documento || undefined,
-        dataEmissao: new Date().toISOString(),
-        dataVencimento: new Date(`${novaFatura.dataVencimento}T12:00:00`).toISOString(),
+        dataEmissao: getBrasiliaNowISO(),
+        dataVencimento: buildBrasiliaDateTimeISOString(novaFatura.dataVencimento),
         formaPagamento: novaFatura.formaPagamento,
         valorBruto: Number(novaFatura.valorBruto),
         desconto: novaFatura.desconto ? Number(novaFatura.desconto) : undefined,

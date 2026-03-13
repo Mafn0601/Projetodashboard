@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma';
+import { parseBrasiliaInput } from '../lib/brasiliaTime';
 import { AppError } from '../middlewares/errorHandler';
 import { Prisma, StatusOrcamento } from '@prisma/client';
 
@@ -117,7 +118,7 @@ export class OrcamentoService {
         descricao: data.descricao,
         valorTotal: data.valorTotal,
         desconto: data.desconto ?? 0,
-        validade: new Date(data.validade),
+            validade: parseBrasiliaInput(data.validade),
         status: data.status ?? 'PENDENTE',
         observacoes: data.observacoes,
         itens: data.itens?.length

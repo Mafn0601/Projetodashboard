@@ -1,4 +1,14 @@
 import prisma from '../../../lib/prisma';
+import {
+  endOfBrasiliaDay,
+  getBrasiliaMonthBounds,
+  getBrasiliaNow,
+  getBrasiliaTodayISO,
+  getBrasiliaYear,
+  parseBrasiliaInput,
+  startOfBrasiliaDay,
+  toBrasiliaISODate,
+} from '../../../lib/brasiliaTime';
 
 const db: any = prisma;
 const CACHE_TTL_MS = 15000;
@@ -124,22 +134,17 @@ function normalizeText(value: string): string {
 }
 
 function diffDays(now: Date, targetISO: string): number {
-  const target = new Date(targetISO);
-  const diffMs = now.getTime() - target.getTime();
+  const todayStart = startOfBrasiliaDay(now);
+  const targetStart = startOfBrasiliaDay(targetISO);
+  const diffMs = todayStart.getTime() - targetStart.getTime();
   return Math.max(0, Math.floor(diffMs / 86400000));
-}
-
-function monthBounds(reference = new Date()): { start: Date; end: Date } {
-  const start = new Date(reference.getFullYear(), reference.getMonth(), 1, 0, 0, 0, 0);
-  const end = new Date(reference.getFullYear(), reference.getMonth() + 1, 0, 23, 59, 59, 999);
-  return { start, end };
 }
 
 function buildStatus(valorLiquido: number, pago: number, vencimento: string, manualStatus?: string): FinanceiroStatus {
   if (manualStatus === 'CANCELADO') return 'CANCELADO';
   if (pago >= valorLiquido) return 'PAGO';
   if (pago > 0 && pago < valorLiquido) return 'PARCIALMENTE_PAGO';
-  if (new Date(vencimento).getTime() < Date.now()) return 'ATRASADO';
+  if (toBrasiliaISODate(vencimento) < getBrasiliaTodayISO()) return 'ATRASADO';
   return 'EM_ABERTO';
 }
 
@@ -163,8 +168,9 @@ function applyListFilters<T extends { status: FinanceiroStatus; formaPagamento: 
     if (query.minValor !== undefined && item.valorLiquido < query.minValor) return false;
     if (query.maxValor !== undefined && item.valorLiquido > query.maxValor) return false;
 
-    if (query.dataInicial && item.dataVencimento < new Date(`${query.dataInicial}T00:00:00`).toISOString()) return false;
-    if (query.dataFinal && item.dataVencimento > new Date(`${query.dataFinal}T23:59:59`).toISOString()) return false;
+    const itemDate = toBrasiliaISODate(item.dataVencimento);
+    if (query.dataInicial && itemDate < query.dataInicial) return false;
+    if (query.dataFinal && itemDate > query.dataFinal) return false;
 
     return true;
   });
@@ -216,8 +222,8 @@ function buildFaturaWhere(tipo: FinanceiroTipo, query: ListQuery): any {
 
   if (query.dataInicial || query.dataFinal) {
     where.dataVencimento = {};
-    if (query.dataInicial) where.dataVencimento.gte = new Date(`${query.dataInicial}T00:00:00`);
-    if (query.dataFinal) where.dataVencimento.lte = new Date(`${query.dataFinal}T23:59:59`);
+    if (query.dataInicial) where.dataVencimento.gte = startOfBrasiliaDay(query.dataInicial);
+    if (query.dataFinal) where.dataVencimento.lte = endOfBrasiliaDay(query.dataFinal);
   }
 
   if (query.status === 'CANCELADO') {
@@ -314,7 +320,7 @@ function toContaPagar(item: FaturaSelecionada, valorPago: number, now: Date): Co
 
 async function nextCodigoFatura(tipo: FinanceiroTipo): Promise<string> {
   const prefixo = tipo === 'RECEBER' ? 'FR' : 'FP';
-  const ano = new Date().getFullYear();
+  const ano = getBrasiliaYear();
 
   const ultima = await db.fatura.findFirst({
     where: {
@@ -342,7 +348,7 @@ export class FinanceiroRepository {
     const cached = getCached<{ data: ContaReceber[]; total: number }>(cacheKey);
     if (cached) return cached;
 
-    const now = new Date();
+    const now = getBrasiliaNow();
     const where = buildFaturaWhere('RECEBER', query);
     const computedSortFields = new Set(['status', 'valorLiquido', 'valorRecebido', 'saldoAberto', 'diasAtraso']);
     const requiresPostProcess =
@@ -418,7 +424,7 @@ export class FinanceiroRepository {
     const cached = getCached<{ data: ContaPagar[]; total: number }>(cacheKey);
     if (cached) return cached;
 
-    const now = new Date();
+    const now = getBrasiliaNow();
     const where = buildFaturaWhere('PAGAR', query);
     const computedSortFields = new Set(['status', 'valorLiquido', 'valorPago', 'saldoAberto', 'diasAtraso']);
     const requiresPostProcess =
@@ -512,8 +518,8 @@ export class FinanceiroRepository {
         status: 'EM_ABERTO',
         nome: payload.nome,
         documento: payload.documento,
-        dataEmissao: new Date(payload.dataEmissao),
-        dataVencimento: new Date(payload.dataVencimento),
+        dataEmissao: parseBrasiliaInput(payload.dataEmissao),
+        dataVencimento: parseBrasiliaInput(payload.dataVencimento),
         formaPagamento: payload.formaPagamento,
         valorBruto: payload.valorBruto,
         desconto: payload.desconto || 0,
@@ -537,8 +543,8 @@ export class FinanceiroRepository {
         status: typeof payload.status === 'string' ? payload.status : undefined,
         nome: typeof payload.nome === 'string' ? payload.nome : undefined,
         documento: typeof payload.documento === 'string' ? payload.documento : undefined,
-        dataEmissao: typeof payload.dataEmissao === 'string' ? new Date(payload.dataEmissao) : undefined,
-        dataVencimento: typeof payload.dataVencimento === 'string' ? new Date(payload.dataVencimento) : undefined,
+        dataEmissao: typeof payload.dataEmissao === 'string' ? parseBrasiliaInput(payload.dataEmissao) : undefined,
+        dataVencimento: typeof payload.dataVencimento === 'string' ? parseBrasiliaInput(payload.dataVencimento) : undefined,
         formaPagamento: typeof payload.formaPagamento === 'string' ? payload.formaPagamento : undefined,
         valorBruto: typeof payload.valorBruto === 'number' ? payload.valorBruto : undefined,
         desconto: typeof payload.desconto === 'number' ? payload.desconto : undefined,
@@ -567,7 +573,7 @@ export class FinanceiroRepository {
         tipo: payload.tipo,
         alvoId: payload.alvoId,
         valor: payload.valor,
-        dataPagamento: new Date(payload.dataPagamento),
+        dataPagamento: parseBrasiliaInput(payload.dataPagamento),
         formaPagamento: payload.formaPagamento,
         observacoes: payload.observacoes,
         comprovanteUrl: payload.comprovanteUrl,
@@ -588,7 +594,7 @@ export class FinanceiroRepository {
         tipo: payload.tipo,
         alvoId: payload.alvoId,
         valor: typeof payload.valor === 'number' ? payload.valor : undefined,
-        dataPagamento: payload.dataPagamento ? new Date(payload.dataPagamento) : undefined,
+        dataPagamento: payload.dataPagamento ? parseBrasiliaInput(payload.dataPagamento) : undefined,
         formaPagamento: payload.formaPagamento,
         observacoes: payload.observacoes,
         comprovanteUrl: payload.comprovanteUrl,
@@ -609,8 +615,8 @@ export class FinanceiroRepository {
       this.listContasPagar({ page: 1, pageSize: 1000 }),
     ]);
 
-    const now = new Date();
-    const { start, end } = monthBounds(now);
+    const now = getBrasiliaNow();
+    const { start, end } = getBrasiliaMonthBounds(now);
 
     const pagamentosMesRows = await db.pagamentoFin.findMany({
       where: {
@@ -665,8 +671,8 @@ export class FinanceiroRepository {
       dataPagamento: item.dataPagamento.toISOString(),
     }));
 
-    const hoje = now.toISOString().slice(0, 10);
-    const vencendoHoje = receber.data.filter((item) => item.dataVencimento.slice(0, 10) === hoje).slice(0, 8);
+    const hoje = getBrasiliaTodayISO();
+    const vencendoHoje = receber.data.filter((item) => toBrasiliaISODate(item.dataVencimento) === hoje).slice(0, 8);
     const emAtraso = receber.data.filter((item) => item.status === 'ATRASADO').slice(0, 8);
 
     const recebimentosPorCategoria = receber.data.reduce((acc: Record<string, number>, item: ContaReceber) => {
@@ -712,19 +718,19 @@ export class FinanceiroRepository {
     const cached = getCached<any>(cacheKey);
     if (cached) return cached;
 
-    const final = payload.dataFinal ? new Date(payload.dataFinal) : new Date();
+    const final = payload.dataFinal ? endOfBrasiliaDay(payload.dataFinal) : endOfBrasiliaDay(getBrasiliaTodayISO());
     const inicial = payload.dataInicial
-      ? new Date(payload.dataInicial)
+      ? startOfBrasiliaDay(payload.dataInicial)
       : new Date(final.getTime() - 29 * 86400000);
 
-    inicial.setHours(0, 0, 0, 0);
-    final.setHours(23, 59, 59, 999);
+    const normalizedInicial = startOfBrasiliaDay(inicial);
+    const normalizedFinal = endOfBrasiliaDay(final);
 
     const entries = await db.pagamentoFin.findMany({
       where: {
         dataPagamento: {
-          gte: inicial,
-          lte: final,
+          gte: normalizedInicial,
+          lte: normalizedFinal,
         },
       },
       select: {
@@ -737,61 +743,55 @@ export class FinanceiroRepository {
       },
     });
 
-    // If no realized cash movement exists in the range, fallback to expected movements from faturas.
-    const faturasNoPeriodo = entries.length === 0
-      ? await db.fatura.findMany({
-          where: {
-            status: {
-              not: 'CANCELADO',
-            },
-            OR: [
-              {
-                dataVencimento: {
-                  gte: inicial,
-                  lte: final,
-                },
-              },
-              {
-                dataEmissao: {
-                  gte: inicial,
-                  lte: final,
-                },
-              },
-            ],
-          },
-          select: {
-            tipo: true,
-            valorBruto: true,
-            desconto: true,
-            dataVencimento: true,
-          },
-          orderBy: {
-            dataVencimento: 'asc',
-          },
-        })
-      : [];
+    const faturasNoPeriodo = await db.fatura.findMany({
+      where: {
+        status: {
+          not: 'CANCELADO',
+        },
+        dataVencimento: {
+          gte: normalizedInicial,
+          lte: normalizedFinal,
+        },
+      },
+      select: {
+        id: true,
+        tipo: true,
+        status: true,
+        valorBruto: true,
+        desconto: true,
+        dataVencimento: true,
+      },
+      orderBy: {
+        dataVencimento: 'asc',
+      },
+    });
+
+    const pagamentosPorFatura = await getPagamentoSums(faturasNoPeriodo.map((item: any) => item.id), 'RECEBER');
+    const pagamentosPorConta = await getPagamentoSums(faturasNoPeriodo.map((item: any) => item.id), 'PAGAR');
 
     const map = new Map<string, { data: string; entradas: number; saidas: number; saldoDiario: number; saldoAcumulado: number; volume: number; ticks: number }>();
 
-    let cursor = new Date(inicial);
-    while (cursor <= final) {
-      const key = cursor.toISOString().slice(0, 10);
-      map.set(key, {
-        data: key,
-        entradas: 0,
-        saidas: 0,
-        saldoDiario: 0,
-        saldoAcumulado: 0,
-        volume: 0,
-        ticks: 0,
-      });
-      cursor = new Date(cursor.getTime() + 86400000);
-    }
+    const ensureRow = (key: string) => {
+      let row = map.get(key);
+      if (!row) {
+        row = {
+          data: key,
+          entradas: 0,
+          saidas: 0,
+          saldoDiario: 0,
+          saldoAcumulado: 0,
+          volume: 0,
+          ticks: 0,
+        };
+        map.set(key, row);
+      }
+
+      return row;
+    };
 
     for (const item of entries) {
-      const key = item.dataPagamento.toISOString().slice(0, 10);
-      const row = map.get(key);
-      if (!row) continue;
+      const key = toBrasiliaISODate(item.dataPagamento);
+      const row = ensureRow(key);
 
       if (item.tipo === 'RECEBER') {
         row.entradas += Number(item.valor);
@@ -804,33 +804,40 @@ export class FinanceiroRepository {
       row.saldoDiario = row.entradas - row.saidas;
     }
 
-    if (entries.length === 0) {
-      for (const item of faturasNoPeriodo) {
-        const key = item.dataVencimento.toISOString().slice(0, 10);
-        const row = map.get(key);
-        if (!row) continue;
+    for (const item of faturasNoPeriodo) {
+      const valorLiquido = Math.max(0, Number(item.valorBruto) - Number(item.desconto || 0));
+      const pago = item.tipo === 'RECEBER'
+        ? pagamentosPorFatura.get(item.id) || 0
+        : pagamentosPorConta.get(item.id) || 0;
+      const saldoAberto = Math.max(0, valorLiquido - pago);
+      const status = buildStatus(valorLiquido, pago, item.dataVencimento.toISOString(), item.status);
 
-        const valorLiquido = Math.max(0, Number(item.valorBruto) - Number(item.desconto || 0));
-        if (item.tipo === 'RECEBER') {
-          row.entradas += valorLiquido;
-        } else {
-          row.saidas += valorLiquido;
-        }
+      if (saldoAberto <= 0 && status === 'PAGO') continue;
 
-        row.volume += valorLiquido;
-        row.ticks += 1;
-        row.saldoDiario = row.entradas - row.saidas;
+      const key = toBrasiliaISODate(item.dataVencimento);
+      const row = ensureRow(key);
+
+      if (item.tipo === 'RECEBER') {
+        row.entradas += saldoAberto;
+      } else {
+        row.saidas += saldoAberto;
       }
+
+      row.volume += saldoAberto;
+      row.ticks += 1;
+      row.saldoDiario = row.entradas - row.saidas;
     }
 
     let saldoAcumulado = 0;
-    const serie = Array.from(map.values()).map((row) => {
+    const serie = Array.from(map.values())
+      .sort((a, b) => a.data.localeCompare(b.data))
+      .map((row) => {
       saldoAcumulado += row.saldoDiario;
       return {
         ...row,
         saldoAcumulado,
       };
-    });
+      });
 
     return setCached(cacheKey, {
       filtrosAplicados: payload,

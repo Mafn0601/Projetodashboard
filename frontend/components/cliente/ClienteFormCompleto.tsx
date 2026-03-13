@@ -23,6 +23,10 @@ import {
 import boxServiceAPI from '@/services/boxServiceAPI';
 import { validateForm } from '@/lib/validation';
 import {
+  buildBrasiliaDateTimeISOString,
+  getBrasiliaDateInputValue,
+  getBrasiliaNowISO,
+  getBrasiliaYear,
   timeToMinutes,
   toDdMmFromISODate,
   toDdMmYyyyFromISODate,
@@ -87,13 +91,6 @@ function generateId(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
 }
 
-function getLocalDateInputValue(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormProps) {
   const { user } = useAuth();
   // Form State
@@ -143,7 +140,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
   // Loading State
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const minDate = getLocalDateInputValue(new Date());
+  const minDate = getBrasiliaDateInputValue();
 
   const isUuid = (value?: string): boolean => {
     if (!value) return false;
@@ -511,8 +508,8 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
         // garantir campos principais preenchidos corretamente
         nome: formData.nomeCliente,
         email: formData.emailCliente,
-        dataCriacao: initial?.dataCriacao || new Date().toISOString(),
-        dataAtualizacao: new Date().toISOString(),
+        dataCriacao: initial?.dataCriacao || getBrasiliaNowISO(),
+        dataAtualizacao: getBrasiliaNowISO(),
       };
 
       let resultado;
@@ -632,7 +629,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
             }
 
             // Se passou todas as validações, criar os agendamentos
-            const dataAgendamentoISO = new Date(`${formData.dataAgendamento}T${horarioNormalizado}:00`).toISOString();
+            const dataAgendamentoISO = buildBrasiliaDateTimeISOString(formData.dataAgendamento, `${horarioNormalizado}:00`);
 
             for (const itemSelecionado of paresAgendamento) {
               const novoAgendamento = await agendamentoServiceAPI.create({
@@ -656,7 +653,7 @@ export default function ClienteForm({ initial, onSaved, onCancel }: ClienteFormP
               window.dispatchEvent(new Event('agendamento:novo'));
 
               addAgendamento({
-                titulo: `${String(new Date().getFullYear()).slice(-2)} ${formData.fabricante || 'VEÍCULO'} - ${formData.modelo || 'MODELO'}`,
+                titulo: `${String(getBrasiliaYear()).slice(-2)} ${formData.fabricante || 'VEÍCULO'} - ${formData.modelo || 'MODELO'}`,
                 placa: placa || 'SEM-PLACA',
                 responsavel: formData.responsavel || user?.name || 'Responsável',
                 cliente: formData.nomeCliente || formData.nome || 'Cliente',

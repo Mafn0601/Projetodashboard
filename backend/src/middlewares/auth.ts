@@ -42,16 +42,16 @@ export function authenticate(
       console.log('⚠️ Usando token MOCK para desenvolvimento');
 
       const MOCK_MAP: Record<string, { userId: string; email: string; role: string }> = {
-        'mock-token-admin-123':       { userId: 'mock-user-admin',       email: 'admin@exemplo.com',       role: 'ADMIN' },
-        'mock-token-gerente-123':     { userId: 'mock-user-gerente',     email: 'gerente@exemplo.com',     role: 'GERENTE' },
-        'mock-token-consultor-123':   { userId: 'mock-user-consultor',   email: 'consultor@exemplo.com',   role: 'PARCEIRO' },
-        'mock-token-operacional-123': { userId: 'mock-user-operacional', email: 'operacional@exemplo.com', role: 'OPERADOR' },
+        'mock-token-admin-123':       { userId: '11111111-1111-4111-8111-111111111111', email: 'admin@exemplo.com',       role: 'ADMIN' },
+        'mock-token-gerente-123':     { userId: '33333333-3333-4333-8333-333333333333', email: 'gerente@exemplo.com',     role: 'GERENTE' },
+        'mock-token-consultor-123':   { userId: '22222222-2222-4222-8222-222222222222', email: 'consultor@exemplo.com',   role: 'PARCEIRO' },
+        'mock-token-operacional-123': { userId: '44444444-4444-4444-8444-444444444444', email: 'operacional@exemplo.com', role: 'OPERADOR' },
         // alias legado
-        'mock-token-vendedor-123':    { userId: 'mock-user-vendedor',    email: 'vendedor@exemplo.com',    role: 'PARCEIRO' },
+        'mock-token-vendedor-123':    { userId: '22222222-2222-4222-8222-222222222222', email: 'vendedor@exemplo.com',    role: 'PARCEIRO' },
       };
 
       req.user = MOCK_MAP[token] ?? {
-        userId: 'mock-user-unknown',
+        userId: '55555555-5555-4555-8555-555555555555',
         email: 'unknown@exemplo.com',
         role: 'PARCEIRO',
       };

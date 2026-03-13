@@ -37,7 +37,7 @@ interface AuthContextType {
 // Usuários MOCK para testes (fallback se API falhar)
 const MOCK_USERS = [
   {
-    id: 'mock-1',
+    id: '11111111-1111-4111-8111-111111111111',
     name: 'Admin',
     login: 'admin',
     email: 'admin@exemplo.com',
@@ -46,7 +46,7 @@ const MOCK_USERS = [
     token: 'mock-token-admin-123'
   },
   {
-    id: 'mock-2',
+    id: '22222222-2222-4222-8222-222222222222',
     name: 'Consultor',
     login: 'consultor',
     email: 'consultor@exemplo.com',
@@ -55,7 +55,7 @@ const MOCK_USERS = [
     token: 'mock-token-consultor-123'
   },
   {
-    id: 'mock-3',
+    id: '33333333-3333-4333-8333-333333333333',
     name: 'Gerente',
     login: 'gerente',
     email: 'gerente@exemplo.com',
@@ -64,7 +64,7 @@ const MOCK_USERS = [
     token: 'mock-token-gerente-123'
   },
   {
-    id: 'mock-4',
+    id: '44444444-4444-4444-8444-444444444444',
     name: 'Operacional',
     login: 'operacional',
     email: 'operacional@exemplo.com',
@@ -74,7 +74,7 @@ const MOCK_USERS = [
   },
   // aliases legados para não quebrar logins existentes
   {
-    id: 'mock-2b',
+    id: '22222222-2222-4222-8222-222222222222',
     name: 'Vendedor',
     login: 'vendedor',
     email: 'vendedor@exemplo.com',

@@ -22,7 +22,10 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/components/AuthContext';
+import ClienteModalCompleto from '@/components/cliente/ClienteModalCompleto';
+import ClienteTable from '@/components/cliente/ClienteTable';
 import { clienteServiceAPI } from '@/services/clienteServiceAPI';
+import type { ClienteCompleto } from '@/services/clienteService';
 import { CreateLeadPayload, LeadAPI, LeadStatus, leadServiceAPI, LeadSummary } from '@/services/leadServiceAPI';
 import { LeadCreateModal } from './LeadCreateModal';
 import { LeadMetricCard } from './LeadMetricCard';
@@ -75,6 +78,8 @@ interface LeadDashboardProps {
 
 export function LeadDashboard({ compact = false, hideCreateButton = false, openCreateNonce = 0 }: LeadDashboardProps) {
   const { user } = useAuth();
+  const [tableTab, setTableTab] = useState<'leads' | 'clientes'>('leads');
+
   const [leads, setLeads] = useState<LeadAPI[]>([]);
   const [summary, setSummary] = useState<LeadSummary>({
     totalLeads: 0,
@@ -96,6 +101,13 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
   const [isRefreshing, startRefreshTransition] = useTransition();
   const [convertingLeadId, setConvertingLeadId] = useState<string | null>(null);
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+
+  const [clientes, setClientes] = useState<ClienteCompleto[]>([]);
+  const [clientesLoading, setClientesLoading] = useState(true);
+  const [clienteBusca, setClienteBusca] = useState('');
+  const [deletingClienteIds, setDeletingClienteIds] = useState<Set<string>>(new Set());
+  const [isClienteModalOpen, setIsClienteModalOpen] = useState(false);
+  const [editingCliente, setEditingCliente] = useState<ClienteCompleto | undefined>();
 
   const filters = useMemo(() => ({
     search: deferredSearch || undefined,
@@ -142,9 +154,109 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
 
   useEffect(() => {
     if (openCreateNonce > 0) {
-      setIsCreateOpen(true);
+      if (tableTab === 'clientes') {
+        setEditingCliente(undefined);
+        setIsClienteModalOpen(true);
+      } else {
+        setIsCreateOpen(true);
+      }
     }
-  }, [openCreateNonce]);
+  }, [openCreateNonce, tableTab]);
+
+  const loadClientes = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
+    const silent = options?.silent ?? false;
+    const forceRefresh = options?.forceRefresh ?? false;
+
+    try {
+      if (!silent) setClientesLoading(true);
+      const resultado = await clienteServiceAPI.findAll({ ativo: true }, { preferCache: true, forceRefresh });
+      setClientes(resultado || []);
+    } catch {
+      setClientes([]);
+    } finally {
+      if (!silent) setClientesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const cached = clienteServiceAPI.getCached();
+    if (cached.length > 0) {
+      setClientes(cached.filter((c) => c.ativo === true));
+      setClientesLoading(false);
+      clienteServiceAPI
+        .findAll({ ativo: true }, { forceRefresh: true })
+        .then((r) => setClientes((r || []).filter((c) => c.ativo === true)))
+        .catch(() => {});
+    } else {
+      void loadClientes({ forceRefresh: true });
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void loadClientes({ silent: true, forceRefresh: true });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  const clientesFiltrados = clientes.filter((c) => {
+    const termo = clienteBusca.toLowerCase();
+    return (
+      (c.nome || c.nomeCliente || '').toLowerCase().includes(termo) ||
+      (c.email || c.emailCliente || '').toLowerCase().includes(termo) ||
+      (c.telefone || '').toLowerCase().includes(termo) ||
+      (c.cpfCnpj || '').toLowerCase().includes(termo)
+    );
+  });
+
+  const handleDeleteCliente = async (id: string) => {
+    if (deletingClienteIds.has(id)) return;
+
+    setDeletingClienteIds((prev) => new Set(prev).add(id));
+    setClientes((prev) => prev.filter((c) => c.id !== id));
+
+    const sucesso = await clienteServiceAPI.delete(id);
+
+    setDeletingClienteIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+
+    if (!sucesso) await loadClientes({ forceRefresh: true });
+    else void loadClientes({ silent: true, forceRefresh: true });
+  };
+
+  const handleClienteSaved = async (cliente?: ClienteCompleto) => {
+    if (cliente) {
+      setClientes((prev) => {
+        const idx = prev.findIndex((c) => c.id === cliente.id);
+        if (idx === -1) return [cliente, ...prev];
+        const next = [...prev];
+        next[idx] = { ...next[idx], ...cliente };
+        return next;
+      });
+
+      void loadClientes({ silent: true, forceRefresh: true });
+    }
+
+    setIsClienteModalOpen(false);
+    setEditingCliente(undefined);
+  };
+
+  const handleOpenCadastro = () => {
+    if (tableTab === 'clientes') {
+      setEditingCliente(undefined);
+      setIsClienteModalOpen(true);
+      return;
+    }
+
+    setIsCreateOpen(true);
+  };
 
   const handleCreateLead = async (payload: CreateLeadPayload) => {
     try {
@@ -272,9 +384,9 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
                 {isRefreshing ? 'Atualizando...' : 'Atualizar'}
               </Button>
               {!hideCreateButton && (
-                <Button className="gap-2" onClick={() => setIsCreateOpen(true)}>
+                <Button className="gap-2" onClick={handleOpenCadastro}>
                   <Plus className="h-4 w-4 shrink-0" />
-                  Novo Lead
+                  Novo Cadastro
                 </Button>
               )}
             </div>
@@ -429,11 +541,69 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
               <h2 className="text-lg font-semibold text-slate-950 dark:text-slate-50">Tabela de Leads</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">Visão operacional para acompanhar o funil e executar ações sem sair da tela.</p>
             </div>
-            <div className="text-sm text-slate-500 dark:text-slate-400">{loading ? 'Carregando...' : `${leads.length} leads carregados`}</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {tableTab === 'leads'
+                ? (loading ? 'Carregando...' : `${leads.length} leads carregados`)
+                : (clientesLoading ? 'Carregando...' : `${clientesFiltrados.length} clientes carregados`)}
+            </div>
+          </div>
+          <div className="mt-4 flex gap-1 border-b border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setTableTab('leads')}
+              className={cn(
+                'px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors',
+                tableTab === 'leads'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+              )}
+            >
+              Leads
+            </button>
+            <button
+              type="button"
+              onClick={() => setTableTab('clientes')}
+              className={cn(
+                'px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors',
+                tableTab === 'clientes'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+              )}
+            >
+              Clientes
+            </button>
           </div>
         </div>
 
-        {error ? (
+        {tableTab === 'clientes' ? (
+          <div className="p-6">
+            <div className="mb-4 w-full max-w-xs">
+              <Input
+                placeholder="Buscar por nome, email, telefone ou CPF..."
+                value={clienteBusca}
+                onChange={(event) => setClienteBusca(event.target.value)}
+              />
+            </div>
+
+            {clientesLoading ? (
+              <div className="text-sm text-slate-500 dark:text-slate-400">Carregando clientes...</div>
+            ) : clientesFiltrados.length === 0 ? (
+              <div className="p-10 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  <Users className="h-6 w-6 shrink-0" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">Nenhum cliente encontrado</h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Cadastre um novo cliente ou ajuste os filtros.</p>
+              </div>
+            ) : (
+              <ClienteTable
+                clientes={clientesFiltrados}
+                onDelete={handleDeleteCliente}
+                deletingIds={deletingClienteIds}
+              />
+            )}
+          </div>
+        ) : error ? (
           <div className="p-6 text-sm text-rose-600 dark:text-rose-400">{error}</div>
         ) : loading ? (
           <div className="p-6 text-sm text-slate-500 dark:text-slate-400">Carregando dashboard...</div>
@@ -592,6 +762,16 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
         onClose={() => setIsCreateOpen(false)}
         onSubmit={handleCreateLead}
         isSubmitting={isSubmittingCreate}
+      />
+
+      <ClienteModalCompleto
+        isOpen={isClienteModalOpen}
+        onClose={() => {
+          setIsClienteModalOpen(false);
+          setEditingCliente(undefined);
+        }}
+        onSaved={handleClienteSaved}
+        initial={editingCliente}
       />
 
       <Modal

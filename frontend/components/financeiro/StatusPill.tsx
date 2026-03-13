@@ -1,11 +1,11 @@
 import { FinanceiroStatus } from '@/services/financeiroServiceAPI';
 
 const statusClassMap: Record<FinanceiroStatus, string> = {
-  EM_ABERTO: 'bg-sky-100 text-sky-700 border-sky-200',
-  PAGO: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  PARCIALMENTE_PAGO: 'bg-amber-100 text-amber-700 border-amber-200',
-  ATRASADO: 'bg-rose-100 text-rose-700 border-rose-200',
-  CANCELADO: 'bg-slate-100 text-slate-700 border-slate-200',
+  EM_ABERTO: 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/50 dark:text-sky-200 dark:border-sky-800',
+  PAGO: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-200 dark:border-emerald-800',
+  PARCIALMENTE_PAGO: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-800',
+  ATRASADO: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/50 dark:text-rose-200 dark:border-rose-800',
+  CANCELADO: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700',
 };
 
 const statusLabelMap: Record<FinanceiroStatus, string> = {

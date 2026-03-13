@@ -6,9 +6,9 @@ type Props = {
 };
 
 const toneMap = {
-  neutral: 'from-slate-50 to-white border-slate-200 text-slate-900',
-  positive: 'from-emerald-50 to-white border-emerald-200 text-emerald-900',
-  negative: 'from-rose-50 to-white border-rose-200 text-rose-900',
+  neutral: 'from-slate-50 to-white border-slate-200 text-slate-900 dark:from-slate-900 dark:to-slate-800 dark:border-slate-700 dark:text-slate-100',
+  positive: 'from-emerald-50 to-white border-emerald-200 text-emerald-900 dark:from-emerald-950/30 dark:to-slate-900 dark:border-emerald-800 dark:text-emerald-200',
+  negative: 'from-rose-50 to-white border-rose-200 text-rose-900 dark:from-rose-950/30 dark:to-slate-900 dark:border-rose-800 dark:text-rose-200',
 };
 
 export function FinanceiroKpiCard({ label, value, helper, tone = 'neutral' }: Props) {

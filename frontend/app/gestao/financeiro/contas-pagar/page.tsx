@@ -22,6 +22,13 @@ export default function ContasPagarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<ContaPagar | null>(null);
+  const [isEditingSelected, setIsEditingSelected] = useState(false);
+  const [selectedObservacoes, setSelectedObservacoes] = useState('');
+  const [selectedVencimento, setSelectedVencimento] = useState('');
+  const [selectedFormaPagamento, setSelectedFormaPagamento] = useState('');
+  const [selectedCentroCusto, setSelectedCentroCusto] = useState('');
+  const [selectedCategoria, setSelectedCategoria] = useState('');
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
 
   const [filters, setFilters] = useState({
@@ -86,27 +93,94 @@ export default function ContasPagarPage() {
     await load();
   };
 
+  const openDrawer = (row: ContaPagar, edit = false) => {
+    setSelected(row);
+    setIsEditingSelected(edit);
+    setSelectedObservacoes(row.observacoes || '');
+    setSelectedVencimento(row.dataVencimento.slice(0, 10));
+    setSelectedFormaPagamento(row.formaPagamento || '');
+    setSelectedCentroCusto(row.centroCusto || '');
+    setSelectedCategoria(row.categoriaDespesa || '');
+  };
+
+  const salvarEdicaoSelecionada = async () => {
+    if (!selected) return;
+
+    await financeiroServiceAPI.atualizarFatura(selected.id, {
+      observacoes: selectedObservacoes,
+      dataVencimento: selectedVencimento ? new Date(`${selectedVencimento}T12:00:00`).toISOString() : undefined,
+      formaPagamento: selectedFormaPagamento,
+      centroCusto: selectedCentroCusto,
+      categoria: selectedCategoria,
+    });
+
+    setActionMessage(`Conta ${selected.codigoFatura} atualizada.`);
+    setIsEditingSelected(false);
+    await load();
+  };
+
+  const anexarComprovante = async (row: ContaPagar) => {
+    const comprovanteUrl = window.prompt('Informe a URL do comprovante', 'https://arquivo.exemplo.com/comprovante.pdf');
+    if (!comprovanteUrl) return;
+
+    await financeiroServiceAPI.atualizarFatura(row.id, {
+      observacoes: `${row.observacoes || '-'} | Comprovante: ${comprovanteUrl}`,
+    });
+
+    setActionMessage(`Comprovante anexado à conta ${row.codigoFatura}.`);
+    await load();
+  };
+
+  const aprovarPagamento = async (row: ContaPagar) => {
+    await financeiroServiceAPI.atualizarFatura(row.id, {
+      observacoes: `${row.observacoes || '-'} | Aprovado em ${new Date().toLocaleString('pt-BR')}`,
+    });
+
+    setActionMessage(`Pagamento aprovado para ${row.codigoFatura}.`);
+    await load();
+  };
+
+  const agendarPagamento = async (row: ContaPagar) => {
+    const data = window.prompt('Data para agendar pagamento (AAAA-MM-DD)', new Date().toISOString().slice(0, 10));
+    if (!data) return;
+
+    const valor = Number(window.prompt('Valor para agendar', String(row.saldoAberto || 0)) || 0);
+    if (!valor || Number.isNaN(valor) || valor <= 0) return;
+
+    await financeiroServiceAPI.registrarPagamento({
+      tipo: 'PAGAR',
+      alvoId: row.id,
+      valor,
+      dataPagamento: new Date(`${data}T12:00:00`).toISOString(),
+      formaPagamento: row.formaPagamento || 'PIX',
+      observacoes: 'Pagamento agendado via contas a pagar',
+    });
+
+    setActionMessage(`Pagamento agendado para ${row.codigoFatura}.`);
+    await load();
+  };
+
   return (
     <div className="space-y-5 pb-10">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Contas a Pagar</h1>
-          <p className="text-sm text-slate-600">Controle de fornecedores, centro de custo e aprovacao de pagamentos.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Contas a Pagar</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Controle de fornecedores, centro de custo e aprovacao de pagamentos.</p>
         </div>
       </header>
 
       <FinanceiroNav />
 
-      <section className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-2 xl:grid-cols-5 dark:border-slate-700 dark:bg-slate-900">
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2 text-xs"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           placeholder="Buscar por fornecedor, codigo, categoria"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
 
         <select
-          className="rounded-lg border border-slate-300 px-3 py-2 text-xs"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           value={filters.status}
           onChange={(e) => setFilters((prev) => ({ ...prev, page: 1, status: e.target.value as '' | FinanceiroStatus }))}
         >
@@ -117,33 +191,34 @@ export default function ContasPagarPage() {
         </select>
 
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2 text-xs"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           placeholder="Forma de pagamento"
           value={filters.formaPagamento}
           onChange={(e) => setFilters((prev) => ({ ...prev, page: 1, formaPagamento: e.target.value }))}
         />
 
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2 text-xs"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           type="date"
           value={filters.dataInicial}
           onChange={(e) => setFilters((prev) => ({ ...prev, page: 1, dataInicial: e.target.value }))}
         />
 
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2 text-xs"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           type="date"
           value={filters.dataFinal}
           onChange={(e) => setFilters((prev) => ({ ...prev, page: 1, dataFinal: e.target.value }))}
         />
       </section>
 
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {error ? <p className="text-sm text-rose-600 dark:text-rose-300">{error}</p> : null}
+      {actionMessage ? <p className="text-sm text-emerald-700 dark:text-emerald-300">{actionMessage}</p> : null}
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="min-w-[1600px] w-full text-left text-xs">
-            <thead className="sticky top-0 bg-slate-100 text-slate-700">
+            <thead className="sticky top-0 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
               <tr>
                 <th className="px-3 py-2">Acoes</th>
                 <th className="px-3 py-2">Status</th>
@@ -168,14 +243,15 @@ export default function ContasPagarPage() {
               ) : rows.length === 0 ? (
                 <tr><td className="px-3 py-4" colSpan={15}>Nenhum registro encontrado.</td></tr>
               ) : rows.map((row) => (
-                <tr key={row.id} className="border-t border-slate-200 hover:bg-slate-50">
+                <tr key={row.id} className="border-t border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
                   <td className="px-3 py-2">
-                    <div className="flex flex-wrap gap-1">
-                      <button className="rounded border border-slate-300 px-2 py-1" onClick={() => setSelected(row)}>Visualizar</button>
-                      <button className="rounded border border-emerald-300 px-2 py-1 text-emerald-700" onClick={() => void registrarPagamento(row)}>Registrar pagamento</button>
-                      <button className="rounded border border-slate-300 px-2 py-1" onClick={() => window.alert('Comprovante anexado com sucesso.')}>Anexar comprovante</button>
-                      <button className="rounded border border-slate-300 px-2 py-1" onClick={() => window.alert('Pagamento aprovado.')}>Aprovar</button>
-                      <button className="rounded border border-slate-300 px-2 py-1" onClick={() => window.alert('Pagamento agendado.')}>Agendar</button>
+                    <div className="grid grid-cols-2 gap-1 xl:grid-cols-3">
+                      <button className="h-7 rounded border border-slate-300 px-2 text-[11px] dark:border-slate-700" onClick={() => openDrawer(row)}>Visualizar</button>
+                      <button className="h-7 rounded border border-slate-300 px-2 text-[11px] dark:border-slate-700" onClick={() => openDrawer(row, true)}>Editar</button>
+                      <button className="h-7 rounded border border-emerald-300 px-2 text-[11px] text-emerald-700 dark:border-emerald-700 dark:text-emerald-300" onClick={() => void registrarPagamento(row)}>Registrar pagamento</button>
+                      <button className="h-7 rounded border border-slate-300 px-2 text-[11px] dark:border-slate-700" onClick={() => void anexarComprovante(row)}>Anexar comprovante</button>
+                      <button className="h-7 rounded border border-slate-300 px-2 text-[11px] dark:border-slate-700" onClick={() => void aprovarPagamento(row)}>Aprovar</button>
+                      <button className="h-7 rounded border border-slate-300 px-2 text-[11px] dark:border-slate-700" onClick={() => void agendarPagamento(row)}>Agendar</button>
                     </div>
                   </td>
                   <td className="px-3 py-2"><StatusPill status={row.status} /></td>
@@ -185,7 +261,7 @@ export default function ContasPagarPage() {
                   <td className="px-3 py-2">{row.categoriaDespesa}</td>
                   <td className="px-3 py-2">{toDate(row.dataEmissao)}</td>
                   <td className="px-3 py-2">{toDate(row.dataVencimento)}</td>
-                  <td className={`px-3 py-2 ${row.diasAtraso > 0 ? 'text-rose-700 font-semibold' : ''}`}>{row.diasAtraso}</td>
+                  <td className={`px-3 py-2 ${row.diasAtraso > 0 ? 'text-rose-700 dark:text-rose-300 font-semibold' : ''}`}>{row.diasAtraso}</td>
                   <td className="px-3 py-2">{row.formaPagamento}</td>
                   <td className="px-3 py-2">{toCurrency(row.valorLiquido)}</td>
                   <td className="px-3 py-2">{toCurrency(row.valorPago)}</td>
@@ -199,14 +275,14 @@ export default function ContasPagarPage() {
         </div>
       </section>
 
-      <footer className="flex items-center justify-between text-xs text-slate-600">
+      <footer className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
         <span>Total de registros: {total}</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
             disabled={filters.page <= 1}
             onClick={() => setFilters((prev) => ({ ...prev, page: prev.page - 1 }))}
-            className="rounded border border-slate-300 px-3 py-1 disabled:opacity-50"
+            className="rounded border border-slate-300 px-3 py-1 disabled:opacity-50 dark:border-slate-700"
           >
             Anterior
           </button>
@@ -215,7 +291,7 @@ export default function ContasPagarPage() {
             type="button"
             disabled={filters.page >= totalPages}
             onClick={() => setFilters((prev) => ({ ...prev, page: prev.page + 1 }))}
-            className="rounded border border-slate-300 px-3 py-1 disabled:opacity-50"
+            className="rounded border border-slate-300 px-3 py-1 disabled:opacity-50 dark:border-slate-700"
           >
             Proxima
           </button>
@@ -225,9 +301,52 @@ export default function ContasPagarPage() {
       <FinanceiroDrawer title={selected ? `Detalhes ${selected.codigoFatura}` : 'Detalhes da conta'} isOpen={Boolean(selected)} onClose={() => setSelected(null)}>
         {selected ? (
           <div className="space-y-4 text-sm">
-            <section className="rounded-lg border border-slate-200 p-3">
-              <h4 className="font-semibold text-slate-900">Dados completos</h4>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-700">
+            {isEditingSelected ? (
+              <section className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs dark:border-sky-800 dark:bg-sky-950/20">
+                <h4 className="font-semibold text-sky-800 dark:text-sky-200">Edição rápida</h4>
+                <div className="mt-2 grid grid-cols-1 gap-2">
+                  <input
+                    className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    type="date"
+                    value={selectedVencimento}
+                    onChange={(e) => setSelectedVencimento(e.target.value)}
+                  />
+                  <input
+                    className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    value={selectedFormaPagamento}
+                    onChange={(e) => setSelectedFormaPagamento(e.target.value)}
+                    placeholder="Forma de pagamento"
+                  />
+                  <input
+                    className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    value={selectedCentroCusto}
+                    onChange={(e) => setSelectedCentroCusto(e.target.value)}
+                    placeholder="Centro de custo"
+                  />
+                  <input
+                    className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    value={selectedCategoria}
+                    onChange={(e) => setSelectedCategoria(e.target.value)}
+                    placeholder="Categoria"
+                  />
+                  <textarea
+                    className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    rows={3}
+                    value={selectedObservacoes}
+                    onChange={(e) => setSelectedObservacoes(e.target.value)}
+                    placeholder="Observações"
+                  />
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <button className="rounded bg-slate-900 px-2 py-1 text-white" onClick={() => void salvarEdicaoSelecionada()}>Salvar</button>
+                  <button className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700" onClick={() => setIsEditingSelected(false)}>Cancelar edição</button>
+                </div>
+              </section>
+            ) : null}
+
+            <section className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+              <h4 className="font-semibold text-slate-900 dark:text-slate-100">Dados completos</h4>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-700 dark:text-slate-300">
                 <p>Fornecedor: {selected.fornecedor}</p>
                 <p>Centro de custo: {selected.centroCusto}</p>
                 <p>Categoria: {selected.categoriaDespesa}</p>
@@ -236,9 +355,9 @@ export default function ContasPagarPage() {
                 <p>Saldo aberto: {toCurrency(selected.saldoAberto)}</p>
               </div>
             </section>
-            <section className="rounded-lg border border-slate-200 p-3 text-xs">
-              <h4 className="font-semibold text-slate-900">Historico e comprovantes</h4>
-              <ul className="mt-2 list-disc pl-4 text-slate-700">
+            <section className="rounded-lg border border-slate-200 p-3 text-xs dark:border-slate-700">
+              <h4 className="font-semibold text-slate-900 dark:text-slate-100">Historico e comprovantes</h4>
+              <ul className="mt-2 list-disc pl-4 text-slate-700 dark:text-slate-300">
                 <li>Aprovacao inicial registrada</li>
                 <li>Comprovante anexado na ultima baixa</li>
                 <li>Agendamento financeiro ativo</li>

@@ -439,6 +439,20 @@ export class FinanceiroRepository {
     const vencendoHoje = receber.data.filter((item) => item.dataVencimento.slice(0, 10) === hoje).slice(0, 8);
     const emAtraso = receber.data.filter((item) => item.status === 'ATRASADO').slice(0, 8);
 
+    const recebimentosPorCategoria = receber.data.reduce((acc: Record<string, number>, item: ContaReceber) => {
+      const key = item.formaPagamento || 'Outros';
+      acc[key] = (acc[key] || 0) + item.valorLiquido;
+      return acc;
+    }, {});
+
+    const pagamentosPorCategoria = pagar.data.reduce((acc: Record<string, number>, item: ContaPagar) => {
+      const key = item.categoriaDespesa || 'Outros';
+      acc[key] = (acc[key] || 0) + item.valorLiquido;
+      return acc;
+    }, {});
+
+    const fluxo = await this.fluxoCaixa({});
+
     return {
       cards: {
         totalReceber,
@@ -454,6 +468,11 @@ export class FinanceiroRepository {
         emAtraso,
         ultimosRecebimentos,
         ultimosPagamentos,
+      },
+      charts: {
+        fluxo30Dias: fluxo.serie,
+        recebimentosPorCategoria: Object.entries(recebimentosPorCategoria).map(([categoria, valor]) => ({ categoria, valor })),
+        pagamentosPorCategoria: Object.entries(pagamentosPorCategoria).map(([categoria, valor]) => ({ categoria, valor })),
       },
     };
   }
@@ -484,6 +503,40 @@ export class FinanceiroRepository {
       },
     });
 
+    // If no realized cash movement exists in the range, fallback to expected movements from faturas.
+    const faturasNoPeriodo = entries.length === 0
+      ? await db.fatura.findMany({
+          where: {
+            status: {
+              not: 'CANCELADO',
+            },
+            OR: [
+              {
+                dataVencimento: {
+                  gte: inicial,
+                  lte: final,
+                },
+              },
+              {
+                dataEmissao: {
+                  gte: inicial,
+                  lte: final,
+                },
+              },
+            ],
+          },
+          select: {
+            tipo: true,
+            valorBruto: true,
+            desconto: true,
+            dataVencimento: true,
+          },
+          orderBy: {
+            dataVencimento: 'asc',
+          },
+        })
+      : [];
+
     const map = new Map<string, { data: string; entradas: number; saidas: number; saldoDiario: number; saldoAcumulado: number }>();
 
     let cursor = new Date(inicial);
@@ -511,6 +564,23 @@ export class FinanceiroRepository {
       }
 
       row.saldoDiario = row.entradas - row.saidas;
+    }
+
+    if (entries.length === 0) {
+      for (const item of faturasNoPeriodo) {
+        const key = item.dataVencimento.toISOString().slice(0, 10);
+        const row = map.get(key);
+        if (!row) continue;
+
+        const valorLiquido = Math.max(0, Number(item.valorBruto) - Number(item.desconto || 0));
+        if (item.tipo === 'RECEBER') {
+          row.entradas += valorLiquido;
+        } else {
+          row.saidas += valorLiquido;
+        }
+
+        row.saldoDiario = row.entradas - row.saidas;
+      }
     }
 
     let saldoAcumulado = 0;

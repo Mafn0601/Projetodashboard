@@ -30,7 +30,6 @@ export default function ContasPagarPage() {
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
-  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
   const [filters, setFilters] = useState({
     page: 1,
@@ -161,6 +160,37 @@ export default function ContasPagarPage() {
     await load();
   };
 
+  const handleRowAction = async (row: ContaPagar, action: string) => {
+    if (action === 'visualizar') {
+      openDrawer(row);
+      return;
+    }
+
+    if (action === 'editar') {
+      openDrawer(row, true);
+      return;
+    }
+
+    if (action === 'registrar') {
+      await registrarPagamento(row);
+      return;
+    }
+
+    if (action === 'anexar') {
+      await anexarComprovante(row);
+      return;
+    }
+
+    if (action === 'aprovar') {
+      await aprovarPagamento(row);
+      return;
+    }
+
+    if (action === 'agendar') {
+      await agendarPagamento(row);
+    }
+  };
+
   return (
     <div className="space-y-5 pb-10">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -246,25 +276,23 @@ export default function ContasPagarPage() {
               ) : rows.map((row) => (
                 <tr key={row.id} className="border-t border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
                   <td className="px-3 py-2">
-                    <div className="relative">
-                      <button
-                        className="h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                        onClick={() => setOpenActionMenuId((prev) => (prev === row.id ? null : row.id))}
-                      >
-                        Ações
-                      </button>
-
-                      {openActionMenuId === row.id ? (
-                        <div className="absolute left-0 top-9 z-20 w-48 rounded-md border border-slate-200 bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900">
-                          <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { openDrawer(row); setOpenActionMenuId(null); }}>Visualizar</button>
-                          <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { openDrawer(row, true); setOpenActionMenuId(null); }}>Editar</button>
-                          <button className="w-full rounded px-2 py-1.5 text-left text-xs text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30" onClick={() => { void registrarPagamento(row); setOpenActionMenuId(null); }}>Registrar pagamento</button>
-                          <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { void anexarComprovante(row); setOpenActionMenuId(null); }}>Anexar comprovante</button>
-                          <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { void aprovarPagamento(row); setOpenActionMenuId(null); }}>Aprovar</button>
-                          <button className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => { void agendarPagamento(row); setOpenActionMenuId(null); }}>Agendar</button>
-                        </div>
-                      ) : null}
-                    </div>
+                    <select
+                      defaultValue=""
+                      className="h-8 w-36 rounded-md border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        event.target.value = '';
+                        void handleRowAction(row, value);
+                      }}
+                    >
+                      <option value="" disabled>Ações</option>
+                      <option value="visualizar">Visualizar</option>
+                      <option value="editar">Editar</option>
+                      <option value="registrar">Registrar pagamento</option>
+                      <option value="anexar">Anexar comprovante</option>
+                      <option value="aprovar">Aprovar</option>
+                      <option value="agendar">Agendar</option>
+                    </select>
                   </td>
                   <td className="px-3 py-2"><StatusPill status={row.status} /></td>
                   <td className="px-3 py-2">{row.codigoFatura}</td>

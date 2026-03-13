@@ -593,3 +593,61 @@ enum StatusChamado {
   RESOLVIDO
   FECHADO
 }
+
+// ==================== FINANCEIRO ====================
+
+model Fatura {
+  id             String       @id @default(uuid())
+  codigoFatura   String       @unique
+  tipo           String       // 'RECEBER' | 'PAGAR'
+  status         String       @default("EM_ABERTO")
+
+  nome           String       // cliente ou fornecedor
+  documento      String?
+
+  dataEmissao    DateTime     @default(now())
+  dataVencimento DateTime
+
+  formaPagamento String
+  valorBruto     Decimal      @db.Decimal(10, 2)
+  desconto       Decimal      @default(0) @db.Decimal(10, 2)
+
+  responsavel    String?
+  observacoes    String?
+  categoria      String?
+  centroCusto    String?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  pagamentos     PagamentoFin[]
+
+  @@index([tipo])
+  @@index([status])
+  @@index([dataVencimento])
+  @@index([tipo, status])
+  @@map("faturas")
+}
+
+model PagamentoFin {
+  id             String   @id @default(uuid())
+  tipo           String   // 'RECEBER' | 'PAGAR'
+  alvoId         String   // Fatura.id
+
+  fatura         Fatura   @relation(fields: [alvoId], references: [id], onDelete: Cascade)
+
+  valor          Decimal  @db.Decimal(10, 2)
+  dataPagamento  DateTime
+  formaPagamento String
+  observacoes    String?
+  comprovanteUrl String?
+  aprovado       Boolean  @default(false)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([alvoId])
+  @@index([tipo, alvoId])
+  @@index([dataPagamento])
+  @@map("pagamentos_fin")
+}

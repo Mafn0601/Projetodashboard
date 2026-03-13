@@ -1,4 +1,5 @@
-import financeiroRepository from '../repositories/financeiroRepository';
+// Use require here to avoid transient TS module resolution glitches after file regeneration.
+const financeiroRepository = require('../repositories/financeiroRepository').default as any;
 
 export type FinanceiroStatus = 'EM_ABERTO' | 'PAGO' | 'PARCIALMENTE_PAGO' | 'ATRASADO' | 'CANCELADO';
 
@@ -102,7 +103,7 @@ export class FinanceiroService {
     }
 
     if (filters.tipo === 'despesas-categoria') {
-      const grouped = pagar.data.reduce<Record<string, number>>((acc, item) => {
+      const grouped = pagar.data.reduce((acc: Record<string, number>, item: any) => {
         acc[item.categoriaDespesa] = (acc[item.categoriaDespesa] || 0) + item.valorLiquido;
         return acc;
       }, {});
@@ -114,7 +115,7 @@ export class FinanceiroService {
     }
 
     if (filters.tipo === 'faturamento-cliente') {
-      const grouped = receber.data.reduce<Record<string, number>>((acc, item) => {
+      const grouped = receber.data.reduce((acc: Record<string, number>, item: any) => {
         acc[item.cliente] = (acc[item.cliente] || 0) + item.valorRecebido;
         return acc;
       }, {});
@@ -125,7 +126,7 @@ export class FinanceiroService {
       };
     }
 
-    const groupedMensal = receber.data.reduce<Record<string, number>>((acc, item) => {
+    const groupedMensal = receber.data.reduce((acc: Record<string, number>, item: any) => {
       const key = item.dataEmissao.slice(0, 7);
       acc[key] = (acc[key] || 0) + item.valorLiquido;
       return acc;
@@ -157,13 +158,13 @@ export class FinanceiroService {
       financeiroRepository.fluxoCaixa({}),
     ]);
 
-    const recebimentosPorCategoria = receber.data.reduce<Record<string, number>>((acc, item) => {
+    const recebimentosPorCategoria = receber.data.reduce((acc: Record<string, number>, item: any) => {
       const key = item.formaPagamento || 'Outros';
       acc[key] = (acc[key] || 0) + item.valorLiquido;
       return acc;
     }, {});
 
-    const pagamentosPorCategoria = pagar.data.reduce<Record<string, number>>((acc, item) => {
+    const pagamentosPorCategoria = pagar.data.reduce((acc: Record<string, number>, item: any) => {
       const key = item.categoriaDespesa || 'Outros';
       acc[key] = (acc[key] || 0) + item.valorLiquido;
       return acc;

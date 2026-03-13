@@ -1,5 +1,7 @@
 import prisma from '../../../lib/prisma';
 
+const db: any = prisma;
+
 type FinanceiroStatus = 'EM_ABERTO' | 'PAGO' | 'PARCIALMENTE_PAGO' | 'ATRASADO' | 'CANCELADO';
 type FinanceiroTipo = 'RECEBER' | 'PAGAR';
 
@@ -20,7 +22,7 @@ type ContaReceber = {
   saldoAberto: number;
   responsavel: string;
   observacoes: string;
-  origem: 'OS' | 'MANUAL';
+  origem: 'MANUAL';
 };
 
 type ContaPagar = {
@@ -57,26 +59,6 @@ type Pagamento = {
   updatedAt: string;
 };
 
-type FaturaManual = {
-  id: string;
-  tipo: FinanceiroTipo;
-  codigoFatura: string;
-  status: FinanceiroStatus;
-  nome: string;
-  documento: string;
-  dataEmissao: string;
-  dataVencimento: string;
-  formaPagamento: string;
-  valorBruto: number;
-  desconto: number;
-  responsavel: string;
-  observacoes: string;
-  categoria?: string;
-  centroCusto?: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 type ListQuery = {
   page: number;
   pageSize: number;
@@ -91,59 +73,11 @@ type ListQuery = {
   sortOrder?: 'asc' | 'desc';
 };
 
-const faturasManuais: FaturaManual[] = [];
-const pagamentosStore: Pagamento[] = [];
-
-const contasPagarStore: Omit<ContaPagar, 'diasAtraso' | 'status' | 'valorPago' | 'saldoAberto'>[] = [
-  {
-    id: 'cp-1',
-    codigoFatura: 'CP-2026-0001',
-    fornecedor: 'Fornecedor Alpha',
-    centroCusto: 'Operacao',
-    categoriaDespesa: 'Insumos',
-    dataEmissao: new Date(Date.now() - 12 * 86400000).toISOString(),
-    dataVencimento: new Date(Date.now() - 2 * 86400000).toISOString(),
-    formaPagamento: 'PIX',
-    valorBruto: 3800,
-    desconto: 100,
-    valorLiquido: 3700,
-    responsavel: 'Financeiro',
-    observacoes: 'Compra recorrente mensal',
-  },
-  {
-    id: 'cp-2',
-    codigoFatura: 'CP-2026-0002',
-    fornecedor: 'Fornecedor Beta',
-    centroCusto: 'Administrativo',
-    categoriaDespesa: 'SaaS',
-    dataEmissao: new Date(Date.now() - 5 * 86400000).toISOString(),
-    dataVencimento: new Date(Date.now() + 4 * 86400000).toISOString(),
-    formaPagamento: 'BOLETO',
-    valorBruto: 990,
-    desconto: 0,
-    valorLiquido: 990,
-    responsavel: 'Financeiro',
-    observacoes: 'Renovacao anual de plataforma',
-  },
-];
-
 function normalizeText(value: string): string {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
-}
-
-function startOfDayISO(value: string): string {
-  const date = new Date(value);
-  date.setHours(0, 0, 0, 0);
-  return date.toISOString();
-}
-
-function endOfDayISO(value: string): string {
-  const date = new Date(value);
-  date.setHours(23, 59, 59, 999);
-  return date.toISOString();
 }
 
 function diffDays(now: Date, targetISO: string): number {
@@ -158,18 +92,12 @@ function monthBounds(reference = new Date()): { start: Date; end: Date } {
   return { start, end };
 }
 
-function buildStatus(valorLiquido: number, pago: number, vencimento: string, manualStatus?: FinanceiroStatus): FinanceiroStatus {
+function buildStatus(valorLiquido: number, pago: number, vencimento: string, manualStatus?: string): FinanceiroStatus {
   if (manualStatus === 'CANCELADO') return 'CANCELADO';
   if (pago >= valorLiquido) return 'PAGO';
   if (pago > 0 && pago < valorLiquido) return 'PARCIALMENTE_PAGO';
   if (new Date(vencimento).getTime() < Date.now()) return 'ATRASADO';
   return 'EM_ABERTO';
-}
-
-function sumPagamentos(tipo: FinanceiroTipo, alvoId: string): number {
-  return pagamentosStore
-    .filter((item) => item.tipo === tipo && item.alvoId === alvoId)
-    .reduce((acc, curr) => acc + curr.valor, 0);
 }
 
 function applyListFilters<T extends { status: FinanceiroStatus; formaPagamento: string; valorLiquido: number; dataVencimento: string }>(
@@ -192,8 +120,8 @@ function applyListFilters<T extends { status: FinanceiroStatus; formaPagamento: 
     if (query.minValor !== undefined && item.valorLiquido < query.minValor) return false;
     if (query.maxValor !== undefined && item.valorLiquido > query.maxValor) return false;
 
-    if (query.dataInicial && item.dataVencimento < startOfDayISO(query.dataInicial)) return false;
-    if (query.dataFinal && item.dataVencimento > endOfDayISO(query.dataFinal)) return false;
+    if (query.dataInicial && item.dataVencimento < new Date(`${query.dataInicial}T00:00:00`).toISOString()) return false;
+    if (query.dataFinal && item.dataVencimento > new Date(`${query.dataFinal}T23:59:59`).toISOString()) return false;
 
     return true;
   });
@@ -223,161 +151,132 @@ function applySortAndPagination<T extends Record<string, unknown>>(rows: T[], qu
   return { data, total };
 }
 
+async function nextCodigoFatura(tipo: FinanceiroTipo): Promise<string> {
+  const prefixo = tipo === 'RECEBER' ? 'FR' : 'FP';
+  const ano = new Date().getFullYear();
+
+  const ultima = await db.fatura.findFirst({
+    where: {
+      tipo,
+      codigoFatura: {
+        startsWith: `${prefixo}-${ano}-`,
+      },
+    },
+    orderBy: {
+      codigoFatura: 'desc',
+    },
+    select: {
+      codigoFatura: true,
+    },
+  });
+
+  const ultimoNumero = ultima?.codigoFatura?.split('-').pop();
+  const sequencia = String((Number(ultimoNumero || '0') || 0) + 1).padStart(4, '0');
+  return `${prefixo}-${ano}-${sequencia}`;
+}
+
 export class FinanceiroRepository {
   async listContasReceber(query: ListQuery): Promise<{ data: ContaReceber[]; total: number }> {
-    const ordens = await prisma.ordemServico.findMany({
-      where: {
-        valorTotal: {
-          not: null,
-        },
-      },
-      select: {
-        id: true,
-        numeroOS: true,
-        formaPagamento: true,
-        valorTotal: true,
-        valorDesconto: true,
-        dataAbertura: true,
-        dataPrevisao: true,
-        observacoes: true,
-        cliente: {
+    const faturas = await db.fatura.findMany({
+      where: { tipo: 'RECEBER' },
+      include: {
+        pagamentos: {
           select: {
-            nome: true,
-            cpfCnpj: true,
-          },
-        },
-        responsavel: {
-          select: {
-            nome: true,
-            login: true,
+            valor: true,
           },
         },
       },
       orderBy: {
-        dataAbertura: 'desc',
+        createdAt: 'desc',
       },
-      take: 500,
+      take: 2000,
     });
 
     const now = new Date();
 
-    const baseRows: ContaReceber[] = ordens.map((os) => {
-      const valorBruto = Number(os.valorTotal || 0);
-      const desconto = Number(os.valorDesconto || 0);
+    const rows: ContaReceber[] = faturas.map((item: any) => {
+      const valorBruto = Number(item.valorBruto);
+      const desconto = Number(item.desconto || 0);
       const valorLiquido = Math.max(0, valorBruto - desconto);
-      const valorRecebido = sumPagamentos('RECEBER', os.id);
+      const valorRecebido = item.pagamentos.reduce((acc: number, pag: any) => acc + Number(pag.valor), 0);
       const saldoAberto = Math.max(0, valorLiquido - valorRecebido);
-      const dataEmissao = os.dataAbertura.toISOString();
-      const dataVencimento = (os.dataPrevisao || new Date(os.dataAbertura.getTime() + 15 * 86400000)).toISOString();
-      const status = buildStatus(valorLiquido, valorRecebido, dataVencimento);
+      const dataVencimento = item.dataVencimento.toISOString();
+      const status = buildStatus(valorLiquido, valorRecebido, dataVencimento, item.status);
 
       return {
-        id: os.id,
-        codigoFatura: `FR-${os.numeroOS}`,
+        id: item.id,
+        codigoFatura: item.codigoFatura,
         status,
-        cliente: os.cliente?.nome || 'Cliente nao informado',
-        cnpjCpf: os.cliente?.cpfCnpj || '-',
-        dataEmissao,
+        cliente: item.nome,
+        cnpjCpf: item.documento || '-',
+        dataEmissao: item.dataEmissao.toISOString(),
         dataVencimento,
         diasAtraso: status === 'ATRASADO' ? diffDays(now, dataVencimento) : 0,
-        formaPagamento: os.formaPagamento || 'NAO_INFORMADO',
+        formaPagamento: item.formaPagamento,
         valorBruto,
         desconto,
         valorLiquido,
         valorRecebido,
         saldoAberto,
-        responsavel: os.responsavel?.nome || os.responsavel?.login || '-',
-        observacoes: os.observacoes || '-',
-        origem: 'OS',
+        responsavel: item.responsavel || '-',
+        observacoes: item.observacoes || '-',
+        origem: 'MANUAL',
       };
     });
 
-    const manuais = faturasManuais
-      .filter((item) => item.tipo === 'RECEBER')
-      .map<ContaReceber>((item) => {
-        const valorLiquido = Math.max(0, item.valorBruto - item.desconto);
-        const valorRecebido = sumPagamentos('RECEBER', item.id);
-        const saldoAberto = Math.max(0, valorLiquido - valorRecebido);
-        const status = buildStatus(valorLiquido, valorRecebido, item.dataVencimento, item.status);
-
-        return {
-          id: item.id,
-          codigoFatura: item.codigoFatura,
-          status,
-          cliente: item.nome,
-          cnpjCpf: item.documento || '-',
-          dataEmissao: item.dataEmissao,
-          dataVencimento: item.dataVencimento,
-          diasAtraso: status === 'ATRASADO' ? diffDays(now, item.dataVencimento) : 0,
-          formaPagamento: item.formaPagamento,
-          valorBruto: item.valorBruto,
-          desconto: item.desconto,
-          valorLiquido,
-          valorRecebido,
-          saldoAberto,
-          responsavel: item.responsavel,
-          observacoes: item.observacoes || '-',
-          origem: 'MANUAL',
-        };
-      });
-
-    const merged = [...baseRows, ...manuais];
-
-    const filtered = applyListFilters(merged, query, (item) => `${item.codigoFatura} ${item.cliente} ${item.cnpjCpf} ${item.responsavel} ${item.observacoes}`);
-
+    const filtered = applyListFilters(rows, query, (item) => `${item.codigoFatura} ${item.cliente} ${item.cnpjCpf} ${item.responsavel} ${item.observacoes}`);
     return applySortAndPagination(filtered, query);
   }
 
   async listContasPagar(query: ListQuery): Promise<{ data: ContaPagar[]; total: number }> {
+    const faturas = await db.fatura.findMany({
+      where: { tipo: 'PAGAR' },
+      include: {
+        pagamentos: {
+          select: {
+            valor: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 2000,
+    });
+
     const now = new Date();
 
-    const fromStore = contasPagarStore.map<ContaPagar>((item) => {
-      const valorPago = sumPagamentos('PAGAR', item.id);
-      const saldoAberto = Math.max(0, item.valorLiquido - valorPago);
-      const status = buildStatus(item.valorLiquido, valorPago, item.dataVencimento);
+    const rows: ContaPagar[] = faturas.map((item: any) => {
+      const valorBruto = Number(item.valorBruto);
+      const desconto = Number(item.desconto || 0);
+      const valorLiquido = Math.max(0, valorBruto - desconto);
+      const valorPago = item.pagamentos.reduce((acc: number, pag: any) => acc + Number(pag.valor), 0);
+      const saldoAberto = Math.max(0, valorLiquido - valorPago);
+      const dataVencimento = item.dataVencimento.toISOString();
+      const status = buildStatus(valorLiquido, valorPago, dataVencimento, item.status);
 
       return {
-        ...item,
+        id: item.id,
+        codigoFatura: item.codigoFatura,
         status,
+        fornecedor: item.nome,
+        centroCusto: item.centroCusto || 'Geral',
+        categoriaDespesa: item.categoria || 'Outros',
+        dataEmissao: item.dataEmissao.toISOString(),
+        dataVencimento,
+        diasAtraso: status === 'ATRASADO' ? diffDays(now, dataVencimento) : 0,
+        formaPagamento: item.formaPagamento,
+        valorBruto,
+        desconto,
+        valorLiquido,
         valorPago,
         saldoAberto,
-        diasAtraso: status === 'ATRASADO' ? diffDays(now, item.dataVencimento) : 0,
+        responsavel: item.responsavel || '-',
+        observacoes: item.observacoes || '-',
       };
     });
 
-    const manuais = faturasManuais
-      .filter((item) => item.tipo === 'PAGAR')
-      .map<ContaPagar>((item) => {
-        const valorLiquido = Math.max(0, item.valorBruto - item.desconto);
-        const valorPago = sumPagamentos('PAGAR', item.id);
-        const saldoAberto = Math.max(0, valorLiquido - valorPago);
-        const status = buildStatus(valorLiquido, valorPago, item.dataVencimento, item.status);
-
-        return {
-          id: item.id,
-          codigoFatura: item.codigoFatura,
-          status,
-          fornecedor: item.nome,
-          centroCusto: item.centroCusto || 'Geral',
-          categoriaDespesa: item.categoria || 'Outros',
-          dataEmissao: item.dataEmissao,
-          dataVencimento: item.dataVencimento,
-          diasAtraso: status === 'ATRASADO' ? diffDays(now, item.dataVencimento) : 0,
-          formaPagamento: item.formaPagamento,
-          valorBruto: item.valorBruto,
-          desconto: item.desconto,
-          valorLiquido,
-          valorPago,
-          saldoAberto,
-          responsavel: item.responsavel,
-          observacoes: item.observacoes || '-',
-        };
-      });
-
-    const merged = [...fromStore, ...manuais];
-
-    const filtered = applyListFilters(merged, query, (item) => `${item.codigoFatura} ${item.fornecedor} ${item.centroCusto} ${item.categoriaDespesa} ${item.responsavel} ${item.observacoes}`);
-
+    const filtered = applyListFilters(rows, query, (item) => `${item.codigoFatura} ${item.fornecedor} ${item.centroCusto} ${item.categoriaDespesa} ${item.responsavel} ${item.observacoes}`);
     return applySortAndPagination(filtered, query);
   }
 
@@ -394,70 +293,84 @@ export class FinanceiroRepository {
     observacoes?: string;
     categoria?: string;
     centroCusto?: string;
-  }): Promise<FaturaManual> {
-    const id = `fat-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const seq = String(faturasManuais.length + 1).padStart(4, '0');
+  }) {
+    const codigoFatura = await nextCodigoFatura(payload.tipo);
 
-    const item: FaturaManual = {
-      id,
-      tipo: payload.tipo,
-      codigoFatura: `${payload.tipo === 'RECEBER' ? 'FR' : 'FP'}-2026-${seq}`,
-      status: 'EM_ABERTO',
-      nome: payload.nome,
-      documento: payload.documento || '-',
-      dataEmissao: payload.dataEmissao,
-      dataVencimento: payload.dataVencimento,
-      formaPagamento: payload.formaPagamento,
-      valorBruto: payload.valorBruto,
-      desconto: payload.desconto || 0,
-      responsavel: payload.responsavel || 'Financeiro',
-      observacoes: payload.observacoes || '-',
-      categoria: payload.categoria,
-      centroCusto: payload.centroCusto,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    faturasManuais.unshift(item);
-    return item;
+    return db.fatura.create({
+      data: {
+        codigoFatura,
+        tipo: payload.tipo,
+        status: 'EM_ABERTO',
+        nome: payload.nome,
+        documento: payload.documento,
+        dataEmissao: new Date(payload.dataEmissao),
+        dataVencimento: new Date(payload.dataVencimento),
+        formaPagamento: payload.formaPagamento,
+        valorBruto: payload.valorBruto,
+        desconto: payload.desconto || 0,
+        responsavel: payload.responsavel,
+        observacoes: payload.observacoes,
+        categoria: payload.categoria,
+        centroCusto: payload.centroCusto,
+      },
+    });
   }
 
-  async updateFatura(id: string, payload: Partial<FaturaManual>): Promise<FaturaManual | null> {
-    const index = faturasManuais.findIndex((item) => item.id === id);
-    if (index === -1) return null;
+  async updateFatura(id: string, payload: Record<string, unknown>) {
+    const exists = await db.fatura.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) return null;
 
-    faturasManuais[index] = {
-      ...faturasManuais[index],
-      ...payload,
-      updatedAt: new Date().toISOString(),
-    };
-
-    return faturasManuais[index];
+    return db.fatura.update({
+      where: { id },
+      data: {
+        status: typeof payload.status === 'string' ? payload.status : undefined,
+        nome: typeof payload.nome === 'string' ? payload.nome : undefined,
+        documento: typeof payload.documento === 'string' ? payload.documento : undefined,
+        dataEmissao: typeof payload.dataEmissao === 'string' ? new Date(payload.dataEmissao) : undefined,
+        dataVencimento: typeof payload.dataVencimento === 'string' ? new Date(payload.dataVencimento) : undefined,
+        formaPagamento: typeof payload.formaPagamento === 'string' ? payload.formaPagamento : undefined,
+        valorBruto: typeof payload.valorBruto === 'number' ? payload.valorBruto : undefined,
+        desconto: typeof payload.desconto === 'number' ? payload.desconto : undefined,
+        responsavel: typeof payload.responsavel === 'string' ? payload.responsavel : undefined,
+        observacoes: typeof payload.observacoes === 'string' ? payload.observacoes : undefined,
+        categoria: typeof payload.categoria === 'string' ? payload.categoria : undefined,
+        centroCusto: typeof payload.centroCusto === 'string' ? payload.centroCusto : undefined,
+      },
+    });
   }
 
-  async createPagamento(payload: Omit<Pagamento, 'id' | 'createdAt' | 'updatedAt'>): Promise<Pagamento> {
-    const item: Pagamento = {
-      ...payload,
-      id: `pag-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    pagamentosStore.unshift(item);
-    return item;
+  async createPagamento(payload: Omit<Pagamento, 'id' | 'createdAt' | 'updatedAt'>) {
+    return db.pagamentoFin.create({
+      data: {
+        tipo: payload.tipo,
+        alvoId: payload.alvoId,
+        valor: payload.valor,
+        dataPagamento: new Date(payload.dataPagamento),
+        formaPagamento: payload.formaPagamento,
+        observacoes: payload.observacoes,
+        comprovanteUrl: payload.comprovanteUrl,
+        aprovado: payload.aprovado || false,
+      },
+    });
   }
 
-  async updatePagamento(id: string, payload: Partial<Pagamento>): Promise<Pagamento | null> {
-    const index = pagamentosStore.findIndex((item) => item.id === id);
-    if (index === -1) return null;
+  async updatePagamento(id: string, payload: Partial<Pagamento>) {
+    const exists = await db.pagamentoFin.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) return null;
 
-    pagamentosStore[index] = {
-      ...pagamentosStore[index],
-      ...payload,
-      updatedAt: new Date().toISOString(),
-    };
-
-    return pagamentosStore[index];
+    return db.pagamentoFin.update({
+      where: { id },
+      data: {
+        tipo: payload.tipo,
+        alvoId: payload.alvoId,
+        valor: typeof payload.valor === 'number' ? payload.valor : undefined,
+        dataPagamento: payload.dataPagamento ? new Date(payload.dataPagamento) : undefined,
+        formaPagamento: payload.formaPagamento,
+        observacoes: payload.observacoes,
+        comprovanteUrl: payload.comprovanteUrl,
+        aprovado: payload.aprovado,
+      },
+    });
   }
 
   async dashboard(): Promise<Record<string, unknown>> {
@@ -469,24 +382,36 @@ export class FinanceiroRepository {
     const now = new Date();
     const { start, end } = monthBounds(now);
 
+    const pagamentosMesRows = await db.pagamentoFin.findMany({
+      where: {
+        dataPagamento: {
+          gte: start,
+          lte: end,
+        },
+      },
+      select: {
+        tipo: true,
+        valor: true,
+        formaPagamento: true,
+        dataPagamento: true,
+        id: true,
+      },
+      orderBy: {
+        dataPagamento: 'desc',
+      },
+      take: 200,
+    });
+
     const totalReceber = receber.data.reduce((acc, item) => acc + item.saldoAberto, 0);
     const totalPagar = pagar.data.reduce((acc, item) => acc + item.saldoAberto, 0);
 
-    const recebimentosMes = pagamentosStore
-      .filter((item) => item.tipo === 'RECEBER')
-      .filter((item) => {
-        const d = new Date(item.dataPagamento);
-        return d >= start && d <= end;
-      })
-      .reduce((acc, item) => acc + item.valor, 0);
+    const recebimentosMes = pagamentosMesRows
+      .filter((item: any) => item.tipo === 'RECEBER')
+      .reduce((acc: number, item: any) => acc + Number(item.valor), 0);
 
-    const pagamentosMes = pagamentosStore
-      .filter((item) => item.tipo === 'PAGAR')
-      .filter((item) => {
-        const d = new Date(item.dataPagamento);
-        return d >= start && d <= end;
-      })
-      .reduce((acc, item) => acc + item.valor, 0);
+    const pagamentosMes = pagamentosMesRows
+      .filter((item: any) => item.tipo === 'PAGAR')
+      .reduce((acc: number, item: any) => acc + Number(item.valor), 0);
 
     const valoresAtraso = [
       ...receber.data.filter((item) => item.status === 'ATRASADO').map((item) => item.saldoAberto),
@@ -496,16 +421,21 @@ export class FinanceiroRepository {
     const previsaoCaixa = totalReceber - totalPagar;
     const saldoAtual = recebimentosMes - pagamentosMes;
 
-    const ultimosRecebimentos = pagamentosStore
-      .filter((item) => item.tipo === 'RECEBER')
-      .slice(0, 8);
+    const ultimosRecebimentos = pagamentosMesRows.filter((item: any) => item.tipo === 'RECEBER').slice(0, 8).map((item: any) => ({
+      id: item.id,
+      formaPagamento: item.formaPagamento,
+      valor: Number(item.valor),
+      dataPagamento: item.dataPagamento.toISOString(),
+    }));
 
-    const ultimosPagamentos = pagamentosStore
-      .filter((item) => item.tipo === 'PAGAR')
-      .slice(0, 8);
+    const ultimosPagamentos = pagamentosMesRows.filter((item: any) => item.tipo === 'PAGAR').slice(0, 8).map((item: any) => ({
+      id: item.id,
+      formaPagamento: item.formaPagamento,
+      valor: Number(item.valor),
+      dataPagamento: item.dataPagamento.toISOString(),
+    }));
 
     const hoje = now.toISOString().slice(0, 10);
-
     const vencendoHoje = receber.data.filter((item) => item.dataVencimento.slice(0, 10) === hoje).slice(0, 8);
     const emAtraso = receber.data.filter((item) => item.status === 'ATRASADO').slice(0, 8);
 
@@ -537,9 +467,21 @@ export class FinanceiroRepository {
     inicial.setHours(0, 0, 0, 0);
     final.setHours(23, 59, 59, 999);
 
-    const entries = pagamentosStore.filter((item) => {
-      const d = new Date(item.dataPagamento);
-      return d >= inicial && d <= final;
+    const entries = await db.pagamentoFin.findMany({
+      where: {
+        dataPagamento: {
+          gte: inicial,
+          lte: final,
+        },
+      },
+      select: {
+        tipo: true,
+        valor: true,
+        dataPagamento: true,
+      },
+      orderBy: {
+        dataPagamento: 'asc',
+      },
     });
 
     const map = new Map<string, { data: string; entradas: number; saidas: number; saldoDiario: number; saldoAcumulado: number }>();
@@ -558,14 +500,14 @@ export class FinanceiroRepository {
     }
 
     for (const item of entries) {
-      const key = item.dataPagamento.slice(0, 10);
+      const key = item.dataPagamento.toISOString().slice(0, 10);
       const row = map.get(key);
       if (!row) continue;
 
       if (item.tipo === 'RECEBER') {
-        row.entradas += item.valor;
+        row.entradas += Number(item.valor);
       } else {
-        row.saidas += item.valor;
+        row.saidas += Number(item.valor);
       }
 
       row.saldoDiario = row.entradas - row.saidas;

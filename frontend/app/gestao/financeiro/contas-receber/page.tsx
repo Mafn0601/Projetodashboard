@@ -4,6 +4,7 @@ import { type MouseEvent, useEffect, useMemo, useState } from 'react';
 import { FinanceiroDrawer } from '@/components/financeiro/FinanceiroDrawer';
 import { FinanceiroNav } from '@/components/financeiro/FinanceiroNav';
 import { StatusPill } from '@/components/financeiro/StatusPill';
+import { applyCpfCnpjMask } from '@/components/ui/MaskedInput';
 import { buildBrasiliaDateTimeISOString, formatDateInBrasilia, getBrasiliaNowISO, toBrasiliaISODate } from '@/lib/dateUtils';
 import { ContaReceber, FinanceiroStatus, financeiroServiceAPI } from '@/services/financeiroServiceAPI';
 
@@ -15,7 +16,13 @@ function toCurrency(value: number): string {
   return financeiroServiceAPI.toCurrency(value || 0);
 }
 
+function toDocument(value?: string): string {
+  if (!value) return '-';
+  return applyCpfCnpjMask(value);
+}
+
 const STATUS_OPTIONS: FinanceiroStatus[] = ['EM_ABERTO', 'PAGO', 'PARCIALMENTE_PAGO', 'ATRASADO', 'CANCELADO'];
+const PAYMENT_OPTIONS = ['PIX', 'BOLETO', 'TRANSFERENCIA', 'CARTAO', 'DINHEIRO'];
 
 export default function ContasReceberPage() {
   const [rows, setRows] = useState<ContaReceber[]>([]);
@@ -146,7 +153,7 @@ export default function ContasReceberPage() {
     const conteudo = [
       `Boleto Simulado - ${row.codigoFatura}`,
       `Sacado: ${row.cliente}`,
-      `Documento: ${row.cnpjCpf}`,
+      `Documento: ${toDocument(row.cnpjCpf)}`,
       `Vencimento: ${toDate(row.dataVencimento)}`,
       `Valor: ${toCurrency(row.saldoAberto)}`,
       `Forma de pagamento: ${row.formaPagamento}`,
@@ -335,12 +342,16 @@ export default function ContasReceberPage() {
           ))}
         </select>
 
-        <input
+        <select
           className="rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          placeholder="Forma de pagamento"
           value={filters.formaPagamento}
           onChange={(e) => setFilters((prev) => ({ ...prev, page: 1, formaPagamento: e.target.value }))}
-        />
+        >
+          <option value="">Todas as formas de pagamento</option>
+          {PAYMENT_OPTIONS.map((option) => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
 
         <input
           className="rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
@@ -433,7 +444,7 @@ export default function ContasReceberPage() {
                   <td className="px-3 py-2"><StatusPill status={row.status} /></td>
                   <td className="px-3 py-2">{row.codigoFatura}</td>
                   <td className="px-3 py-2">{row.cliente}</td>
-                  <td className="px-3 py-2">{row.cnpjCpf}</td>
+                  <td className="px-3 py-2">{toDocument(row.cnpjCpf)}</td>
                   <td className="px-3 py-2">{toDate(row.dataEmissao)}</td>
                   <td className="px-3 py-2">{toDate(row.dataVencimento)}</td>
                   <td className={`px-3 py-2 ${row.diasAtraso > 0 ? 'text-rose-700 dark:text-rose-300 font-semibold' : ''}`}>{row.diasAtraso}</td>
@@ -518,7 +529,7 @@ export default function ContasReceberPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">CNPJ / CPF</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Documento" value={novaFatura.documento} onChange={(e) => setNovaFatura((prev) => ({ ...prev, documento: e.target.value }))} />
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Documento" value={novaFatura.documento} onChange={(e) => setNovaFatura((prev) => ({ ...prev, documento: applyCpfCnpjMask(e.target.value) }))} />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Vencimento *</label>
@@ -535,11 +546,9 @@ export default function ContasReceberPage() {
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Forma de pagamento</label>
                 <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" value={novaFatura.formaPagamento} onChange={(e) => setNovaFatura((prev) => ({ ...prev, formaPagamento: e.target.value }))}>
-                  <option value="PIX">PIX</option>
-                  <option value="BOLETO">Boleto</option>
-                  <option value="TRANSFERENCIA">Transferência</option>
-                  <option value="CARTAO">Cartão</option>
-                  <option value="DINHEIRO">Dinheiro</option>
+                  {PAYMENT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -572,12 +581,15 @@ export default function ContasReceberPage() {
                     value={selectedVencimento}
                     onChange={(e) => setSelectedVencimento(e.target.value)}
                   />
-                  <input
+                  <select
                     className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     value={selectedFormaPagamento}
                     onChange={(e) => setSelectedFormaPagamento(e.target.value)}
-                    placeholder="Forma de pagamento"
-                  />
+                  >
+                    {PAYMENT_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
                   <textarea
                     className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     rows={3}
@@ -597,7 +609,7 @@ export default function ContasReceberPage() {
               <h4 className="font-semibold text-slate-900 dark:text-slate-100">Dados completos</h4>
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-700 dark:text-slate-300">
                 <p>Cliente: {selected.cliente}</p>
-                <p>Documento: {selected.cnpjCpf}</p>
+                <p>Documento: {toDocument(selected.cnpjCpf)}</p>
                 <p>Emissao: {toDate(selected.dataEmissao)}</p>
                 <p>Vencimento: {toDate(selected.dataVencimento)}</p>
                 <p>Valor liquido: {toCurrency(selected.valorLiquido)}</p>

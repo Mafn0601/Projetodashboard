@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function FinanceiroPage() {
-  redirect('/vendas/fatura');
+  redirect('/gestao/financeiro/dashboard');
 }

@@ -285,6 +285,128 @@ export const leadListQuerySchema = z
     take: query.take !== undefined ? Math.min(query.take, 100) : undefined,
   }));
 
+// ==================== FINANCEIRO ====================
+
+const optionalDecimal = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((value) => {
+    const raw = Array.isArray(value) ? value[0] : value;
+    if (raw === undefined || raw === '') return undefined;
+    const parsed = Number(raw);
+    if (Number.isNaN(parsed)) return NaN;
+    return parsed;
+  })
+  .refine((value) => value === undefined || !Number.isNaN(value), {
+    message: 'Valor decimal invalido',
+  });
+
+const optionalFinanceiroStatus = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((value) => (Array.isArray(value) ? value[0] : value))
+  .refine(
+    (value) =>
+      value === undefined ||
+      z.enum(['EM_ABERTO', 'PAGO', 'PARCIALMENTE_PAGO', 'ATRASADO', 'CANCELADO']).safeParse(value).success,
+    {
+      message: 'Status financeiro invalido',
+    }
+  );
+
+const optionalSortOrderFinanceiro = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((value) => (Array.isArray(value) ? value[0] : value))
+  .refine((value) => value === undefined || z.enum(['asc', 'desc']).safeParse(value).success, {
+    message: 'Ordem de classificacao invalida',
+  });
+
+const optionalPositiveInt = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((value) => {
+    const raw = Array.isArray(value) ? value[0] : value;
+    if (raw === undefined || raw === '') return undefined;
+    const parsed = Number(raw);
+    if (!Number.isInteger(parsed) || parsed <= 0) return NaN;
+    return parsed;
+  })
+  .refine((value) => value === undefined || (Number.isInteger(value) && value > 0), {
+    message: 'Deve ser inteiro positivo',
+  });
+
+export const financeiroListQuerySchema = z
+  .object({
+    page: optionalPositiveInt,
+    pageSize: optionalPositiveInt,
+    search: optionalText,
+    status: optionalFinanceiroStatus,
+    formaPagamento: optionalText,
+    minValor: optionalDecimal,
+    maxValor: optionalDecimal,
+    dataInicial: optionalDateString,
+    dataFinal: optionalDateString,
+    sortBy: optionalText,
+    sortOrder: optionalSortOrderFinanceiro,
+  })
+  .transform((query) => ({
+    page: query.page ?? 1,
+    pageSize: Math.min(query.pageSize ?? 20, 100),
+    search: query.search,
+    status: query.status,
+    formaPagamento: query.formaPagamento,
+    minValor: query.minValor,
+    maxValor: query.maxValor,
+    dataInicial: query.dataInicial,
+    dataFinal: query.dataFinal,
+    sortBy: query.sortBy,
+    sortOrder: query.sortOrder,
+  }));
+
+export const financeiroFluxoQuerySchema = z.object({
+  dataInicial: optionalDateString,
+  dataFinal: optionalDateString,
+  categoria: optionalText,
+  contaBancaria: optionalText,
+});
+
+export const financeiroFaturaSchema = z.object({
+  tipo: z.enum(['RECEBER', 'PAGAR']),
+  nome: z.string().min(2, 'Nome obrigatorio'),
+  documento: z.string().optional(),
+  dataEmissao: z.string().datetime('Data de emissao invalida'),
+  dataVencimento: z.string().datetime('Data de vencimento invalida'),
+  formaPagamento: z.string().min(2, 'Forma de pagamento obrigatoria'),
+  valorBruto: z.number().min(0),
+  desconto: z.number().min(0).optional(),
+  responsavel: z.string().optional(),
+  observacoes: z.string().optional(),
+  categoria: z.string().optional(),
+  centroCusto: z.string().optional(),
+});
+
+export const financeiroPagamentoSchema = z.object({
+  tipo: z.enum(['RECEBER', 'PAGAR']),
+  alvoId: z.string().min(2),
+  valor: z.number().positive(),
+  dataPagamento: z.string().datetime('Data de pagamento invalida'),
+  formaPagamento: z.string().min(2),
+  observacoes: z.string().optional(),
+  comprovanteUrl: z.string().optional(),
+  aprovado: z.boolean().optional(),
+});
+
+export const financeiroContaParamsSchema = z.object({
+  id: z.string().min(2, 'ID invalido'),
+});
+
+export const financeiroRelatoriosQuerySchema = z.object({
+  tipo: z.enum(['contas-receber', 'contas-atraso', 'faturamento-cliente', 'faturamento-mensal', 'despesas-categoria']),
+  dataInicial: optionalDateString,
+  dataFinal: optionalDateString,
+});
+
 // ==================== VEÍCULO ====================
 
 export const createVeiculoSchema = z.object({

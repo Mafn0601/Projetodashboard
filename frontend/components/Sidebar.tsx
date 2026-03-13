@@ -132,7 +132,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Financeiro",
-    href: "/gestao/financeiro",
+    href: "/gestao/financeiro/dashboard",
     icon: Receipt,
     section: "Gestão",
     roles: ADMIN_GERENTE,

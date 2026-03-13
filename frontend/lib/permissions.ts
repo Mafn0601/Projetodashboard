@@ -92,6 +92,12 @@ export const PAGE_ROLES: Record<string, Role[]> = {
   // Gestão
   '/gestao/estoque': ADMIN_GERENTE,
   '/gestao/financeiro': ADMIN_GERENTE,
+  '/gestao/financeiro/dashboard': ADMIN_GERENTE,
+  '/gestao/financeiro/contas-receber': ADMIN_GERENTE,
+  '/gestao/financeiro/contas-pagar': ADMIN_GERENTE,
+  '/gestao/financeiro/fluxo-caixa': ADMIN_GERENTE,
+  '/gestao/financeiro/relatorios': ADMIN_GERENTE,
+  '/gestao/financeiro/configuracoes': ADMIN_GERENTE,
   '/gestao/comissoes': ADMIN_GERENTE,
   '/inteligencia/relatorios': ADMIN_GERENTE,
   '/inteligencia/comissoes': ADMIN_GERENTE,

@@ -13,6 +13,7 @@ import boxRoutes from './boxRoutes';
 import statusRoutes from './statusRoutes';
 import orcamentoRoutes from './orcamentoRoutes';
 import leadRoutes from './leadRoutes';
+import financeiroRoutes from '../modules/financeiro/routes/financeiroRoutes';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/boxes', boxRoutes);
 router.use('/status', statusRoutes);
 router.use('/orcamentos', orcamentoRoutes);
 router.use('/leads', leadRoutes);
+router.use('/financeiro', financeiroRoutes);
 
 export default router;

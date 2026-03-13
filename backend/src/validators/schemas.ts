@@ -115,6 +115,7 @@ export const registerSchema = z.object({
   email: z.string().email('Email inválido'),
   senha: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
   role: z.enum(['ADMIN', 'GERENTE', 'OPERADOR', 'PARCEIRO']).optional(),
+  parceiroId: z.string().uuid('Parceiro ID inválido').optional(),
 });
 
 export const changePasswordSchema = z

@@ -4,6 +4,15 @@ import { changePasswordSchema, loginSchema, registerSchema } from '../validators
 import { AuthRequest } from '../middlewares/auth';
 
 export class AuthController {
+  async listUsers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const usuarios = await authService.listUsers();
+      res.json(usuarios);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // registra um novo usuário
   async register(req: Request, res: Response, next: NextFunction) {
     try {

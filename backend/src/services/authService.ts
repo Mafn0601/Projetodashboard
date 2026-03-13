@@ -20,6 +20,7 @@ export class AuthService {
     email: string;
     senha: string;
     role?: 'ADMIN' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO';
+    parceiroId?: string;
   }) {
     const normalizedEmail = data.email.trim().toLowerCase();
     const normalizedLogin = data.login.trim().toLowerCase();
@@ -71,6 +72,30 @@ export class AuthService {
     });
 
     return { usuario, token };
+  }
+
+  async listUsers() {
+    const usuarios = await prisma.usuario.findMany({
+      select: {
+        id: true,
+        nome: true,
+        login: true,
+        email: true,
+        role: true,
+        ativo: true,
+        parceiroId: true,
+        parceiro: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return usuarios;
   }
 
   async login(identifier: string, senha: string) {

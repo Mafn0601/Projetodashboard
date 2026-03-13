@@ -5,70 +5,31 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select, SelectOption } from '@/components/ui/Select';
-import { MaskedInput, applyCpfCnpjMask, applyPhoneMask } from '@/components/ui/MaskedInput';
 import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
-import { equipeServiceAPI } from '@/services/equipeServiceAPI';
+import { usuarioServiceAPI, UsuarioRole } from '@/services/usuarioServiceAPI';
 
 type UsuarioForm = {
   parceiroId: string;
   email: string;
   login: string;
   senha: string;
-  cpf: string;
-  funcao: string;
-  telefone: string;
-  estado: string;
+  role: UsuarioRole;
 };
 
 type UsuarioListItem = {
   id: string;
   parceiroNome: string;
-  cpf: string;
   email: string;
   login: string;
-  funcao: string;
-  telefone: string;
-  estado: string;
+  role: UsuarioRole;
+  ativo: boolean;
 };
 
-const funcoesOptions: SelectOption[] = [
-  { value: 'admin', label: 'ADMIN' },
-  { value: 'consultor_vendas', label: 'Consultor de Vendas' },
-  { value: 'gerente_vendas', label: 'Gerente de Vendas' },
-  { value: 'gerente_comercial', label: 'Gerente Comercial' },
-  { value: 'operador', label: 'Operador' },
-  { value: 'auxiliar_administrativo', label: 'Auxiliar Administrativo' },
-  { value: 'tecnico', label: 'Técnico' },
-];
-
-const estadosBrasil: SelectOption[] = [
-  { value: 'AC', label: 'Acre' },
-  { value: 'AL', label: 'Alagoas' },
-  { value: 'AP', label: 'Amapá' },
-  { value: 'AM', label: 'Amazonas' },
-  { value: 'BA', label: 'Bahia' },
-  { value: 'CE', label: 'Ceará' },
-  { value: 'DF', label: 'Distrito Federal' },
-  { value: 'ES', label: 'Espírito Santo' },
-  { value: 'GO', label: 'Goiás' },
-  { value: 'MA', label: 'Maranhão' },
-  { value: 'MT', label: 'Mato Grosso' },
-  { value: 'MS', label: 'Mato Grosso do Sul' },
-  { value: 'MG', label: 'Minas Gerais' },
-  { value: 'PA', label: 'Pará' },
-  { value: 'PB', label: 'Paraíba' },
-  { value: 'PR', label: 'Paraná' },
-  { value: 'PE', label: 'Pernambuco' },
-  { value: 'PI', label: 'Piauí' },
-  { value: 'RJ', label: 'Rio de Janeiro' },
-  { value: 'RN', label: 'Rio Grande do Norte' },
-  { value: 'RS', label: 'Rio Grande do Sul' },
-  { value: 'RO', label: 'Rondônia' },
-  { value: 'RR', label: 'Roraima' },
-  { value: 'SC', label: 'Santa Catarina' },
-  { value: 'SP', label: 'São Paulo' },
-  { value: 'SE', label: 'Sergipe' },
-  { value: 'TO', label: 'Tocantins' },
+const roleOptions: SelectOption[] = [
+  { value: 'ADMIN', label: 'ADMIN' },
+  { value: 'GERENTE', label: 'GERENTE' },
+  { value: 'OPERADOR', label: 'OPERADOR' },
+  { value: 'PARCEIRO', label: 'PARCEIRO' },
 ];
 
 const initialForm: UsuarioForm = {
@@ -76,30 +37,11 @@ const initialForm: UsuarioForm = {
   email: '',
   login: '',
   senha: '',
-  cpf: '',
-  funcao: '',
-  telefone: '',
-  estado: '',
+  role: 'OPERADOR',
 };
 
 function normalizeText(value: string) {
   return value.trim();
-}
-
-function normalizeDigits(value: string) {
-  return value.replace(/\D/g, '');
-}
-
-function formatCpf(value: string) {
-  const digits = normalizeDigits(value).slice(0, 11);
-  if (!digits) return '-';
-  return applyCpfCnpjMask(digits);
-}
-
-function formatPhone(value: string) {
-  const digits = normalizeDigits(value).slice(0, 11);
-  if (!digits) return '-';
-  return applyPhoneMask(digits);
 }
 
 export default function Page() {
@@ -116,23 +58,21 @@ export default function Page() {
   const carregarDados = async () => {
     try {
       setIsLoading(true);
-      const [parceiros, equipes] = await Promise.all([
+      const [parceiros, usuariosApi] = await Promise.all([
         parceiroServiceAPI.findAll({ preferCache: true, forceRefresh: true }),
-        equipeServiceAPI.findAll(undefined, undefined, { preferCache: true, forceRefresh: true }),
+        usuarioServiceAPI.findAll(),
       ]);
 
       const options = parceiros.map((p) => ({ value: p.id, label: p.nome }));
       setConcessionarias(options);
 
-      const list: UsuarioListItem[] = equipes.map((eq) => ({
-        id: eq.id,
-        parceiroNome: parceiros.find((p) => p.id === eq.parceiroId)?.nome || eq.parceiro?.nome || '-',
-        cpf: eq.cpf || '-',
-        email: eq.email || '-',
-        login: eq.login,
-        funcao: eq.funcao,
-        telefone: eq.telefone || '-',
-        estado: eq.estado || '-',
+      const list: UsuarioListItem[] = usuariosApi.map((usuario) => ({
+        id: usuario.id,
+        parceiroNome: parceiros.find((p) => p.id === usuario.parceiroId)?.nome || usuario.parceiro?.nome || '-',
+        email: usuario.email,
+        login: usuario.login,
+        role: usuario.role,
+        ativo: usuario.ativo,
       }));
       setUsuarios(list);
     } catch (error) {
@@ -163,11 +103,7 @@ export default function Page() {
     if (!normalizeText(form.email)) nextErrors.email = 'Campo obrigatório';
     if (!normalizeText(form.login)) nextErrors.login = 'Campo obrigatório';
     if (!normalizeText(form.senha)) nextErrors.senha = 'Campo obrigatório';
-    if (!normalizeText(form.funcao)) nextErrors.funcao = 'Campo obrigatório';
-
-    const cpf = normalizeDigits(form.cpf);
-    if (!cpf) nextErrors.cpf = 'Campo obrigatório';
-    else if (cpf.length !== 11) nextErrors.cpf = 'CPF deve ter 11 dígitos';
+    if (!normalizeText(form.role)) nextErrors.role = 'Campo obrigatório';
 
     if (normalizeText(form.senha) && normalizeText(form.senha).length < 6) {
       nextErrors.senha = 'Senha deve ter no mínimo 6 caracteres';
@@ -184,15 +120,13 @@ export default function Page() {
     setIsSubmitting(true);
 
     try {
-      await equipeServiceAPI.create({
+      await usuarioServiceAPI.create({
+        nome: normalizeText(form.login),
         parceiroId: normalizeText(form.parceiroId),
         email: normalizeText(form.email).toLowerCase(),
-        cpf: normalizeDigits(form.cpf),
-        funcao: normalizeText(form.funcao),
-        telefone: normalizeDigits(form.telefone),
-        estado: normalizeText(form.estado) || undefined,
-        comissaoAtiva: false,
-        ativo: true,
+        login: normalizeText(form.login).toLowerCase(),
+        senha: form.senha,
+        role: form.role,
       });
 
       setIsModalOpen(false);
@@ -233,23 +167,21 @@ export default function Page() {
               <table className="w-full text-left text-xs">
                 <thead className="sticky top-0 bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                   <tr>
-                    <th className="px-3 py-2 font-medium">CPF</th>
+                    <th className="px-3 py-2 font-medium">Concessionária</th>
                     <th className="px-3 py-2 font-medium">E-mail</th>
                     <th className="px-3 py-2 font-medium">Login</th>
-                    <th className="px-3 py-2 font-medium">Função</th>
-                    <th className="px-3 py-2 font-medium">Telefone</th>
-                    <th className="px-3 py-2 font-medium">Estado</th>
+                    <th className="px-3 py-2 font-medium">Perfil</th>
+                    <th className="px-3 py-2 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {usuarios.map((usuario) => (
                     <tr key={usuario.id} className="border-t border-slate-200 odd:bg-slate-50 even:bg-slate-100 dark:border-slate-800 dark:odd:bg-slate-950/60 dark:even:bg-slate-900/40">
-                      <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{formatCpf(usuario.cpf)}</td>
+                      <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.parceiroNome}</td>
                       <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.email}</td>
                       <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.login}</td>
-                      <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.funcao}</td>
-                      <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{formatPhone(usuario.telefone)}</td>
-                      <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.estado}</td>
+                      <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.role}</td>
+                      <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{usuario.ativo ? 'Ativo' : 'Inativo'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -309,39 +241,15 @@ export default function Page() {
               required
               error={errors.senha}
             />
-            <MaskedInput
-              label="CPF"
-              mask="cpfCnpj"
-              value={form.cpf}
-              onChange={(value) => handleChange('cpf', value)}
-              required
-              error={errors.cpf}
-            />
             <Select
-              label="Função"
-              value={form.funcao}
-              onChange={(value) => handleChange('funcao', value)}
-              options={funcoesOptions}
+              label="Perfil"
+              value={form.role}
+              onChange={(value) => handleChange('role', value as UsuarioRole)}
+              options={roleOptions}
               placeholder="Selecione..."
               required
-              error={errors.funcao}
+              error={errors.role}
               forceAbove={false}
-            />
-            <MaskedInput
-              label="Telefone"
-              mask="phone"
-              value={form.telefone}
-              onChange={(value) => handleChange('telefone', value)}
-              error={errors.telefone}
-            />
-            <Select
-              label="Estado"
-              value={form.estado}
-              onChange={(value) => handleChange('estado', value)}
-              options={estadosBrasil}
-              placeholder="Selecione..."
-              error={errors.estado}
-              forceAbove={true}
             />
           </div>
 

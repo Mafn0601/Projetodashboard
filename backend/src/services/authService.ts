@@ -3,6 +3,16 @@ import { hashPassword, comparePassword } from '../utils/password';
 import { generateToken } from '../utils/jwt';
 import { AppError } from '../middlewares/errorHandler';
 
+function mapEquipeFuncaoToRole(funcao?: string): 'ADMIN' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO' {
+  const value = String(funcao || '').trim().toLowerCase();
+
+  if (value === 'admin' || value === 'administrador') return 'ADMIN';
+  if (value.includes('gerente')) return 'GERENTE';
+  if (value === 'operador' || value === 'tecnico' || value === 'auxiliar_administrativo') return 'OPERADOR';
+
+  return 'PARCEIRO';
+}
+
 export class AuthService {
   async register(data: {
     nome: string;
@@ -103,7 +113,7 @@ export class AuthService {
                 login: loginEquipe,
                 email: emailEquipe,
                 senha: equipe.senha,
-                role: 'PARCEIRO',
+                role: mapEquipeFuncaoToRole(equipe.funcao),
                 ativo: equipe.ativo,
                 parceiroId: equipe.parceiroId,
               },
@@ -121,6 +131,24 @@ export class AuthService {
 
     if (!usuario) {
       throw new AppError('Credenciais inválidas', 401);
+    }
+
+    // Se existir equipe vinculada por login/email, alinhar role automaticamente.
+    const equipeRelacionada = await prisma.equipe.findFirst({
+      where: {
+        OR: [{ login: usuario.login }, { email: usuario.email }],
+      },
+      select: { funcao: true },
+    });
+
+    if (equipeRelacionada) {
+      const roleEsperada = mapEquipeFuncaoToRole(equipeRelacionada.funcao);
+      if (usuario.role !== roleEsperada) {
+        usuario = await prisma.usuario.update({
+          where: { id: usuario.id },
+          data: { role: roleEsperada },
+        });
+      }
     }
 
     // checa se o usuário tá ativo ainda

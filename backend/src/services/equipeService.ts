@@ -4,6 +4,16 @@ import { AppError } from '../middlewares/errorHandler';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
+function mapEquipeFuncaoToRole(funcao?: string): 'ADMIN' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO' {
+  const value = String(funcao || '').trim().toLowerCase();
+
+  if (value === 'admin' || value === 'administrador') return 'ADMIN';
+  if (value.includes('gerente')) return 'GERENTE';
+  if (value === 'operador' || value === 'tecnico' || value === 'auxiliar_administrativo') return 'OPERADOR';
+
+  return 'PARCEIRO';
+}
+
 export class EquipeService {
   async findAll(filters?: {
     search?: string;
@@ -261,7 +271,7 @@ export class EquipeService {
           login,
           email,
           senha: senhaHash,
-          role: 'PARCEIRO',
+          role: mapEquipeFuncaoToRole(data.funcao),
           ativo: data.ativo ?? true,
           parceiroId: data.parceiroId,
         },
@@ -341,6 +351,7 @@ export class EquipeService {
     const usuarioAtualDaEquipe = await prisma.usuario.findUnique({ where: { login: equipe.login } });
     const novoLoginUsuario = loginAtualizado || equipe.login;
     const novoEmailUsuario = emailAtualizado || (equipe.email || '').trim().toLowerCase();
+    const novaRoleUsuario = mapEquipeFuncaoToRole(data.funcao || equipe.funcao);
 
     if (usuarioAtualDaEquipe) {
       if (novoLoginUsuario !== usuarioAtualDaEquipe.login) {
@@ -364,6 +375,7 @@ export class EquipeService {
           login: novoLoginUsuario,
           ...(novoEmailUsuario ? { email: novoEmailUsuario } : {}),
           ...(senhaHash ? { senha: senhaHash } : {}),
+          role: novaRoleUsuario,
           ...(data.ativo !== undefined ? { ativo: data.ativo } : {}),
         },
       });
@@ -384,7 +396,7 @@ export class EquipeService {
           login: novoLoginUsuario,
           email: novoEmailUsuario,
           senha: senhaHash || equipe.senha,
-          role: 'PARCEIRO',
+          role: novaRoleUsuario,
           ativo: data.ativo ?? equipe.ativo,
           parceiroId: equipe.parceiroId,
         },

@@ -19,13 +19,7 @@ type ListFilters = {
 
 export class FinanceiroService {
   async dashboard() {
-    const data = await financeiroRepository.dashboard();
-    const charts = await this.buildDashboardCharts();
-
-    return {
-      ...data,
-      charts,
-    };
+    return financeiroRepository.dashboard();
   }
 
   async contasReceber(filters: ListFilters) {
@@ -151,31 +145,6 @@ export class FinanceiroService {
     };
   }
 
-  private async buildDashboardCharts() {
-    const [receber, pagar, fluxo] = await Promise.all([
-      financeiroRepository.listContasReceber({ page: 1, pageSize: 1000 }),
-      financeiroRepository.listContasPagar({ page: 1, pageSize: 1000 }),
-      financeiroRepository.fluxoCaixa({}),
-    ]);
-
-    const recebimentosPorCategoria = receber.data.reduce((acc: Record<string, number>, item: any) => {
-      const key = item.formaPagamento || 'Outros';
-      acc[key] = (acc[key] || 0) + item.valorLiquido;
-      return acc;
-    }, {});
-
-    const pagamentosPorCategoria = pagar.data.reduce((acc: Record<string, number>, item: any) => {
-      const key = item.categoriaDespesa || 'Outros';
-      acc[key] = (acc[key] || 0) + item.valorLiquido;
-      return acc;
-    }, {});
-
-    return {
-      fluxo30Dias: fluxo.serie,
-      recebimentosPorCategoria: Object.entries(recebimentosPorCategoria).map(([categoria, valor]) => ({ categoria, valor })),
-      pagamentosPorCategoria: Object.entries(pagamentosPorCategoria).map(([categoria, valor]) => ({ categoria, valor })),
-    };
-  }
 }
 
 export default new FinanceiroService();

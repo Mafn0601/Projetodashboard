@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { FinanceiroKpiCard } from '@/components/financeiro/FinanceiroKpiCard';
 import { FinanceiroNav } from '@/components/financeiro/FinanceiroNav';
 import { StatusPill } from '@/components/financeiro/StatusPill';
@@ -35,18 +36,17 @@ export default function FinanceiroDashboardPage() {
   const cards = data?.cards;
 
   const fluxoSerie = useMemo(() => {
-    const serie = data?.charts?.fluxo30Dias || [];
-    const maxAbs = Math.max(
-      1,
-      ...serie.map((item: any) => Math.max(Math.abs(item.entradas), Math.abs(item.saidas), Math.abs(item.saldoDiario)))
-    );
-
+    const serie: any[] = data?.charts?.fluxo30Dias || [];
     return serie.slice(-30).map((item: any) => ({
-      ...item,
-      entradaWidth: `${Math.max(2, Math.round((item.entradas / maxAbs) * 100))}%`,
-      saidaWidth: `${Math.max(2, Math.round((item.saidas / maxAbs) * 100))}%`,
+      data: item.data,
+      Entradas: item.entradas,
+      Saidas: item.saidas,
+      Saldo: item.saldoDiario,
     }));
   }, [data]);
+
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 }).format(v);
 
   if (loading) {
     return <div className="p-6 text-sm text-slate-500 dark:text-slate-300">Carregando dashboard financeiro...</div>;
@@ -77,20 +77,36 @@ export default function FinanceiroDashboardPage() {
 
       <section className="grid gap-4 xl:grid-cols-3">
         <article className="rounded-xl border border-slate-200 bg-white p-4 xl:col-span-2 dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Fluxo de caixa (ultimos 30 dias)</h2>
-          <div className="mt-4 space-y-3">
-            {fluxoSerie.map((item: any) => (
-              <div key={item.data} className="grid grid-cols-[90px_1fr_1fr] items-center gap-3 text-xs">
-                <span className="text-slate-500 dark:text-slate-300">{item.data}</span>
-                <div className="h-2 rounded bg-emerald-50 dark:bg-emerald-900/30">
-                  <div className="h-2 rounded bg-emerald-500" style={{ width: item.entradaWidth }} />
-                </div>
-                <div className="h-2 rounded bg-rose-50 dark:bg-rose-900/30">
-                  <div className="h-2 rounded bg-rose-500" style={{ width: item.saidaWidth }} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Fluxo de caixa — ultimos 30 dias</h2>
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart data={fluxoSerie} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradEntradas" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradSaidas" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradSaldo" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="data" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+              <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={60} />
+              <Tooltip
+                formatter={(value: number, name: string) => [financeiroServiceAPI.toCurrency(value), name]}
+                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff' }}
+              />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+              <Area type="monotone" dataKey="Entradas" stroke="#10b981" strokeWidth={2} fill="url(#gradEntradas)" dot={false} />
+              <Area type="monotone" dataKey="Saidas" stroke="#f43f5e" strokeWidth={2} fill="url(#gradSaidas)" dot={false} />
+              <Area type="monotone" dataKey="Saldo" stroke="#6366f1" strokeWidth={2} fill="url(#gradSaldo)" dot={false} strokeDasharray="4 2" />
+            </AreaChart>
+          </ResponsiveContainer>
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">

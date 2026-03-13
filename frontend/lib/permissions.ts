@@ -68,7 +68,6 @@ export const PAGE_ROLES: Record<string, Role[]> = {
   '/cadastros/cliente': ADMIN_GERENTE_CONSULTOR,
   '/cadastros/equipe': ADMIN_GERENTE,
   '/cadastros/parceiro': ADMIN_GERENTE_CONSULTOR,
-  '/cadastros/tipo-os': ADMIN_GERENTE,
   '/cadastros/meta-comissao': ADMIN_GERENTE,
   '/cadastros/usuario': ADMIN_ONLY,
 
@@ -103,7 +102,6 @@ export const PAGE_ROLES: Record<string, Role[]> = {
   '/configuracoes': ADMIN_GERENTE,
   '/configuracoes/usuarios': ADMIN_ONLY,
   '/configuracoes/servicos': ADMIN_GERENTE,
-  '/configuracoes/tipos-os': ADMIN_GERENTE,
   '/configuracoes/alterar-senha': ALL,
   '/configuracoes/tutorial': ALL,
 };

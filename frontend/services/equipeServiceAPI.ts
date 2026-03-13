@@ -28,8 +28,6 @@ export interface EquipeAPI {
 }
 
 interface CreateEquipeData {
-  login: string;
-  senha: string;
   cpf?: string;
   funcao: string;
   telefone?: string;

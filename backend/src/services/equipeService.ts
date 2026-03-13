@@ -4,17 +4,37 @@ import { AppError } from '../middlewares/errorHandler';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-function mapEquipeFuncaoToRole(funcao?: string): 'ADMIN' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO' {
-  const value = String(funcao || '').trim().toLowerCase();
-
-  if (value === 'admin' || value === 'administrador') return 'ADMIN';
-  if (value.includes('gerente')) return 'GERENTE';
-  if (value === 'operador' || value === 'tecnico' || value === 'auxiliar_administrativo') return 'OPERADOR';
-
-  return 'PARCEIRO';
-}
-
 export class EquipeService {
+  private sanitizeForLogin(value?: string): string {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toLowerCase();
+  }
+
+  private async generateUniqueEquipeLogin(email?: string, cpf?: string): Promise<string> {
+    const emailPrefix = this.sanitizeForLogin(email?.split('@')[0]);
+    const cpfSuffix = String(cpf || '').replace(/\D/g, '').slice(-4);
+    const base = emailPrefix || (cpfSuffix ? `eq${cpfSuffix}` : 'equipe');
+
+    let candidate = base;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const exists = await prisma.equipe.findUnique({ where: { login: candidate } });
+      if (!exists) {
+        return candidate;
+      }
+      const random = Math.random().toString(36).slice(2, 6);
+      candidate = `${base}${random}`;
+    }
+
+    return `eq${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  }
+
+  private generateInternalPassword(): string {
+    return `Eq!${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  }
+
   async findAll(filters?: {
     search?: string;
     parceiroId?: string;
@@ -145,8 +165,6 @@ export class EquipeService {
   }
 
   async create(data: {
-    login: string;
-    senha: string;
     cpf?: string;
     funcao: string;
     telefone?: string;
@@ -163,31 +181,10 @@ export class EquipeService {
     parceiroId: string;
     ativo?: boolean;
   }) {
-    const login = data.login?.trim().toLowerCase();
     const cpf = data.cpf?.trim();
     const email = data.email?.trim().toLowerCase();
 
-    // Verificar se login já existe
-    const equipeComMesmoLogin = await prisma.equipe.findUnique({
-      where: { login },
-    });
-
-    if (equipeComMesmoLogin) {
-      throw new AppError('Já existe uma equipe cadastrada com este login', 409);
-    }
-
-    // Verificar colisão com usuários de autenticação
-    const usuarioComMesmoLogin = await prisma.usuario.findUnique({ where: { login } });
-    if (usuarioComMesmoLogin) {
-      throw new AppError('Já existe um usuário com este login', 409);
-    }
-
-    if (email) {
-      const usuarioComMesmoEmail = await prisma.usuario.findUnique({ where: { email } });
-      if (usuarioComMesmoEmail) {
-        throw new AppError('Já existe um usuário com este email', 409);
-      }
-    }
+    const loginInterno = await this.generateUniqueEquipeLogin(email, cpf);
 
     // Verificar se CPF já existe
     if (cpf) {
@@ -209,12 +206,12 @@ export class EquipeService {
       throw new AppError('Parceiro não encontrado', 404);
     }
 
-    // Hash da senha
-    const senhaHash = await bcrypt.hash(data.senha, 10);
+    // A equipe continua exigindo login/senha no banco, mas esses dados passam a ser internos.
+    const senhaHash = await bcrypt.hash(this.generateInternalPassword(), 10);
 
     const equipe = await prisma.equipe.create({
       data: {
-        login,
+        login: loginInterno,
         senha: senhaHash,
         cpf,
         funcao: data.funcao,
@@ -263,29 +260,12 @@ export class EquipeService {
       },
     });
 
-    // Cria usuário de autenticação espelhado para permitir login na plataforma
-    if (email) {
-      await prisma.usuario.create({
-        data: {
-          nome: login,
-          login,
-          email,
-          senha: senhaHash,
-          role: mapEquipeFuncaoToRole(data.funcao),
-          ativo: data.ativo ?? true,
-          parceiroId: data.parceiroId,
-        },
-      });
-    }
-
     return equipe;
   }
 
   async update(
     id: string,
     data: Partial<{
-      login: string;
-      senha: string;
       cpf?: string;
       funcao: string;
       telefone?: string;
@@ -308,27 +288,7 @@ export class EquipeService {
       throw new AppError('Equipe não encontrada', 404);
     }
 
-    const loginAtualizado = data.login?.trim().toLowerCase();
     const emailAtualizado = data.email?.trim().toLowerCase();
-    if (loginAtualizado && loginAtualizado !== equipe.login) {
-      const equipeComMesmoLogin = await prisma.equipe.findUnique({
-        where: { login: loginAtualizado },
-      });
-
-      if (equipeComMesmoLogin) {
-        throw new AppError('Já existe uma equipe cadastrada com este login', 409);
-      }
-    }
-
-    if (emailAtualizado && emailAtualizado !== (equipe.email || '').trim().toLowerCase()) {
-      const usuarioComMesmoEmail = await prisma.usuario.findUnique({ where: { email: emailAtualizado } });
-      if (usuarioComMesmoEmail) {
-        const usuarioAtualDaEquipe = await prisma.usuario.findUnique({ where: { login: equipe.login } });
-        if (!usuarioAtualDaEquipe || usuarioAtualDaEquipe.id !== usuarioComMesmoEmail.id) {
-          throw new AppError('Já existe um usuário com este email', 409);
-        }
-      }
-    }
 
     const cpfAtualizado = data.cpf?.trim();
     if (cpfAtualizado && cpfAtualizado !== equipe.cpf) {
@@ -341,73 +301,9 @@ export class EquipeService {
       }
     }
 
-    // Hash da senha se fornecida
-    let senhaHash: string | undefined;
-    if (data.senha) {
-      senhaHash = await bcrypt.hash(data.senha, 10);
-    }
-
-    // Sincroniza o usuário de autenticação vinculado ao login atual da equipe
-    const usuarioAtualDaEquipe = await prisma.usuario.findUnique({ where: { login: equipe.login } });
-    const novoLoginUsuario = loginAtualizado || equipe.login;
-    const novoEmailUsuario = emailAtualizado || (equipe.email || '').trim().toLowerCase();
-    const novaRoleUsuario = mapEquipeFuncaoToRole(data.funcao || equipe.funcao);
-
-    if (usuarioAtualDaEquipe) {
-      if (novoLoginUsuario !== usuarioAtualDaEquipe.login) {
-        const conflitoLogin = await prisma.usuario.findUnique({ where: { login: novoLoginUsuario } });
-        if (conflitoLogin && conflitoLogin.id !== usuarioAtualDaEquipe.id) {
-          throw new AppError('Já existe um usuário com este login', 409);
-        }
-      }
-
-      if (novoEmailUsuario && novoEmailUsuario !== usuarioAtualDaEquipe.email) {
-        const conflitoEmail = await prisma.usuario.findUnique({ where: { email: novoEmailUsuario } });
-        if (conflitoEmail && conflitoEmail.id !== usuarioAtualDaEquipe.id) {
-          throw new AppError('Já existe um usuário com este email', 409);
-        }
-      }
-
-      await prisma.usuario.update({
-        where: { id: usuarioAtualDaEquipe.id },
-        data: {
-          nome: novoLoginUsuario,
-          login: novoLoginUsuario,
-          ...(novoEmailUsuario ? { email: novoEmailUsuario } : {}),
-          ...(senhaHash ? { senha: senhaHash } : {}),
-          role: novaRoleUsuario,
-          ...(data.ativo !== undefined ? { ativo: data.ativo } : {}),
-        },
-      });
-    } else if (novoEmailUsuario) {
-      // Equipes antigas podem não ter usuário espelhado; cria sob demanda.
-      const conflitoLogin = await prisma.usuario.findUnique({ where: { login: novoLoginUsuario } });
-      if (conflitoLogin) {
-        throw new AppError('Já existe um usuário com este login', 409);
-      }
-      const conflitoEmail = await prisma.usuario.findUnique({ where: { email: novoEmailUsuario } });
-      if (conflitoEmail) {
-        throw new AppError('Já existe um usuário com este email', 409);
-      }
-
-      await prisma.usuario.create({
-        data: {
-          nome: novoLoginUsuario,
-          login: novoLoginUsuario,
-          email: novoEmailUsuario,
-          senha: senhaHash || equipe.senha,
-          role: novaRoleUsuario,
-          ativo: data.ativo ?? equipe.ativo,
-          parceiroId: equipe.parceiroId,
-        },
-      });
-    }
-
     const equipeAtualizada = await prisma.equipe.update({
       where: { id },
       data: {
-        login: loginAtualizado,
-        ...(senhaHash && { senha: senhaHash }),
         cpf: cpfAtualizado,
         funcao: data.funcao,
         telefone: data.telefone,

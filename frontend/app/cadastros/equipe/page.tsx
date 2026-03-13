@@ -18,8 +18,7 @@ type Equipe = {
   id: string;
   parceiroId?: string;
   parceiro?: string;
-  login: string;
-  senha?: string;
+  login?: string;
   cpf?: string;
   funcao: string;
   telefone?: string;
@@ -108,13 +107,10 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedParceiros, setExpandedParceiros] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [mostrarSenha, setMostrarSenha] = useState(false);
   const didInitExpand = useRef(false);
   const [formData, setFormData] = useState<Equipe>({
     id: '',
     parceiroId: '',
-    login: '',
-    senha: '',
     cpf: '',
     funcao: '',
     telefone: '',
@@ -191,8 +187,6 @@ export default function Page() {
     setFormData({
       id: '',
       parceiroId: '',
-      login: '',
-      senha: '',
       cpf: '',
       funcao: '',
       telefone: '',
@@ -210,7 +204,6 @@ export default function Page() {
     });
     setErrors({});
     setEditingId(null);
-    setMostrarSenha(false);
   };
 
   const handleChange = (field: keyof Equipe, value: string | boolean) => {
@@ -228,9 +221,6 @@ export default function Page() {
     const newErrors: Record<string, string> = {};
     
     if (!formData.parceiroId) newErrors.parceiroId = 'Campo obrigatório';
-    if (!formData.login) newErrors.login = 'Campo obrigatório';
-    if (!editingId && !formData.senha) newErrors.senha = 'Campo obrigatório';
-    if (!editingId && formData.senha && formData.senha.length < 6) newErrors.senha = 'Senha deve ter no mínimo 6 caracteres';
     if (!formData.cpf) newErrors.cpf = 'Campo obrigatório';
     if (!formData.funcao) newErrors.funcao = 'Campo obrigatório';
     if (!formData.email) newErrors.email = 'Campo obrigatório';
@@ -250,8 +240,6 @@ export default function Page() {
       if (editingId) {
         // Atualizar - parceiroId não pode ser alterado
         const dataToUpdate = {
-          login: formData.login,
-          ...(formData.senha && { senha: formData.senha }),
           cpf: formData.cpf?.replace(/\D/g, '') || '',
           funcao: formData.funcao,
           telefone: formData.telefone?.replace(/\D/g, '') || '',
@@ -272,8 +260,6 @@ export default function Page() {
       } else {
         // Criar - parceiroId é obrigatório
         const dataToCreate = {
-          login: formData.login,
-          senha: formData.senha || '',
           cpf: formData.cpf?.replace(/\D/g, '') || '',
           funcao: formData.funcao,
           telefone: formData.telefone?.replace(/\D/g, '') || '',
@@ -306,7 +292,6 @@ export default function Page() {
   const handleEdit = (equipe: Equipe) => {
     setFormData(equipe);
     setEditingId(equipe.id);
-    setMostrarSenha(false);
     setIsModalOpen(true);
   };
 
@@ -339,8 +324,7 @@ export default function Page() {
             const currentUser = JSON.parse(rawUser) as { email?: string };
             const currentIdentifier = String(currentUser.email ?? '').toLowerCase();
             const removedEmail = String(equipeRemovida.email ?? '').toLowerCase();
-            const removedLogin = String(equipeRemovida.login ?? '').toLowerCase();
-            if (currentIdentifier && (currentIdentifier === removedEmail || currentIdentifier === removedLogin)) {
+            if (currentIdentifier && currentIdentifier === removedEmail) {
               localStorage.removeItem('user');
             }
           } catch {}
@@ -371,7 +355,7 @@ export default function Page() {
       const funcaoLabel = obterLabelFuncao(equipe.funcao).toLowerCase();
       
       return (
-        equipe.login.toLowerCase().includes(term) ||
+        String(equipe.email || '').toLowerCase().includes(term) ||
         (equipe.cpf && equipe.cpf.includes(term)) ||
         parceiroNome.includes(term) ||
         funcaoLabel.includes(term)
@@ -508,7 +492,7 @@ export default function Page() {
                 Concessionaria
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Login
+                E-mail
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 CPF
@@ -553,7 +537,7 @@ export default function Page() {
                         {obterLabelParceiro(equipe.parceiroId || '')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
-                        {equipe.login}
+                        {equipe.email || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100 font-mono">
                         {equipe.cpf}
@@ -622,7 +606,7 @@ export default function Page() {
                       >
                         <div className="space-y-1.5 text-sm">
                           <p className="text-slate-900 dark:text-slate-100">
-                            <span className="font-medium">Login:</span> {equipe.login}
+                            <span className="font-medium">E-mail:</span> {equipe.email || '-'}
                           </p>
                           <p className="text-slate-900 dark:text-slate-100 font-mono">
                             <span className="font-medium not-italic">CPF:</span> {equipe.cpf}
@@ -680,8 +664,8 @@ export default function Page() {
                   </p>
                 </div>
                 <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Login</p>
-                  <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{selectedEquipe.login}</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">E-mail</p>
+                  <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{selectedEquipe.email || '-'}</p>
                 </div>
                 <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                   <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">CPF</p>
@@ -761,28 +745,6 @@ export default function Page() {
                     onChange={(e) => handleChange('email', e.target.value)}
                     error={errors.email}
                   />
-                  <Input
-                    label="Login *"
-                    value={formData.login}
-                    onChange={(e) => handleChange('login', e.target.value)}
-                    error={errors.login}
-                  />
-                  <Input
-                    label="Senha *"
-                    type={mostrarSenha ? 'text' : 'password'}
-                    value={formData.senha || ''}
-                    onChange={(e) => handleChange('senha', e.target.value)}
-                    error={errors.senha}
-                  />
-                  <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 -mt-2">
-                    <input
-                      type="checkbox"
-                      checked={mostrarSenha}
-                      onChange={(e) => setMostrarSenha(e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300"
-                    />
-                    Visualizar senha digitada
-                  </label>
                   <MaskedInput
                     label="CPF *"
                     value={formData.cpf}

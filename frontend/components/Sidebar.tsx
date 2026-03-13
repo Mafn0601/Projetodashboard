@@ -165,13 +165,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: Settings,
     section: "Configurações",
     roles: ADMIN_GERENTE,
-  },
-  {
-    label: "Tipos de OS",
-    href: "/configuracoes/tipos-os",
-    icon: FileDigit,
-    section: "Configurações",
-    roles: ADMIN_GERENTE,
   }
 ];
 

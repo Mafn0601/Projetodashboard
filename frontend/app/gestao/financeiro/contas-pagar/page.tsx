@@ -32,7 +32,17 @@ export default function ContasPagarPage() {
   const [searchInput, setSearchInput] = useState('');
   const [actionMenu, setActionMenu] = useState<{ rowId: string; x: number; y: number } | null>(null);
   const [showNovaConta, setShowNovaConta] = useState(false);
-  const [novaConta, setNovaConta] = useState({ nome: '', documento: '', centroCusto: '', categoria: '', dataVencimento: '', formaPagamento: 'PIX', valorBruto: '', responsavel: '', observacoes: '' });
+  const [novaConta, setNovaConta] = useState({
+    data: new Date().toISOString().slice(0, 10),
+    grupo: '',
+    fornecedor: '',
+    numeroDocto: '',
+    tipo: '',
+    valor: '',
+    pagto: 'PIX',
+    status: 'EM_ABERTO' as FinanceiroStatus,
+    observacao: '',
+  });
   const [salvandoNova, setSalvandoNova] = useState(false);
 
   const [filters, setFilters] = useState({
@@ -196,23 +206,37 @@ export default function ContasPagarPage() {
   };
 
   const criarNovaConta = async () => {
-    if (!novaConta.nome || !novaConta.dataVencimento || !novaConta.valorBruto) return;
+    if (!novaConta.fornecedor || !novaConta.data || !novaConta.valor) return;
     setSalvandoNova(true);
     try {
-      await financeiroServiceAPI.criarFatura({
+      const created = await financeiroServiceAPI.criarFatura({
         tipo: 'PAGAR',
-        nome: novaConta.nome,
-        documento: novaConta.documento || undefined,
-        dataEmissao: new Date().toISOString(),
-        dataVencimento: new Date(`${novaConta.dataVencimento}T12:00:00`).toISOString(),
-        formaPagamento: novaConta.formaPagamento,
-        valorBruto: Number(novaConta.valorBruto),
-        centroCusto: novaConta.centroCusto || undefined,
-        categoria: novaConta.categoria || undefined,
-        responsavel: novaConta.responsavel || undefined,
-        observacoes: novaConta.observacoes || undefined,
+        nome: novaConta.fornecedor,
+        documento: novaConta.numeroDocto || undefined,
+        dataEmissao: new Date(`${novaConta.data}T12:00:00`).toISOString(),
+        dataVencimento: new Date(`${novaConta.data}T12:00:00`).toISOString(),
+        formaPagamento: novaConta.pagto,
+        valorBruto: Number(novaConta.valor),
+        centroCusto: novaConta.grupo || undefined,
+        categoria: novaConta.tipo || undefined,
+        observacoes: novaConta.observacao || undefined,
       });
-      setNovaConta({ nome: '', documento: '', centroCusto: '', categoria: '', dataVencimento: '', formaPagamento: 'PIX', valorBruto: '', responsavel: '', observacoes: '' });
+
+      if (novaConta.status !== 'EM_ABERTO') {
+        await financeiroServiceAPI.atualizarFatura(created.id, { status: novaConta.status });
+      }
+
+      setNovaConta({
+        data: new Date().toISOString().slice(0, 10),
+        grupo: '',
+        fornecedor: '',
+        numeroDocto: '',
+        tipo: '',
+        valor: '',
+        pagto: 'PIX',
+        status: 'EM_ABERTO',
+        observacao: '',
+      });
       setShowNovaConta(false);
       setActionMessage('Conta a pagar criada com sucesso.');
       await load();
@@ -410,33 +434,33 @@ export default function ContasPagarPage() {
           <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
             <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Nova conta a pagar</h2>
             <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">DATA *</label>
+                <input type="date" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" value={novaConta.data} onChange={(e) => setNovaConta((prev) => ({ ...prev, data: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">GRUPO</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Ex: Operacao" value={novaConta.grupo} onChange={(e) => setNovaConta((prev) => ({ ...prev, grupo: e.target.value }))} />
+              </div>
               <div className="col-span-2">
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Fornecedor *</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Nome do fornecedor" value={novaConta.nome} onChange={(e) => setNovaConta((prev) => ({ ...prev, nome: e.target.value }))} />
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">FORNECEDOR *</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Nome do fornecedor" value={novaConta.fornecedor} onChange={(e) => setNovaConta((prev) => ({ ...prev, fornecedor: e.target.value }))} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">CNPJ / CPF</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Documento" value={novaConta.documento} onChange={(e) => setNovaConta((prev) => ({ ...prev, documento: e.target.value }))} />
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">N° DOCTO</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Número do documento" value={novaConta.numeroDocto} onChange={(e) => setNovaConta((prev) => ({ ...prev, numeroDocto: e.target.value }))} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Vencimento *</label>
-                <input type="date" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" value={novaConta.dataVencimento} onChange={(e) => setNovaConta((prev) => ({ ...prev, dataVencimento: e.target.value }))} />
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">TIPO</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Ex: Insumos" value={novaConta.tipo} onChange={(e) => setNovaConta((prev) => ({ ...prev, tipo: e.target.value }))} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Valor bruto *</label>
-                <input type="number" min="0" step="0.01" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="0,00" value={novaConta.valorBruto} onChange={(e) => setNovaConta((prev) => ({ ...prev, valorBruto: e.target.value }))} />
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">VALOR *</label>
+                <input type="number" min="0" step="0.01" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="0,00" value={novaConta.valor} onChange={(e) => setNovaConta((prev) => ({ ...prev, valor: e.target.value }))} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Centro de custo</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Ex: Operacao" value={novaConta.centroCusto} onChange={(e) => setNovaConta((prev) => ({ ...prev, centroCusto: e.target.value }))} />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Categoria</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Ex: Insumos" value={novaConta.categoria} onChange={(e) => setNovaConta((prev) => ({ ...prev, categoria: e.target.value }))} />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Forma de pagamento</label>
-                <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" value={novaConta.formaPagamento} onChange={(e) => setNovaConta((prev) => ({ ...prev, formaPagamento: e.target.value }))}>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">PAGTO</label>
+                <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" value={novaConta.pagto} onChange={(e) => setNovaConta((prev) => ({ ...prev, pagto: e.target.value }))}>
                   <option value="PIX">PIX</option>
                   <option value="BOLETO">Boleto</option>
                   <option value="TRANSFERENCIA">Transferência</option>
@@ -445,12 +469,16 @@ export default function ContasPagarPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Responsável</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Nome do responsável" value={novaConta.responsavel} onChange={(e) => setNovaConta((prev) => ({ ...prev, responsavel: e.target.value }))} />
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">STATUS</label>
+                <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" value={novaConta.status} onChange={(e) => setNovaConta((prev) => ({ ...prev, status: e.target.value as FinanceiroStatus }))}>
+                  {STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
               </div>
               <div className="col-span-2">
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Observações</label>
-                <textarea rows={2} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Observações opcionais" value={novaConta.observacoes} onChange={(e) => setNovaConta((prev) => ({ ...prev, observacoes: e.target.value }))} />
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">OBSERVAÇÃO</label>
+                <textarea rows={2} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" placeholder="Observação" value={novaConta.observacao} onChange={(e) => setNovaConta((prev) => ({ ...prev, observacao: e.target.value }))} />
               </div>
             </div>
             <div className="mt-4 flex justify-end gap-2">

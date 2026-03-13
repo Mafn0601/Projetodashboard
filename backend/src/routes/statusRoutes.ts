@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import statusController from '../controllers/statusController';
-import { authenticate } from '../middlewares/auth';
+import { authenticate, authorize } from '../middlewares/auth';
 
 const router = Router();
 
-// Todas as rotas de status requerem autenticação
 router.use(authenticate);
 
 router.get('/', statusController.findAll);
@@ -13,6 +12,7 @@ router.get('/:id', statusController.findById);
 router.post('/', statusController.create);
 router.put('/:id', statusController.update);
 router.put('/:id/move', statusController.moveCard);
-router.delete('/:id', statusController.delete);
+// exclusão: somente admin/gerente
+router.delete('/:id', authorize('ADMIN', 'GERENTE'), statusController.delete);
 
 export default router;

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "./AuthContext";
+import { normalizeRole, type Role } from "@/lib/permissions";
 import { useTheme } from "next-themes";
 
 type NavItem = {
@@ -37,7 +38,14 @@ type NavItem = {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   section: string;
+  roles?: Role[]; // se ausente → todos os roles têm acesso
 };
+
+const ALL: Role[] = ['admin', 'gerente', 'consultor', 'operacional'];
+const ADMIN_GERENTE: Role[] = ['admin', 'gerente'];
+const ADMIN_GERENTE_CONSULTOR: Role[] = ['admin', 'gerente', 'consultor'];
+const ADMIN_GERENTE_OPERACIONAL: Role[] = ['admin', 'gerente', 'operacional'];
+const ADMIN_ONLY: Role[] = ['admin'];
 
 // TODO: talvez adicionar badges com contadores nos itens?
 const NAV_ITEMS: NavItem[] = [
@@ -45,108 +53,125 @@ const NAV_ITEMS: NavItem[] = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    section: "Root"
+    section: "Root",
+    roles: ALL,
   },
   // Operação
   {
     label: "Agenda",
     href: "/operacao/agenda",
     icon: CalendarCheck,
-    section: "Operação"
+    section: "Operação",
+    roles: ADMIN_GERENTE_OPERACIONAL,
   },
   {
     label: "Boxes",
     href: "/operacao/boxes",
     icon: BoxIcon,
-    section: "Operação"
+    section: "Operação",
+    roles: ADMIN_GERENTE_OPERACIONAL,
   },
   {
     label: "Status",
     href: "/operacao/status",
     icon: BarChart3,
-    section: "Operação"
+    section: "Operação",
+    roles: ADMIN_GERENTE_OPERACIONAL,
   },
   {
     label: "Tarefas",
     href: "/operacao/tarefas",
     icon: ClipboardList,
-    section: "Operação"
+    section: "Operação",
+    roles: ADMIN_GERENTE_OPERACIONAL,
   },
   // CRM
   {
     label: "Clientes",
     href: "/crm/clientes",
     icon: Users,
-    section: "CRM"
+    section: "CRM",
+    roles: ADMIN_GERENTE_CONSULTOR,
   },
   {
     label: "Vendedores",
     href: "/crm/vendedores",
     icon: UserCog,
-    section: "CRM"
+    section: "CRM",
+    roles: ADMIN_GERENTE,
   },
   {
     label: "Concessionárias",
     href: "/crm/concessionarias",
     icon: Handshake,
-    section: "CRM"
+    section: "CRM",
+    roles: ADMIN_GERENTE_CONSULTOR,
   },
   // Vendas
   {
     label: "Orçamentos",
     href: "/vendas/orcamentos",
     icon: FileText,
-    section: "Vendas"
+    section: "Vendas",
+    roles: ADMIN_GERENTE_CONSULTOR,
   },
   {
     label: "Ordens de Serviço",
     href: "/vendas/ordens-servico",
     icon: FileDigit,
-    section: "Vendas"
+    section: "Vendas",
+    roles: ALL,
   },
   {
     label: "Contratos",
     href: "/vendas/contratos",
     icon: BadgeCheck,
-    section: "Vendas"
+    section: "Vendas",
+    roles: ADMIN_GERENTE,
   },
   // Gestão
   {
     label: "Estoque",
     href: "/gestao/estoque",
     icon: Package,
-    section: "Gestão"
+    section: "Gestão",
+    roles: ADMIN_GERENTE,
   },
   {
     label: "Financeiro",
     href: "/gestao/financeiro",
     icon: Receipt,
-    section: "Gestão"
+    section: "Gestão",
+    roles: ADMIN_GERENTE,
   },
   {
     label: "Comissões",
     href: "/gestao/comissoes",
     icon: TrendingUp,
-    section: "Gestão"
+    section: "Gestão",
+    roles: ADMIN_GERENTE,
   },
   // Configurações
   {
     label: "Usuários",
     href: "/configuracoes/usuarios",
     icon: Users,
-    section: "Configurações"
+    section: "Configurações",
+    roles: ADMIN_ONLY,
   },
   {
     label: "Serviços",
     href: "/configuracoes/servicos",
     icon: Settings,
-    section: "Configurações"
+    section: "Configurações",
+    roles: ADMIN_GERENTE,
   },
   {
     label: "Tipos de OS",
     href: "/configuracoes/tipos-os",
     icon: FileDigit,
-    section: "Configurações"
+    section: "Configurações",
+    roles: ADMIN_GERENTE,
   }
 ];
 
@@ -460,7 +485,12 @@ export function Sidebar({ mobileMenuOpen = false, onMobileMenuClose }: SidebarPr
         isMobile ? "space-y-5 px-4 pr-2" : collapsed ? "space-y-2 px-2" : "space-y-5 px-4 pr-2"
       )}>
         {SECTIONS_ORDER.map((section) => {
-          const items = NAV_ITEMS.filter((item) => item.section === section);
+          const userRole = user ? normalizeRole(user.role) : 'consultor';
+          const items = NAV_ITEMS.filter(
+            (item) =>
+              item.section === section &&
+              (!item.roles || item.roles.includes(userRole))
+          );
           if (!items.length) return null;
 
           const isExpanded = expandedSections.has(section);

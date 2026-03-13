@@ -40,17 +40,22 @@ export function authenticate(
     // Suporte para tokens MOCK (desenvolvimento)
     if (token.startsWith('mock-token-')) {
       console.log('⚠️ Usando token MOCK para desenvolvimento');
-      
-      // Determinar role baseado no token
-      const isMockAdmin = token.includes('admin');
-      const isMockVendedor = token.includes('vendedor');
-      
-      req.user = {
-        userId: isMockAdmin ? 'mock-user-admin' : 'mock-user-vendedor',
-        email: isMockAdmin ? 'admin@exemplo.com' : 'vendedor@exemplo.com',
-        role: isMockAdmin ? 'ADMIN' : 'VENDEDOR'
+
+      const MOCK_MAP: Record<string, { userId: string; email: string; role: string }> = {
+        'mock-token-admin-123':       { userId: 'mock-user-admin',       email: 'admin@exemplo.com',       role: 'ADMIN' },
+        'mock-token-gerente-123':     { userId: 'mock-user-gerente',     email: 'gerente@exemplo.com',     role: 'GERENTE' },
+        'mock-token-consultor-123':   { userId: 'mock-user-consultor',   email: 'consultor@exemplo.com',   role: 'PARCEIRO' },
+        'mock-token-operacional-123': { userId: 'mock-user-operacional', email: 'operacional@exemplo.com', role: 'OPERADOR' },
+        // alias legado
+        'mock-token-vendedor-123':    { userId: 'mock-user-vendedor',    email: 'vendedor@exemplo.com',    role: 'PARCEIRO' },
       };
-      
+
+      req.user = MOCK_MAP[token] ?? {
+        userId: 'mock-user-unknown',
+        email: 'unknown@exemplo.com',
+        role: 'PARCEIRO',
+      };
+
       return next();
     }
 

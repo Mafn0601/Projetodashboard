@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from './AuthContext';
+import { canAccessPage } from '@/lib/permissions';
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -10,12 +11,17 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isLoading && !user && pathname !== '/login') {
+    if (isLoading) return;
+    if (!user && pathname !== '/login') {
       router.push('/login');
+      return;
+    }
+    // Rota acessível mas role não autorizada → volta para /
+    if (user && pathname !== '/login' && !canAccessPage(user.role, pathname)) {
+      router.replace('/');
     }
   }, [user, isLoading, pathname, router]);
 
-  // Mostrar loading enquanto verifica autenticação
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -27,9 +33,10 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     );
   }
 
-  // Se não estiver autenticado e não estiver na página de login, não renderiza nada
-  // (o useEffect acima vai redirecionar)
-  if (!user && pathname !== '/login') {
+  if (!user && pathname !== '/login') return null;
+
+  // Bloqueia renderização se role não permitida (evita flash de conteúdo)
+  if (user && pathname !== '/login' && !canAccessPage(user.role, pathname)) {
     return null;
   }
 

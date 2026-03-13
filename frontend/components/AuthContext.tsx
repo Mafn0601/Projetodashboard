@@ -13,13 +13,17 @@ import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 import boxServiceAPI from '@/services/boxServiceAPI';
 import { leadServiceAPI } from '@/services/leadServiceAPI';
 
+import { normalizeRole } from '@/lib/permissions';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+export type UserRole = 'admin' | 'gerente' | 'consultor' | 'operacional';
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'vendedor' | 'tecnico';
+  role: UserRole;
 }
 
 interface AuthContextType {
@@ -38,17 +42,45 @@ const MOCK_USERS = [
     login: 'admin',
     email: 'admin@exemplo.com',
     password: 'admin123',
-    role: 'admin' as const,
+    role: 'admin' as UserRole,
     token: 'mock-token-admin-123'
   },
   {
     id: 'mock-2',
+    name: 'Consultor',
+    login: 'consultor',
+    email: 'consultor@exemplo.com',
+    password: 'consultor123',
+    role: 'consultor' as UserRole,
+    token: 'mock-token-consultor-123'
+  },
+  {
+    id: 'mock-3',
+    name: 'Gerente',
+    login: 'gerente',
+    email: 'gerente@exemplo.com',
+    password: 'gerente123',
+    role: 'gerente' as UserRole,
+    token: 'mock-token-gerente-123'
+  },
+  {
+    id: 'mock-4',
+    name: 'Operacional',
+    login: 'operacional',
+    email: 'operacional@exemplo.com',
+    password: 'operacional123',
+    role: 'operacional' as UserRole,
+    token: 'mock-token-operacional-123'
+  },
+  // aliases legados para não quebrar logins existentes
+  {
+    id: 'mock-2b',
     name: 'Vendedor',
     login: 'vendedor',
     email: 'vendedor@exemplo.com',
     password: 'vendedor123',
-    role: 'vendedor' as const,
-    token: 'mock-token-vendedor-123'
+    role: 'consultor' as UserRole,
+    token: 'mock-token-consultor-123'
   }
 ];
 
@@ -160,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: data.usuario.id,
             name: data.usuario.nome,
             email: data.usuario.email,
-            role: data.usuario.role || 'vendedor',
+            role: normalizeRole(data.usuario.role || 'consultor'),
           };
           setUser(userData);
           localStorage.setItem('user', JSON.stringify(userData));

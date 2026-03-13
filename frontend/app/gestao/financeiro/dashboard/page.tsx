@@ -98,7 +98,7 @@ export default function FinanceiroDashboardPage() {
               <XAxis dataKey="data" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
               <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={60} />
               <Tooltip
-                formatter={(value: number, name: string) => [financeiroServiceAPI.toCurrency(value), name]}
+                formatter={(value, name) => [financeiroServiceAPI.toCurrency(Number(value ?? 0)), String(name)]}
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff' }}
               />
               <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />

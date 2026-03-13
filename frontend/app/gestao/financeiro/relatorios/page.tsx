@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { FinanceiroNav } from '@/components/financeiro/FinanceiroNav';
 import { financeiroServiceAPI } from '@/services/financeiroServiceAPI';
+import { formatDateInBrasilia, formatDateTimeInBrasilia } from '@/lib/dateUtils';
 
 type TipoRelatorio = 'contas-receber' | 'contas-atraso' | 'faturamento-cliente' | 'faturamento-mensal' | 'despesas-categoria';
 
@@ -13,6 +14,63 @@ const relatorios: Array<{ value: TipoRelatorio; label: string }> = [
   { value: 'faturamento-mensal', label: 'Faturamento mensal' },
   { value: 'despesas-categoria', label: 'Despesas por categoria' },
 ];
+
+const hiddenColumns = new Set(['id']);
+
+const columnLabels: Record<string, string> = {
+  codigoFatura: 'Codigo da fatura',
+  cnpjCpf: 'CNPJ/CPF',
+  dataEmissao: 'Data emissao',
+  dataVencimento: 'Data vencimento',
+  diasAtraso: 'Dias atraso',
+  formaPagamento: 'Forma pagamento',
+  valorBruto: 'Valor bruto',
+  valorLiquido: 'Valor liquido',
+  valorRecebido: 'Valor recebido',
+  valorPago: 'Valor pago',
+  saldoAberto: 'Saldo aberto',
+  categoriaDespesa: 'Categoria despesa',
+};
+
+const currencyColumns = new Set(['valor', 'valorBruto', 'desconto', 'valorLiquido', 'valorRecebido', 'valorPago', 'saldoAberto']);
+const dateTimeColumns = new Set(['dataEmissao']);
+const dateColumns = new Set(['dataVencimento', 'dataPagamento']);
+
+function toReadableHeader(key: string): string {
+  if (columnLabels[key]) return columnLabels[key];
+  return key
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+function toVisibleColumns(rows: any[]): string[] {
+  const first = rows[0] || { info: '' };
+  return Object.keys(first).filter((key) => !hiddenColumns.has(key));
+}
+
+function formatValueByColumn(column: string, value: unknown): string {
+  if (value === null || value === undefined || value === '') return '-';
+
+  if (currencyColumns.has(column) && typeof value === 'number') {
+    return financeiroServiceAPI.toCurrency(value);
+  }
+
+  if (column === 'diasAtraso' && typeof value === 'number') {
+    return value <= 0 ? '0' : `${value} dia(s)`;
+  }
+
+  if (typeof value === 'string') {
+    if (dateTimeColumns.has(column)) {
+      return formatDateTimeInBrasilia(value);
+    }
+    if (dateColumns.has(column)) {
+      return formatDateInBrasilia(value);
+    }
+  }
+
+  return String(value);
+}
 
 function downloadBlob(filename: string, content: string, type: string) {
   const blob = new Blob([content], { type });
@@ -57,11 +115,11 @@ export default function RelatoriosFinanceirosPage() {
     const rows = result?.rows || [];
     if (!rows.length) return;
 
-    const headers = Object.keys(rows[0]);
-    const lines = [headers.join(',')];
+    const headers = toVisibleColumns(rows);
+    const lines = [headers.map((h) => toReadableHeader(h)).join(',')];
 
     for (const row of rows) {
-      lines.push(headers.map((h) => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(','));
+      lines.push(headers.map((h) => `"${formatValueByColumn(h, row[h]).replace(/"/g, '""')}"`).join(','));
     }
 
     downloadBlob(`relatorio-${tipo}.csv`, lines.join('\n'), 'text/csv;charset=utf-8;');
@@ -71,11 +129,11 @@ export default function RelatoriosFinanceirosPage() {
     const rows = result?.rows || [];
     if (!rows.length) return;
 
-    const headers = Object.keys(rows[0]);
-    const lines = [headers.join('\t')];
+    const headers = toVisibleColumns(rows);
+    const lines = [headers.map((h) => toReadableHeader(h)).join('\t')];
 
     for (const row of rows) {
-      lines.push(headers.map((h) => String(row[h] ?? '')).join('\t'));
+      lines.push(headers.map((h) => formatValueByColumn(h, row[h])).join('\t'));
     }
 
     downloadBlob(`relatorio-${tipo}.xls`, lines.join('\n'), 'application/vnd.ms-excel');
@@ -118,16 +176,16 @@ export default function RelatoriosFinanceirosPage() {
             <table className="min-w-[800px] w-full text-left text-xs">
               <thead className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                 <tr>
-                  {Object.keys(result?.rows?.[0] || { info: '' }).map((header) => (
-                    <th key={header} className="px-3 py-2">{header}</th>
+                  {toVisibleColumns(result?.rows || []).map((header) => (
+                    <th key={header} className="px-3 py-2">{toReadableHeader(header)}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {(result?.rows || []).map((row: any, index: number) => (
                   <tr key={index} className="border-t border-slate-200 dark:border-slate-700">
-                    {Object.keys(result?.rows?.[0] || { info: '' }).map((header) => (
-                      <td key={header} className="px-3 py-2">{String(row[header] ?? '-')}</td>
+                    {toVisibleColumns(result?.rows || []).map((header) => (
+                      <td key={header} className="px-3 py-2">{formatValueByColumn(header, row[header])}</td>
                     ))}
                   </tr>
                 ))}

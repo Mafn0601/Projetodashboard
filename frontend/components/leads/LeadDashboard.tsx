@@ -465,52 +465,56 @@ export function LeadDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:w-[340px]">
-                          <a href={`tel:${lead.telefone}`} className="inline-flex items-center">
-                            <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl items-center justify-center">
-                              <Phone className="h-4 w-4 shrink-0" />
-                              Ligar
+                        <div className="w-[320px] max-w-full space-y-2">
+                          <div className="flex flex-wrap gap-2">
+                            <a href={`tel:${lead.telefone}`} className="inline-flex items-center">
+                              <Button variant="outline" size="sm" className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap">
+                                <Phone className="h-3.5 w-3.5 shrink-0" />
+                                Ligar
+                              </Button>
+                            </a>
+                            <a href={`mailto:${lead.email || ''}`} className="inline-flex items-center">
+                              <Button variant="outline" size="sm" className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap" disabled={!lead.email}>
+                                <Mail className="h-3.5 w-3.5 shrink-0" />
+                                Email
+                              </Button>
+                            </a>
+                            <Button variant="outline" size="sm" className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap" onClick={() => openNotes(lead)}>
+                              <StickyNote className="h-3.5 w-3.5 shrink-0" />
+                              Nota
                             </Button>
-                          </a>
-                          <a href={`mailto:${lead.email || ''}`} className="inline-flex items-center">
-                            <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl items-center justify-center" disabled={!lead.email}>
-                              <Mail className="h-4 w-4 shrink-0" />
-                              Email
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" size="sm" className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap" onClick={() => void handleToggleSequence(lead)}>
+                              <Workflow className="h-3.5 w-3.5 shrink-0" />
+                              {lead.emSequencia ? 'Sequência' : 'Adicionar sequência'}
                             </Button>
-                          </a>
-                          <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl items-center justify-center" onClick={() => openNotes(lead)}>
-                            <StickyNote className="h-4 w-4 shrink-0" />
-                            Criar Nota
-                          </Button>
-                          <Button variant="outline" size="sm" className="w-full gap-2 rounded-xl items-center justify-center" onClick={() => void handleToggleSequence(lead)}>
-                            <Workflow className="h-4 w-4 shrink-0" />
-                            {lead.emSequencia ? 'Na Sequência' : 'Adicionar à Sequência'}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full gap-2 rounded-xl items-center justify-center"
-                            onClick={() => void handleConvertToClient(lead)}
-                            disabled={Boolean(lead.clienteId) || convertingLeadId === lead.id}
-                            title={lead.clienteId ? 'Lead ja vinculado a cliente' : 'Criar cliente com dados do lead'}
-                          >
-                            <UserPlus className="h-4 w-4 shrink-0" />
-                            {lead.clienteId
-                              ? 'Cliente vinculado'
-                              : convertingLeadId === lead.id
-                                ? 'Convertendo...'
-                                : 'Converter em Cliente'}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full gap-2 rounded-xl border-rose-200 text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950/40 items-center justify-center"
-                            onClick={() => void handleDeleteLead(lead)}
-                            disabled={deletingLeadId === lead.id}
-                          >
-                            <Trash2 className="h-4 w-4 shrink-0" />
-                            {deletingLeadId === lead.id ? 'Excluindo...' : 'Excluir'}
-                          </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap"
+                              onClick={() => void handleConvertToClient(lead)}
+                              disabled={Boolean(lead.clienteId) || convertingLeadId === lead.id}
+                              title={lead.clienteId ? 'Lead ja vinculado a cliente' : 'Criar cliente com dados do lead'}
+                            >
+                              <UserPlus className="h-3.5 w-3.5 shrink-0" />
+                              {lead.clienteId
+                                ? 'Cliente vinculado'
+                                : convertingLeadId === lead.id
+                                  ? 'Convertendo...'
+                                  : 'Converter'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-2 rounded-xl border-rose-200 px-3 text-xs font-semibold whitespace-nowrap text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                              onClick={() => void handleDeleteLead(lead)}
+                              disabled={deletingLeadId === lead.id}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                              {deletingLeadId === lead.id ? 'Excluindo...' : 'Excluir'}
+                            </Button>
+                          </div>
                         </div>
                       </td>
                     </tr>

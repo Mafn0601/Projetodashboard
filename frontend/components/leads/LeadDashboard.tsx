@@ -465,56 +465,52 @@ export function LeadDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="w-[320px] max-w-full space-y-2">
-                          <div className="flex flex-wrap gap-2">
-                            <a href={`tel:${lead.telefone}`} className="inline-flex items-center">
-                              <Button variant="outline" size="sm" className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap">
-                                <Phone className="h-3.5 w-3.5 shrink-0" />
-                                Ligar
-                              </Button>
-                            </a>
-                            <a href={`mailto:${lead.email || ''}`} className="inline-flex items-center">
-                              <Button variant="outline" size="sm" className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap" disabled={!lead.email}>
-                                <Mail className="h-3.5 w-3.5 shrink-0" />
-                                Email
-                              </Button>
-                            </a>
-                            <Button variant="outline" size="sm" className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap" onClick={() => openNotes(lead)}>
-                              <StickyNote className="h-3.5 w-3.5 shrink-0" />
-                              Nota
+                        <div className="grid w-[132px] max-w-full grid-cols-3 gap-2">
+                          <a href={`tel:${lead.telefone}`} className="inline-flex items-center" title="Ligar para lead" aria-label="Ligar para lead">
+                            <Button variant="outline" size="sm" className="h-9 w-9 rounded-xl p-0" aria-label="Ligar para lead">
+                              <Phone className="h-4 w-4 shrink-0" />
                             </Button>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button variant="outline" size="sm" className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap" onClick={() => void handleToggleSequence(lead)}>
-                              <Workflow className="h-3.5 w-3.5 shrink-0" />
-                              {lead.emSequencia ? 'Sequência' : 'Adicionar sequência'}
+                          </a>
+                          <a href={`mailto:${lead.email || ''}`} className="inline-flex items-center" title={lead.email ? 'Enviar email' : 'Lead sem email'} aria-label={lead.email ? 'Enviar email' : 'Lead sem email'}>
+                            <Button variant="outline" size="sm" className="h-9 w-9 rounded-xl p-0" disabled={!lead.email} aria-label={lead.email ? 'Enviar email' : 'Lead sem email'}>
+                              <Mail className="h-4 w-4 shrink-0" />
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 gap-2 rounded-xl px-3 text-xs font-semibold whitespace-nowrap"
-                              onClick={() => void handleConvertToClient(lead)}
-                              disabled={Boolean(lead.clienteId) || convertingLeadId === lead.id}
-                              title={lead.clienteId ? 'Lead ja vinculado a cliente' : 'Criar cliente com dados do lead'}
-                            >
-                              <UserPlus className="h-3.5 w-3.5 shrink-0" />
-                              {lead.clienteId
-                                ? 'Cliente vinculado'
-                                : convertingLeadId === lead.id
-                                  ? 'Convertendo...'
-                                  : 'Converter'}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 gap-2 rounded-xl border-rose-200 px-3 text-xs font-semibold whitespace-nowrap text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950/40"
-                              onClick={() => void handleDeleteLead(lead)}
-                              disabled={deletingLeadId === lead.id}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 shrink-0" />
-                              {deletingLeadId === lead.id ? 'Excluindo...' : 'Excluir'}
-                            </Button>
-                          </div>
+                          </a>
+                          <Button variant="outline" size="sm" className="h-9 w-9 rounded-xl p-0" onClick={() => openNotes(lead)} title="Criar nota" aria-label="Criar nota">
+                            <StickyNote className="h-4 w-4 shrink-0" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 w-9 rounded-xl p-0"
+                            onClick={() => void handleToggleSequence(lead)}
+                            title={lead.emSequencia ? 'Lead na sequência' : 'Adicionar à sequência'}
+                            aria-label={lead.emSequencia ? 'Lead na sequência' : 'Adicionar à sequência'}
+                          >
+                            <Workflow className="h-4 w-4 shrink-0" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 w-9 rounded-xl p-0"
+                            onClick={() => void handleConvertToClient(lead)}
+                            disabled={Boolean(lead.clienteId) || convertingLeadId === lead.id}
+                            title={lead.clienteId ? 'Cliente vinculado' : convertingLeadId === lead.id ? 'Convertendo lead' : 'Converter em cliente'}
+                            aria-label={lead.clienteId ? 'Cliente vinculado' : convertingLeadId === lead.id ? 'Convertendo lead' : 'Converter em cliente'}
+                          >
+                            <UserPlus className="h-4 w-4 shrink-0" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 w-9 rounded-xl border-rose-200 p-0 text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                            onClick={() => void handleDeleteLead(lead)}
+                            disabled={deletingLeadId === lead.id}
+                            title={deletingLeadId === lead.id ? 'Excluindo lead' : 'Excluir lead'}
+                            aria-label={deletingLeadId === lead.id ? 'Excluindo lead' : 'Excluir lead'}
+                          >
+                            <Trash2 className="h-4 w-4 shrink-0" />
+                          </Button>
                         </div>
                       </td>
                     </tr>

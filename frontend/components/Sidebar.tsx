@@ -116,13 +116,6 @@ const NAV_ITEMS: NavItem[] = [
     roles: ADMIN_GERENTE_CONSULTOR,
   },
   {
-    label: "Ordens de Serviço",
-    href: "/vendas/ordens-servico",
-    icon: FileDigit,
-    section: "Vendas",
-    roles: ALL,
-  },
-  {
     label: "Contratos",
     href: "/vendas/contratos",
     icon: BadgeCheck,

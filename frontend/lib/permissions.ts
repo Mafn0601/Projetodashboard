@@ -74,7 +74,6 @@ export const PAGE_ROLES: Record<string, Role[]> = {
   // Vendas
   '/vendas/orcamentos': ADMIN_GERENTE_CONSULTOR,
   '/vendas/orcamento': ADMIN_GERENTE_CONSULTOR,
-  '/vendas/ordens-servico': ALL,
   '/vendas/fatura': ADMIN_GERENTE,
   '/vendas/certificados': ADMIN_GERENTE,
   '/vendas/contratos': ADMIN_GERENTE,
@@ -82,7 +81,7 @@ export const PAGE_ROLES: Record<string, Role[]> = {
   // Operação
   '/operacao/agenda': ADMIN_GERENTE_OPERACIONAL,
   '/operacao/boxes': ADMIN_GERENTE_OPERACIONAL,
-  '/operacao/status': ADMIN_GERENTE_OPERACIONAL,
+  '/operacao/status': ALL,
   '/operacao/tarefas': ADMIN_GERENTE_OPERACIONAL,
   '/operacional/agendamento': ADMIN_GERENTE_OPERACIONAL,
   '/operacional/box': ADMIN_GERENTE_OPERACIONAL,

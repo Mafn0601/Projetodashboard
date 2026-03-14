@@ -35,6 +35,10 @@ type Equipe = {
   ativo?: boolean;
 };
 
+type EquipeLike = Equipe & {
+  parceiro?: string | { id?: string; nome?: string };
+};
+
 // ===== OPÇÕES DE SELEÇÃO =====
 
 // Funções / Papéis da Equipe
@@ -128,6 +132,29 @@ export default function Page() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const resolverParceiroId = (equipe: EquipeLike, parceirosLista: Parceiro[]): string => {
+    if (equipe.parceiroId) return equipe.parceiroId;
+
+    if (equipe.parceiro && typeof equipe.parceiro === 'object' && equipe.parceiro.id) {
+      return equipe.parceiro.id;
+    }
+
+    const parceiroNome =
+      typeof equipe.parceiro === 'string'
+        ? equipe.parceiro
+        : equipe.parceiro?.nome;
+
+    if (!parceiroNome) return '';
+
+    const match = parceirosLista.find((p) => p.nome.toLowerCase() === parceiroNome.toLowerCase());
+    return match?.id || '';
+  };
+
+  const normalizarEquipe = (equipe: EquipeLike, parceirosLista: Parceiro[]): Equipe => ({
+    ...equipe,
+    parceiroId: resolverParceiroId(equipe, parceirosLista),
+  });
+
   const carregarDados = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
     const silent = options?.silent ?? false;
     const forceRefresh = options?.forceRefresh ?? false;
@@ -142,10 +169,13 @@ export default function Page() {
         parceiroServiceAPI.findAll({ preferCache: !forceRefresh, forceRefresh }),
         equipeServiceAPI.findAll(undefined, undefined, { preferCache: !forceRefresh, forceRefresh })
       ]);
-      
-      setParceiros(parceirosData as unknown as Parceiro[]);
-      setParceiroOptions(parceirosData.map(p => ({ value: p.id, label: p.nome })));
-      setEquipes(equipesData as unknown as Equipe[]);
+
+      const parceirosNormalizados = parceirosData as unknown as Parceiro[];
+      const equipesNormalizadas = (equipesData as unknown as EquipeLike[]).map((e) => normalizarEquipe(e, parceirosNormalizados));
+
+      setParceiros(parceirosNormalizados);
+      setParceiroOptions(parceirosNormalizados.map(p => ({ value: p.id, label: p.nome })));
+      setEquipes(equipesNormalizadas);
     } catch (error) {
       console.warn('Erro ao carregar dados da API/cache da API:', error);
     } finally {
@@ -160,9 +190,12 @@ export default function Page() {
     const cachedEquipes = equipeServiceAPI.getCached();
 
     if (cachedParceiros.length > 0 || cachedEquipes.length > 0) {
-      setParceiros(cachedParceiros as unknown as Parceiro[]);
-      setParceiroOptions(cachedParceiros.map(p => ({ value: p.id, label: p.nome })));
-      setEquipes(cachedEquipes as unknown as Equipe[]);
+      const parceirosNormalizados = cachedParceiros as unknown as Parceiro[];
+      const equipesNormalizadas = (cachedEquipes as unknown as EquipeLike[]).map((e) => normalizarEquipe(e, parceirosNormalizados));
+
+      setParceiros(parceirosNormalizados);
+      setParceiroOptions(parceirosNormalizados.map(p => ({ value: p.id, label: p.nome })));
+      setEquipes(equipesNormalizadas);
       setIsLoading(false);
       carregarDados({ silent: true, forceRefresh: true });
       return;
@@ -290,7 +323,7 @@ export default function Page() {
   };
 
   const handleEdit = (equipe: Equipe) => {
-    setFormData(equipe);
+    setFormData(normalizarEquipe(equipe, parceiros));
     setEditingId(equipe.id);
     setIsModalOpen(true);
   };
@@ -436,7 +469,10 @@ export default function Page() {
               Gerencie os vendedores vinculados as concessionarias
             </p>
           </div>
-          <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
+          <Button
+            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            disabled={isLoading || parceiroOptions.length === 0}
+          >
             + Novo Cadastro
           </Button>
         </div>
@@ -737,6 +773,8 @@ export default function Page() {
                     onChange={(value) => handleChange('parceiroId', value)}
                     options={parceiroOptions}
                     error={errors.parceiroId}
+                    disabled={parceiroOptions.length === 0}
+                    placeholder={parceiroOptions.length === 0 ? 'Carregando concessionarias...' : 'Selecione...'}
                   />
                   <Input
                     label="E-mail *"

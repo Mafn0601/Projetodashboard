@@ -166,6 +166,11 @@ class LeadServiceAPI {
       headers: this.getHeaders(),
     });
 
+    // Treat 404 as an idempotent delete: the lead is already gone.
+    if (response.status === 404) {
+      return { message: 'Lead já removido' };
+    }
+
     return this.parseResponse<{ message: string }>(response);
   }
 }

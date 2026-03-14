@@ -304,7 +304,10 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
 
   const handleRefresh = async () => {
     startRefreshTransition(() => {
-      void loadDashboard();
+      void Promise.all([
+        loadDashboard(),
+        loadClientes({ forceRefresh: true }),
+      ]);
     });
   };
 
@@ -339,7 +342,10 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
         ultimaInteracao: getBrasiliaNowISO(),
       });
 
-      await loadDashboard();
+      await Promise.all([
+        loadDashboard(),
+        loadClientes({ silent: true, forceRefresh: true }),
+      ]);
     } catch (error) {
       console.error('Erro ao converter lead em cliente:', error);
       window.alert('Erro ao converter lead em cliente.');

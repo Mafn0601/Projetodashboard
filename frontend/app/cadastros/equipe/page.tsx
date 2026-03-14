@@ -35,7 +35,7 @@ type Equipe = {
   ativo?: boolean;
 };
 
-type EquipeLike = Equipe & {
+type EquipeLike = Omit<Equipe, 'parceiro'> & {
   parceiro?: string | { id?: string; nome?: string };
 };
 
@@ -150,10 +150,15 @@ export default function Page() {
     return match?.id || '';
   };
 
-  const normalizarEquipe = (equipe: EquipeLike, parceirosLista: Parceiro[]): Equipe => ({
-    ...equipe,
-    parceiroId: resolverParceiroId(equipe, parceirosLista),
-  });
+  const normalizarEquipe = (equipe: EquipeLike, parceirosLista: Parceiro[]): Equipe => {
+    const { parceiro, ...rest } = equipe;
+
+    return {
+      ...rest,
+      parceiro: typeof parceiro === 'string' ? parceiro : parceiro?.nome,
+      parceiroId: resolverParceiroId(equipe, parceirosLista),
+    };
+  };
 
   const carregarDados = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
     const silent = options?.silent ?? false;

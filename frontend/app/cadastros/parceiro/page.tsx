@@ -218,7 +218,7 @@ export default function Page() {
       <div className="space-y-6">
         <header className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Cadastro de Concessionarias</h1>
+               <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Cadastro de Concessionarias</h1>
             <p className="text-xs text-slate-700 dark:text-slate-400">Sincronizando dados...</p>
           </div>
         </header>

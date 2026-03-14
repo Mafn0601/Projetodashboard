@@ -476,7 +476,6 @@ export default function Page() {
           </div>
           <Button
             onClick={() => { resetForm(); setIsModalOpen(true); }}
-            disabled={isLoading || parceiroOptions.length === 0}
           >
             + Novo Cadastro
           </Button>

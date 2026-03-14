@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Area, CartesianGrid, ComposedChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { FinanceiroKpiCard } from '@/components/financeiro/FinanceiroKpiCard';
 import { FinanceiroNav } from '@/components/financeiro/FinanceiroNav';
 import { StatusPill } from '@/components/financeiro/StatusPill';
+import { addDaysToBrasiliaISODate, getBrasiliaTodayISO } from '@/lib/dateUtils';
 import { financeiroServiceAPI } from '@/services/financeiroServiceAPI';
 
 function toCurrency(value: number): string {
@@ -37,12 +38,21 @@ export default function FinanceiroDashboardPage() {
 
   const fluxoSerie = useMemo(() => {
     const serie: any[] = data?.charts?.fluxo30Dias || [];
-    return serie.slice(-30).map((item: any) => ({
-      data: item.data,
-      Entradas: item.entradas,
-      Saidas: item.saidas,
-      Saldo: item.saldoDiario,
-    }));
+    const byDate = new Map<string, any>(serie.map((item: any) => [item.data, item]));
+
+    const startDate = addDaysToBrasiliaISODate(getBrasiliaTodayISO(), -29);
+
+    return Array.from({ length: 30 }, (_, index) => {
+      const dia = addDaysToBrasiliaISODate(startDate, index);
+      const item = byDate.get(dia);
+
+      return {
+        data: dia,
+        Entradas: Number(item?.entradas || 0),
+        Saidas: Number(item?.saidas || 0),
+        Saldo: Number(item?.saldoDiario || 0),
+      };
+    });
   }, [data]);
 
   const formatCurrency = (v: number) =>
@@ -85,20 +95,6 @@ export default function FinanceiroDashboardPage() {
           </div>
           <ResponsiveContainer width="100%" height={380}>
             <ComposedChart data={fluxoSerie} margin={{ top: 12, right: 18, left: 12, bottom: 10 }}>
-              <defs>
-                <linearGradient id="gradEntradas" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.34} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gradSaidas" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.34} />
-                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gradSaldo" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.34} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                </linearGradient>
-              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.45} vertical={false} />
               <XAxis dataKey="data" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} minTickGap={24} />
               <YAxis yAxisId="financeiro" tickFormatter={formatCurrency} tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={76} />
@@ -108,9 +104,9 @@ export default function FinanceiroDashboardPage() {
                 contentStyle={{ fontSize: 13, borderRadius: 12, border: '1px solid #1e293b', background: '#020617', color: '#e2e8f0' }}
               />
               <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
-              <Area yAxisId="financeiro" type="monotone" dataKey="Entradas" stroke="#10b981" strokeWidth={3} fill="url(#gradEntradas)" dot={false} />
-              <Area yAxisId="financeiro" type="monotone" dataKey="Saidas" stroke="#f43f5e" strokeWidth={3} fill="url(#gradSaidas)" dot={false} />
-              <Area yAxisId="financeiro" type="monotone" dataKey="Saldo" stroke="#6366f1" strokeWidth={3} fill="url(#gradSaldo)" dot={false} strokeDasharray="6 3" />
+              <Line yAxisId="financeiro" type="monotone" dataKey="Entradas" stroke="#10b981" strokeWidth={3} dot={false} connectNulls />
+              <Line yAxisId="financeiro" type="monotone" dataKey="Saidas" stroke="#f43f5e" strokeWidth={3} dot={false} connectNulls />
+              <Line yAxisId="financeiro" type="monotone" dataKey="Saldo" stroke="#6366f1" strokeWidth={3} dot={false} strokeDasharray="6 3" connectNulls />
             </ComposedChart>
           </ResponsiveContainer>
         </article>

@@ -91,7 +91,7 @@ export default function FluxoCaixaPage() {
         )}
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="min-w-[900px] w-full text-left text-xs">
             <thead className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">

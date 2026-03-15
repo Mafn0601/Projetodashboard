@@ -132,6 +132,25 @@ export default function Page() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const carregarParceirosLegadoLocal = (): Parceiro[] => {
+    if (typeof window === 'undefined') return [];
+
+    try {
+      const raw = localStorage.getItem('parceiros');
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed
+        .map((item: any) => ({
+          id: String(item?.id || ''),
+          nome: String(item?.nome || ''),
+        }))
+        .filter((item: Parceiro) => Boolean(item.id) && Boolean(item.nome));
+    } catch {
+      return [];
+    }
+  };
+
   const resolverParceiroId = (equipe: EquipeLike, parceirosLista: Parceiro[]): string => {
     if (equipe.parceiroId) return equipe.parceiroId;
 
@@ -175,7 +194,8 @@ export default function Page() {
         equipeServiceAPI.findAll(undefined, undefined, { preferCache: !forceRefresh, forceRefresh })
       ]);
 
-      const parceirosNormalizados = parceirosData as unknown as Parceiro[];
+      const parceirosAPI = parceirosData as unknown as Parceiro[];
+      const parceirosNormalizados = parceirosAPI.length > 0 ? parceirosAPI : carregarParceirosLegadoLocal();
       const equipesNormalizadas = (equipesData as unknown as EquipeLike[]).map((e) => normalizarEquipe(e, parceirosNormalizados));
 
       setParceiros(parceirosNormalizados);
@@ -193,9 +213,11 @@ export default function Page() {
   useEffect(() => {
     const cachedParceiros = parceiroServiceAPI.getCached();
     const cachedEquipes = equipeServiceAPI.getCached();
+    const legadoParceiros = carregarParceirosLegadoLocal();
+    const parceirosBootstrap = cachedParceiros.length > 0 ? (cachedParceiros as unknown as Parceiro[]) : legadoParceiros;
 
-    if (cachedParceiros.length > 0 || cachedEquipes.length > 0) {
-      const parceirosNormalizados = cachedParceiros as unknown as Parceiro[];
+    if (parceirosBootstrap.length > 0 || cachedEquipes.length > 0) {
+      const parceirosNormalizados = parceirosBootstrap;
       const equipesNormalizadas = (cachedEquipes as unknown as EquipeLike[]).map((e) => normalizarEquipe(e, parceirosNormalizados));
 
       setParceiros(parceirosNormalizados);
@@ -778,7 +800,13 @@ export default function Page() {
                     options={parceiroOptions}
                     error={errors.parceiroId}
                     disabled={parceiroOptions.length === 0}
-                    placeholder={parceiroOptions.length === 0 ? 'Carregando concessionarias...' : 'Selecione...'}
+                    placeholder={
+                      parceiroOptions.length > 0
+                        ? 'Selecione...'
+                        : isLoading
+                        ? 'Carregando concessionarias...'
+                        : 'Nenhuma concessionaria disponível'
+                    }
                   />
                   <Input
                     label="E-mail *"

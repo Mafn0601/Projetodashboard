@@ -7,6 +7,7 @@ import { Select, SelectOption } from '@/components/ui/Select';
 import { MaskedInput } from '@/components/ui/MaskedInput';
 import { equipeServiceAPI } from '@/services/equipeServiceAPI';
 import { parceiroServiceAPI } from '@/services/parceiroServiceAPI';
+import { useAuth } from '@/components/AuthContext';
 
 type Parceiro = {
   id: string;
@@ -102,6 +103,7 @@ function generateId(prefix: string) {
 }
 
 export default function Page() {
+  const { isLoading: authLoading } = useAuth();
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
   const [parceiroOptions, setParceiroOptions] = useState<SelectOption[]>([]);
@@ -203,6 +205,11 @@ export default function Page() {
       setEquipes(equipesNormalizadas);
     } catch (error) {
       console.warn('Erro ao carregar dados da API/cache da API:', error);
+      const legado = carregarParceirosLegadoLocal();
+      if (legado.length > 0) {
+        setParceiros(legado);
+        setParceiroOptions(legado.map(p => ({ value: p.id, label: p.nome })));
+      }
     } finally {
       if (!silent) {
         setIsLoading(false);
@@ -211,6 +218,8 @@ export default function Page() {
   };
 
   useEffect(() => {
+    if (authLoading) return;
+
     const cachedParceiros = parceiroServiceAPI.getCached();
     const cachedEquipes = equipeServiceAPI.getCached();
     const legadoParceiros = carregarParceirosLegadoLocal();
@@ -229,7 +238,7 @@ export default function Page() {
     }
 
     carregarDados({ forceRefresh: true });
-  }, []);
+  }, [authLoading]);
 
   // Recarregar dados quando a página ganha foco (volta de outra página)
   useEffect(() => {

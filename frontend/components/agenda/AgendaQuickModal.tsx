@@ -424,12 +424,17 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
 
     if (!dataIso || !horario || tiposItens.length === 0 || !parceiroId || !responsavel) {
       traceAgendar('quick-modal:submit-invalid');
-      setErroValidacao('Preencha todos os campos obrigatórios (parceiro, responsável e pelo menos um tipo/item)');
+      const mensagem = 'Preencha todos os campos obrigatórios (parceiro, responsável e pelo menos um tipo/item)';
+      setErroValidacao(mensagem);
+      alert(mensagem);
       return;
     }
 
     if (!validarDisponibilidade()) {
       traceAgendar('quick-modal:submit-blocked', { erro: erroValidacao || 'sem disponibilidade' });
+      if (erroValidacao) {
+        alert(erroValidacao);
+      }
       return;
     }
 
@@ -536,6 +541,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       }
     } catch (error) {
       console.error('Erro ao salvar agendamento na API:', error);
+      alert(error instanceof Error ? error.message : 'Erro ao criar agendamento');
       traceAgendar('quick-modal:api-error', {
         message: error instanceof Error ? error.message : 'erro desconhecido',
       });
@@ -848,7 +854,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
           <Button type="button" variant="secondary" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={Boolean(erroValidacao) || isLoading}>
+          <Button type="submit" disabled={isLoading}>
             Agendar
           </Button>
         </div>

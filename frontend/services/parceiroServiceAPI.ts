@@ -137,9 +137,13 @@ class ParceiroServiceAPI {
     }
   }
 
-  async findById(id: string): Promise<ParceiroAPI> {
+  async findById(id: string): Promise<ParceiroAPI | null> {
     try {
       const response = await fetch(`${API_URL}/api/parceiros/${id}`, { headers: this.getAuthHeaders() });
+
+      if (response.status === 404) {
+        return null;
+      }
 
       if (!response.ok) {
         throw new Error(`Erro ao buscar parceiro (HTTP ${response.status})`);

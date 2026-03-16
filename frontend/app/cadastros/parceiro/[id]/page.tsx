@@ -121,10 +121,22 @@ export default function ParceiroDetalhePage() {
           }
         }
 
-        const [parceiroData, equipesData] = await Promise.all([
-          parceiroDataInicial ? Promise.resolve(parceiroDataInicial) : parceiroServiceAPI.findById(parceiroIdResolvido),
-          equipeServiceAPI.findAll(parceiroIdResolvido, undefined, { preferCache: true, forceRefresh: false }),
-        ]);
+        const parceiroData = parceiroDataInicial
+          ? parceiroDataInicial
+          : await parceiroServiceAPI.findById(parceiroIdResolvido);
+
+        if (!parceiroData) {
+          if (!mounted) return;
+          setParceiro(null);
+          setEquipes([]);
+          setLoading(false);
+          return;
+        }
+
+        const equipesData = await equipeServiceAPI.findAll(parceiroIdResolvido, undefined, {
+          preferCache: true,
+          forceRefresh: false,
+        });
 
         if (!mounted) return;
 

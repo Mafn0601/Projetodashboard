@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import prisma from '../lib/prisma';
+import { AuthRequest } from '../middlewares/auth';
 
 export class BoxController {
-  async findAll(req: Request, res: Response) {
+  async findAll(req: AuthRequest, res: Response) {
     try {
       const boxes = await prisma.box.findMany({
         orderBy: { numero: 'asc' },
@@ -18,7 +19,7 @@ export class BoxController {
     }
   }
 
-  async findById(req: Request, res: Response) {
+  async findById(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
 
@@ -40,7 +41,7 @@ export class BoxController {
     }
   }
 
-  async create(req: Request, res: Response) {
+  async create(req: AuthRequest, res: Response) {
     try {
       const { numero, nome, descricao, tipo, parceiroId, parceiro, cor, ativo } = req.body;
 
@@ -85,7 +86,7 @@ export class BoxController {
     }
   }
 
-  async update(req: Request, res: Response) {
+  async update(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
       const { numero, nome, descricao, tipo, parceiroId, parceiro, cor, ativo } = req.body;
@@ -136,7 +137,7 @@ export class BoxController {
     }
   }
 
-  async delete(req: Request, res: Response) {
+  async delete(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
 

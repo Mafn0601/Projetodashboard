@@ -161,6 +161,14 @@ export default function Page() {
     };
   };
 
+  const carregarParceirosApenas = async (forceRefresh = false): Promise<Parceiro[]> => {
+    const parceirosData = await parceiroServiceAPI.findAll({ preferCache: !forceRefresh, forceRefresh });
+    const parceirosNormalizados = parceirosData as unknown as Parceiro[];
+    setParceiros(parceirosNormalizados);
+    setParceiroOptions(parceirosNormalizados.map((p) => ({ value: p.id, label: p.nome })));
+    return parceirosNormalizados;
+  };
+
   const carregarDados = async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
     const silent = options?.silent ?? false;
     const forceRefresh = options?.forceRefresh ?? false;
@@ -170,18 +178,27 @@ export default function Page() {
         setIsLoading(true);
       }
       
-      // Carregar da API em paralelo
-      const [parceirosData, equipesData] = await Promise.all([
-        parceiroServiceAPI.findAll({ preferCache: !forceRefresh, forceRefresh }),
-        equipeServiceAPI.findAll(undefined, undefined, { preferCache: !forceRefresh, forceRefresh })
+      const [parceirosResult, equipesResult] = await Promise.allSettled([
+        carregarParceirosApenas(forceRefresh),
+        equipeServiceAPI.findAll(undefined, undefined, { preferCache: !forceRefresh, forceRefresh }),
       ]);
 
-      const parceirosNormalizados = parceirosData as unknown as Parceiro[];
-      const equipesNormalizadas = (equipesData as unknown as EquipeLike[]).map((e) => normalizarEquipe(e, parceirosNormalizados));
+      const parceirosBase = parceirosResult.status === 'fulfilled'
+        ? parceirosResult.value
+        : (parceiroServiceAPI.getCached() as unknown as Parceiro[]);
 
-      setParceiros(parceirosNormalizados);
-      setParceiroOptions(parceirosNormalizados.map(p => ({ value: p.id, label: p.nome })));
-      setEquipes(equipesNormalizadas);
+      if (equipesResult.status === 'fulfilled') {
+        const equipesNormalizadas = (equipesResult.value as unknown as EquipeLike[]).map((e) => normalizarEquipe(e, parceirosBase));
+        setEquipes(equipesNormalizadas);
+      }
+
+      if (parceirosResult.status === 'rejected') {
+        console.warn('Erro ao carregar parceiros:', parceirosResult.reason);
+      }
+
+      if (equipesResult.status === 'rejected') {
+        console.warn('Erro ao carregar equipes:', equipesResult.reason);
+      }
     } catch (error) {
       console.warn('Erro ao carregar dados da API/cache da API:', error);
     } finally {
@@ -331,6 +348,9 @@ export default function Page() {
   };
 
   const handleEdit = (equipe: Equipe) => {
+    if (parceiroOptions.length === 0) {
+      void carregarParceirosApenas(true);
+    }
     setFormData(normalizarEquipe(equipe, parceiros));
     setEditingId(equipe.id);
     setIsModalOpen(true);
@@ -478,7 +498,13 @@ export default function Page() {
             </p>
           </div>
           <Button
-            onClick={() => { resetForm(); setIsModalOpen(true); }}
+            onClick={() => {
+              resetForm();
+              if (parceiroOptions.length === 0) {
+                void carregarParceirosApenas(true);
+              }
+              setIsModalOpen(true);
+            }}
           >
             + Novo Cadastro
           </Button>
@@ -780,7 +806,7 @@ export default function Page() {
                     onChange={(value) => handleChange('parceiroId', value)}
                     options={parceiroOptions}
                     error={errors.parceiroId}
-                    disabled={parceiroOptions.length === 0}
+                    disabled={isLoading}
                     placeholder={
                       parceiroOptions.length > 0
                         ? 'Selecione...'

@@ -127,9 +127,7 @@ export default function ParceiroDetalhePage() {
 
         if (!parceiroData) {
           if (!mounted) return;
-          setParceiro(null);
-          setEquipes([]);
-          setLoading(false);
+          router.replace('/cadastros/parceiro');
           return;
         }
 

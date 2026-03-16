@@ -219,6 +219,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      if (response.status === 401 || response.status === 403) {
+        console.warn('⚠️ Credenciais inválidas na API');
+        return false;
+      }
+
+      if (response.status >= 500) {
+        console.warn(`⚠️ API retornou erro ${response.status}, tentando fallback MOCK`);
+      } else {
+        const errorBody = await response.json().catch(() => null);
+        console.warn('⚠️ Falha de login na API:', errorBody?.error || `HTTP ${response.status}`);
+        return false;
+      }
+
       // Fallback: tentar usuários MOCK se API falhar
       console.log('⚠️ API não disponível, usando usuários MOCK');
       const identifier = email.trim().toLowerCase();

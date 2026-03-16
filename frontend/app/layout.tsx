@@ -7,7 +7,10 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Dashboard de Gestão de OS",
-  description: "Sistema de gestão de Ordens de Serviço, Vendas e Inteligência Comercial."
+  description: "Sistema de gestão de Ordens de Serviço, Vendas e Inteligência Comercial.",
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

@@ -37,6 +37,8 @@ model Usuario {
 
 enum Role {
   ADMIN
+  DONO
+  FINANCEIRO
   GERENTE
   OPERADOR
   PARCEIRO

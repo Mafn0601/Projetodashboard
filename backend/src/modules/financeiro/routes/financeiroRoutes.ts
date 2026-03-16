@@ -5,7 +5,7 @@ import { authenticate, authorize } from '../../../middlewares/auth';
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('ADMIN', 'GERENTE'));
+router.use(authorize('ADMIN', 'DONO', 'GERENTE', 'FINANCEIRO'));
 
 router.get('/dashboard', financeiroController.dashboard);
 router.get('/contas-receber', financeiroController.contasReceber);

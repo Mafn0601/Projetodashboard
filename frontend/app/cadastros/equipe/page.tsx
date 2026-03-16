@@ -45,12 +45,11 @@ type EquipeLike = Omit<Equipe, 'parceiro'> & {
 // Funções / Papéis da Equipe
 const funcoes = [
   { value: "admin", label: "ADMIN" },
-  { value: "consultor_vendas", label: "Consultor de Vendas" },
-  { value: "gerente_vendas", label: "Gerente de Vendas" },
-  { value: "gerente_comercial", label: "Gerente Comercial" },
-  { value: "operador", label: "Operador" },
-  { value: "auxiliar_administrativo", label: "Auxiliar Administrativo" },
-  { value: "tecnico", label: "Técnico" }
+  { value: "dono", label: "Dono" },
+  { value: "financeiro", label: "Financeiro" },
+  { value: "gerente", label: "Gerente" },
+  { value: "consultor", label: "Consultor" },
+  { value: "operacional", label: "Operacional" }
 ];
 
 // Meios de Pagamento para Comissão

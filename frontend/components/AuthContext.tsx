@@ -17,7 +17,7 @@ import { normalizeRole } from '@/lib/permissions';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-export type UserRole = 'admin' | 'gerente' | 'consultor' | 'operacional';
+export type UserRole = 'admin' | 'dono' | 'financeiro' | 'gerente' | 'consultor' | 'operacional';
 
 interface User {
   id: string;
@@ -44,6 +44,24 @@ const MOCK_USERS = [
     password: 'admin123',
     role: 'admin' as UserRole,
     token: 'mock-token-admin-123'
+  },
+  {
+    id: '66666666-6666-4666-8666-666666666666',
+    name: 'Dono',
+    login: 'dono',
+    email: 'dono@exemplo.com',
+    password: 'dono123',
+    role: 'dono' as UserRole,
+    token: 'mock-token-dono-123'
+  },
+  {
+    id: '77777777-7777-4777-8777-777777777777',
+    name: 'Financeiro',
+    login: 'financeiro',
+    email: 'financeiro@exemplo.com',
+    password: 'financeiro123',
+    role: 'financeiro' as UserRole,
+    token: 'mock-token-financeiro-123'
   },
   {
     id: '22222222-2222-4222-8222-222222222222',

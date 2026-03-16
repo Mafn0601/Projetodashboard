@@ -41,10 +41,11 @@ type NavItem = {
   roles?: Role[]; // se ausente → todos os roles têm acesso
 };
 
-const ALL: Role[] = ['admin', 'gerente', 'consultor', 'operacional'];
-const ADMIN_GERENTE: Role[] = ['admin', 'gerente'];
-const ADMIN_GERENTE_CONSULTOR: Role[] = ['admin', 'gerente', 'consultor'];
-const ADMIN_GERENTE_OPERACIONAL: Role[] = ['admin', 'gerente', 'operacional'];
+const ALL: Role[] = ['admin', 'dono', 'financeiro', 'gerente', 'consultor', 'operacional'];
+const ADMIN_DONO_GERENTE: Role[] = ['admin', 'dono', 'gerente'];
+const ADMIN_DONO_GERENTE_CONSULTOR: Role[] = ['admin', 'dono', 'gerente', 'consultor'];
+const ADMIN_DONO_GERENTE_OPERACIONAL: Role[] = ['admin', 'dono', 'gerente', 'operacional'];
+const ADMIN_DONO_GERENTE_FINANCEIRO: Role[] = ['admin', 'dono', 'gerente', 'financeiro'];
 const ADMIN_ONLY: Role[] = ['admin'];
 
 // TODO: talvez adicionar badges com contadores nos itens?
@@ -62,28 +63,28 @@ const NAV_ITEMS: NavItem[] = [
     href: "/operacao/agenda",
     icon: CalendarCheck,
     section: "Operação",
-    roles: ADMIN_GERENTE_OPERACIONAL,
+    roles: ADMIN_DONO_GERENTE_OPERACIONAL,
   },
   {
     label: "Boxes",
     href: "/operacao/boxes",
     icon: BoxIcon,
     section: "Operação",
-    roles: ADMIN_GERENTE_OPERACIONAL,
+    roles: ADMIN_DONO_GERENTE_OPERACIONAL,
   },
   {
     label: "Status",
     href: "/operacao/status",
     icon: BarChart3,
     section: "Operação",
-    roles: ADMIN_GERENTE_OPERACIONAL,
+    roles: ADMIN_DONO_GERENTE_OPERACIONAL,
   },
   {
     label: "Tarefas",
     href: "/operacao/tarefas",
     icon: ClipboardList,
     section: "Operação",
-    roles: ADMIN_GERENTE_OPERACIONAL,
+    roles: ADMIN_DONO_GERENTE_OPERACIONAL,
   },
   // CRM
   {
@@ -91,21 +92,21 @@ const NAV_ITEMS: NavItem[] = [
     href: "/crm/clientes",
     icon: Users,
     section: "CRM",
-    roles: ADMIN_GERENTE_CONSULTOR,
+    roles: ADMIN_DONO_GERENTE_CONSULTOR,
   },
   {
     label: "Vendedores",
     href: "/crm/vendedores",
     icon: UserCog,
     section: "CRM",
-    roles: ADMIN_GERENTE,
+    roles: ADMIN_DONO_GERENTE,
   },
   {
     label: "Concessionárias",
     href: "/crm/concessionarias",
     icon: Handshake,
     section: "CRM",
-    roles: ADMIN_GERENTE_CONSULTOR,
+    roles: ADMIN_DONO_GERENTE_CONSULTOR,
   },
   // Vendas
   {
@@ -113,14 +114,14 @@ const NAV_ITEMS: NavItem[] = [
     href: "/vendas/orcamentos",
     icon: FileText,
     section: "Vendas",
-    roles: ADMIN_GERENTE_CONSULTOR,
+    roles: ADMIN_DONO_GERENTE_CONSULTOR,
   },
   {
     label: "Contratos",
     href: "/vendas/contratos",
     icon: BadgeCheck,
     section: "Vendas",
-    roles: ADMIN_GERENTE,
+    roles: ADMIN_DONO_GERENTE,
   },
   // Gestão
   {
@@ -128,21 +129,21 @@ const NAV_ITEMS: NavItem[] = [
     href: "/gestao/estoque",
     icon: Package,
     section: "Gestão",
-    roles: ADMIN_GERENTE,
+    roles: ADMIN_DONO_GERENTE,
   },
   {
     label: "Financeiro",
     href: "/gestao/financeiro/dashboard",
     icon: Receipt,
     section: "Gestão",
-    roles: ADMIN_GERENTE,
+    roles: ADMIN_DONO_GERENTE_FINANCEIRO,
   },
   {
     label: "Comissões",
     href: "/gestao/comissoes",
     icon: TrendingUp,
     section: "Gestão",
-    roles: ADMIN_GERENTE,
+    roles: ADMIN_DONO_GERENTE_FINANCEIRO,
   },
   // Configurações
   {
@@ -157,7 +158,7 @@ const NAV_ITEMS: NavItem[] = [
     href: "/configuracoes/servicos",
     icon: Settings,
     section: "Configurações",
-    roles: ADMIN_GERENTE,
+    roles: ADMIN_DONO_GERENTE,
   }
 ];
 

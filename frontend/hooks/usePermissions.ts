@@ -16,6 +16,8 @@ export function usePermissions() {
   return {
     role,
     isAdmin: role === 'admin',
+    isDono: role === 'dono',
+    isFinanceiro: role === 'financeiro',
     isGerente: role === 'gerente',
     isConsultor: role === 'consultor',
     isOperacional: role === 'operacional',

@@ -43,6 +43,8 @@ export function authenticate(
 
       const MOCK_MAP: Record<string, { userId: string; email: string; role: string }> = {
         'mock-token-admin-123':       { userId: '11111111-1111-4111-8111-111111111111', email: 'admin@exemplo.com',       role: 'ADMIN' },
+        'mock-token-dono-123':        { userId: '66666666-6666-4666-8666-666666666666', email: 'dono@exemplo.com',        role: 'DONO' },
+        'mock-token-financeiro-123':  { userId: '77777777-7777-4777-8777-777777777777', email: 'financeiro@exemplo.com',  role: 'FINANCEIRO' },
         'mock-token-gerente-123':     { userId: '33333333-3333-4333-8333-333333333333', email: 'gerente@exemplo.com',     role: 'GERENTE' },
         'mock-token-consultor-123':   { userId: '22222222-2222-4222-8222-222222222222', email: 'consultor@exemplo.com',   role: 'PARCEIRO' },
         'mock-token-operacional-123': { userId: '44444444-4444-4444-8444-444444444444', email: 'operacional@exemplo.com', role: 'OPERADOR' },
@@ -76,7 +78,11 @@ export function authorize(...roles: string[]) {
       return next(new AppError('Não autorizado', 401));
     }
 
-    if (roles.length && !roles.includes(req.user.role)) {
+    const userRole = req.user.role;
+    const hasDirectRole = roles.includes(userRole);
+    const donoAsAdmin = userRole === 'DONO' && roles.includes('ADMIN');
+
+    if (roles.length && !hasDirectRole && !donoAsAdmin) {
       return next(new AppError('Sem permissão para acessar este recurso', 403));
     }
 

@@ -3,10 +3,12 @@ import { hashPassword, comparePassword } from '../utils/password';
 import { generateToken } from '../utils/jwt';
 import { AppError } from '../middlewares/errorHandler';
 
-function mapEquipeFuncaoToRole(funcao?: string): 'ADMIN' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO' {
+function mapEquipeFuncaoToRole(funcao?: string): 'ADMIN' | 'DONO' | 'FINANCEIRO' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO' {
   const value = String(funcao || '').trim().toLowerCase();
 
   if (value === 'admin' || value === 'administrador') return 'ADMIN';
+  if (value === 'dono') return 'DONO';
+  if (value.includes('financeir')) return 'FINANCEIRO';
   if (value.includes('gerente')) return 'GERENTE';
   if (value === 'operador' || value === 'tecnico' || value === 'auxiliar_administrativo') return 'OPERADOR';
 
@@ -19,7 +21,7 @@ export class AuthService {
     login: string;
     email: string;
     senha: string;
-    role?: 'ADMIN' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO';
+    role?: 'ADMIN' | 'DONO' | 'FINANCEIRO' | 'GERENTE' | 'OPERADOR' | 'PARCEIRO';
     parceiroId?: string;
   }) {
     const normalizedEmail = data.email.trim().toLowerCase();

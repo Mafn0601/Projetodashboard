@@ -27,6 +27,8 @@ type UsuarioListItem = {
 
 const roleOptions: SelectOption[] = [
   { value: 'ADMIN', label: 'ADMIN' },
+  { value: 'DONO', label: 'DONO' },
+  { value: 'FINANCEIRO', label: 'FINANCEIRO' },
   { value: 'GERENTE', label: 'GERENTE' },
   { value: 'OPERADOR', label: 'OPERADOR' },
   { value: 'PARCEIRO', label: 'PARCEIRO' },

@@ -86,10 +86,18 @@ class LeadServiceAPI {
     this.authToken = token;
   }
 
+  private resolveToken(): string | null {
+    if (this.authToken) return this.authToken;
+    if (typeof window === 'undefined') return null;
+
+    return sessionStorage.getItem('token') || localStorage.getItem('token');
+  }
+
   private getHeaders(): Record<string, string> {
+    const token = this.resolveToken();
     return {
       'Content-Type': 'application/json',
-      ...(this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
   }
 

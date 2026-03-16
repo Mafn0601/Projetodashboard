@@ -24,6 +24,11 @@ const ACTIVE_LEAD_STATUSES: StatusLead[] = [
   'QUALIFICADO',
 ];
 
+function isUuid(value?: string): boolean {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export class LeadService {
   private buildWhere(filters?: LeadFilters): Prisma.LeadWhereInput {
     const where: Prisma.LeadWhereInput = {};
@@ -47,7 +52,14 @@ export class LeadService {
     }
 
     if (filters?.responsavelId) {
-      where.responsavelId = filters.responsavelId;
+      if (isUuid(filters.responsavelId)) {
+        where.responsavelId = filters.responsavelId;
+      } else {
+        console.warn('⚠️ responsavelId inválido no filtro de leads. Retornando vazio para evitar erro Prisma.', {
+          responsavelId: filters.responsavelId,
+        });
+        where.responsavelId = '00000000-0000-0000-0000-000000000000';
+      }
     }
 
     if (filters?.minScore !== undefined) {

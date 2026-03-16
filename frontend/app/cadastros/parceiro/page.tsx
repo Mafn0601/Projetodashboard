@@ -82,17 +82,7 @@ export default function Page() {
 
     const hydrateParceirosLocalStorage = async () => {
       try {
-        const localRaw = typeof window !== 'undefined' ? localStorage.getItem('parceiros') : null;
-        const localParceiros = localRaw ? JSON.parse(localRaw) : [];
-
-        const temIdLegado = Array.isArray(localParceiros)
-          ? localParceiros.some((p: { id?: unknown }) => String(p?.id || '').startsWith('parceiros_'))
-          : false;
-
-        if (Array.isArray(localParceiros) && localParceiros.length > 0 && !temIdLegado) {
-          return;
-        }
-
+        // Reconciles local list with API source of truth to drop stale local-only records.
         await syncParceirosFromAPI();
       } catch (error) {
         console.error('Erro ao sincronizar parceiros para localStorage:', error);

@@ -59,6 +59,7 @@ export class EquipeService {
 
     if (filters?.search) {
       where.OR = [
+        { nome: { contains: filters.search, mode: 'insensitive' } },
         { login: { contains: filters.search, mode: 'insensitive' } },
         { cpf: { contains: filters.search } },
         { email: { contains: filters.search, mode: 'insensitive' } },
@@ -85,6 +86,7 @@ export class EquipeService {
         take: safeTake,
         select: {
           id: true,
+          nome: true,
           login: true,
           cpf: true,
           funcao: true,
@@ -128,6 +130,7 @@ export class EquipeService {
       where: { id },
       select: {
         id: true,
+        nome: true,
         login: true,
         cpf: true,
         funcao: true,
@@ -165,6 +168,7 @@ export class EquipeService {
   }
 
   async create(data: {
+    nome: string;
     cpf?: string;
     funcao: string;
     telefone?: string;
@@ -211,6 +215,7 @@ export class EquipeService {
 
     const equipe = await prisma.equipe.create({
       data: {
+        nome: data.nome.trim(),
         login: loginInterno,
         senha: senhaHash,
         cpf,
@@ -231,6 +236,7 @@ export class EquipeService {
       },
       select: {
         id: true,
+        nome: true,
         login: true,
         cpf: true,
         funcao: true,
@@ -266,6 +272,7 @@ export class EquipeService {
   async update(
     id: string,
     data: Partial<{
+      nome?: string;
       cpf?: string;
       funcao: string;
       telefone?: string;
@@ -304,6 +311,7 @@ export class EquipeService {
     const equipeAtualizada = await prisma.equipe.update({
       where: { id },
       data: {
+        nome: data.nome?.trim(),
         cpf: cpfAtualizado,
         funcao: data.funcao,
         telefone: data.telefone,
@@ -321,6 +329,7 @@ export class EquipeService {
       },
       select: {
         id: true,
+        nome: true,
         login: true,
         cpf: true,
         funcao: true,

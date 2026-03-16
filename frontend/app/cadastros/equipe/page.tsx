@@ -17,6 +17,7 @@ type Parceiro = {
 
 type Equipe = {
   id: string;
+  nome?: string;
   parceiroId?: string;
   parceiro?: string;
   login?: string;
@@ -115,6 +116,7 @@ export default function Page() {
   const didInitExpand = useRef(false);
   const [formData, setFormData] = useState<Equipe>({
     id: '',
+    nome: '',
     parceiroId: '',
     cpf: '',
     funcao: '',
@@ -244,6 +246,7 @@ export default function Page() {
   const resetForm = () => {
     setFormData({
       id: '',
+      nome: '',
       parceiroId: '',
       cpf: '',
       funcao: '',
@@ -279,6 +282,7 @@ export default function Page() {
     const newErrors: Record<string, string> = {};
     
     if (!formData.parceiroId) newErrors.parceiroId = 'Campo obrigatório';
+    if (!String(formData.nome || '').trim()) newErrors.nome = 'Campo obrigatório';
     if (!formData.cpf) newErrors.cpf = 'Campo obrigatório';
     if (!formData.funcao) newErrors.funcao = 'Campo obrigatório';
     if (!formData.email) newErrors.email = 'Campo obrigatório';
@@ -298,6 +302,7 @@ export default function Page() {
       if (editingId) {
         // Atualizar - parceiroId não pode ser alterado
         const dataToUpdate = {
+          nome: String(formData.nome || '').trim(),
           cpf: formData.cpf?.replace(/\D/g, '') || '',
           funcao: formData.funcao,
           telefone: formData.telefone?.replace(/\D/g, '') || '',
@@ -318,6 +323,7 @@ export default function Page() {
       } else {
         // Criar - parceiroId é obrigatório
         const dataToCreate = {
+          nome: String(formData.nome || '').trim(),
           cpf: formData.cpf?.replace(/\D/g, '') || '',
           funcao: formData.funcao,
           telefone: formData.telefone?.replace(/\D/g, '') || '',
@@ -416,6 +422,7 @@ export default function Page() {
       const funcaoLabel = obterLabelFuncao(equipe.funcao).toLowerCase();
       
       return (
+        String(equipe.nome || '').toLowerCase().includes(term) ||
         String(equipe.email || '').toLowerCase().includes(term) ||
         (equipe.cpf && equipe.cpf.includes(term)) ||
         parceiroNome.includes(term) ||
@@ -561,6 +568,9 @@ export default function Page() {
                 Concessionaria
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Nome
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 E-mail
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
@@ -587,7 +597,7 @@ export default function Page() {
                     className="bg-slate-50 dark:bg-slate-900/60 cursor-pointer"
                     onClick={() => alternarGrupo(parceiroId)}
                   >
-                    <td className="px-6 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100" colSpan={6}>
+                    <td className="px-6 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100" colSpan={7}>
                       <div className="flex items-center justify-between">
                         <span>{parceiroLabel}</span>
                         <span className="text-xs font-medium text-slate-700 dark:text-slate-400">
@@ -604,6 +614,9 @@ export default function Page() {
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
                         {obterLabelParceiro(equipe.parceiroId || '')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100 font-medium">
+                        {equipe.nome || equipe.login || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
                         {equipe.email || '-'}
@@ -675,6 +688,9 @@ export default function Page() {
                       >
                         <div className="space-y-1.5 text-sm">
                           <p className="text-slate-900 dark:text-slate-100">
+                            <span className="font-medium">Nome:</span> {equipe.nome || equipe.login || '-'}
+                          </p>
+                          <p className="text-slate-900 dark:text-slate-100">
                             <span className="font-medium">E-mail:</span> {equipe.email || '-'}
                           </p>
                           <p className="text-slate-900 dark:text-slate-100 font-mono">
@@ -730,6 +746,12 @@ export default function Page() {
                   <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Concessionaria</p>
                   <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">
                     {obterLabelParceiro(selectedEquipe.parceiroId || '')}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-700 dark:text-slate-400 mb-1">Nome</p>
+                  <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">
+                    {selectedEquipe.nome || selectedEquipe.login || '-'}
                   </p>
                 </div>
                 <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -814,6 +836,12 @@ export default function Page() {
                         ? 'Carregando concessionarias...'
                         : 'Nenhuma concessionaria disponível'
                     }
+                  />
+                  <Input
+                    label="Nome *"
+                    value={formData.nome || ''}
+                    onChange={(e) => handleChange('nome', e.target.value)}
+                    error={errors.nome}
                   />
                   <Input
                     label="E-mail *"

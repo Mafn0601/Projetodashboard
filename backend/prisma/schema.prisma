@@ -74,6 +74,7 @@ model Parceiro {
 
 model Equipe {
   id                    String   @id @default(uuid())
+  nome                  String
   login                 String   @unique
   senha                 String   // Hash bcrypt
   cpf                   String?  @unique

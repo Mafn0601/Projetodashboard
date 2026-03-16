@@ -633,6 +633,7 @@ export const createTipoOSItemSchema = z.object({
 // ==================== EQUIPE ====================
 
 export const createEquipeSchema = z.object({
+  nome: z.string().min(2, 'Nome é obrigatório'),
   cpf: z.string().min(1, 'CPF é obrigatório').regex(/^\d{11}$/, 'CPF deve ter 11 dígitos'),
   funcao: z.string().min(3, 'Função é inválida'),
   email: z.string().email('Email inválido'),

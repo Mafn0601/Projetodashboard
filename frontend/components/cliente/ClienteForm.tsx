@@ -86,7 +86,7 @@ export default function ClienteForm({ onSaved, initial }: Props) {
     );
     const options: SelectOption[] = equipasFiltradas.map((e) => ({
       value: e.id,
-      label: e.login
+      label: e.nome || e.login
     }));
     setResponsavelOptions(options);
     if (parceiroId && !equipasFiltradas.find(e => e.id === responsavel)) {

@@ -3,6 +3,7 @@ const EQUIPES_CACHE_KEY = 'cache_api_equipes_v1';
 
 export interface EquipeAPI {
   id: string;
+  nome: string;
   login: string;
   cpf?: string;
   funcao: string;
@@ -28,6 +29,7 @@ export interface EquipeAPI {
 }
 
 interface CreateEquipeData {
+  nome: string;
   cpf?: string;
   funcao: string;
   telefone?: string;

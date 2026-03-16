@@ -227,7 +227,7 @@ export default function Page() {
     const equipasFiltradas = equipes.filter(e => e.parceiroId === parceiroId);
     setResponsavelOptions(equipasFiltradas.map(e => ({
       value: e.id,
-      label: e.login
+      label: e.nome || e.login
     })));
     setResponsavel('');
   };
@@ -572,6 +572,7 @@ export default function Page() {
       const parceiroNome = parceiroOptions.find(p => p.value === parceiro)?.label || parceiro;
       const responsavelNome =
         responsavelOptions.find(r => r.value === responsavel)?.label ||
+        equipes.find(e => e.id === responsavel)?.nome ||
         equipes.find(e => e.id === responsavel)?.login ||
         'Responsável não informado';
 

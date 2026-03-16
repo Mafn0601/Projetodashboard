@@ -41,10 +41,19 @@ class ParceiroServiceAPI {
     this.authToken = token;
   }
 
+  private resolveToken(): string | null {
+    if (this.authToken) return this.authToken;
+    if (typeof window === 'undefined') return null;
+
+    return sessionStorage.getItem('token') || localStorage.getItem('token');
+  }
+
   private getAuthHeaders(): Record<string, string> {
     const headers: Record<string, string> = {};
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`;
+    const token = this.resolveToken();
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
     return headers;
   }

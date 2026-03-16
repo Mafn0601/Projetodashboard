@@ -93,11 +93,33 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
   const [ultimoAgendamento, setUltimoAgendamento] = useState<any | null>(null);
   const [isLoadingAgendamento, setIsLoadingAgendamento] = useState(false);
 
+  const carregarUltimoAgendamento = async (clienteId?: string) => {
+    if (!clienteId) {
+      setUltimoAgendamento(null);
+      return;
+    }
+
+    setIsLoadingAgendamento(true);
+    try {
+      const agendamentos = await agendamentoServiceAPI.findAll({ clienteId, take: 30 });
+      const ordenados = [...(agendamentos || [])].sort((a, b) => {
+        const aTime = new Date(a.updatedAt || a.createdAt || a.dataAgendamento || 0).getTime();
+        const bTime = new Date(b.updatedAt || b.createdAt || b.dataAgendamento || 0).getTime();
+        return bTime - aTime;
+      });
+      setUltimoAgendamento(ordenados[0] || null);
+    } catch (agendamentoError) {
+      console.error('❌ Erro ao carregar agendamento:', agendamentoError);
+      setUltimoAgendamento(null);
+    } finally {
+      setIsLoadingAgendamento(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       const carregarDados = async () => {
         try {
-          // Carregar parceiros e equipes
           const [parceirosApi, equipesApi] = await Promise.all([
             parceiroServiceAPI.findAll({ preferCache: true }),
             equipeServiceAPI.findAll(undefined, undefined, { preferCache: true }),
@@ -109,27 +131,7 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
           const tiposOsCadastrados = readArray<TipoOS>('tiposOs');
           setTiposOs(tiposOsCadastrados);
 
-          // Carregar último agendamento
-          if (cliente?.id) {
-            setIsLoadingAgendamento(true);
-            console.log('📍 Carregando último agendamento do cliente:', cliente.id);
-            try {
-              const agendamentos = await agendamentoServiceAPI.findAll({ clienteId: cliente.id, take: 1 });
-              console.log('📍 Agendamentos retornados:', agendamentos);
-              if (agendamentos && agendamentos.length > 0) {
-                console.log('📍 Último agendamento carregado:', agendamentos[0]);
-                setUltimoAgendamento(agendamentos[0]);
-              } else {
-                console.log('⚠️ Nenhum agendamento encontrado para este cliente');
-                setUltimoAgendamento(null);
-              }
-            } catch (agendamentoError) {
-              console.error('❌ Erro ao carregar agendamento:', agendamentoError);
-              setUltimoAgendamento(null);
-            } finally {
-              setIsLoadingAgendamento(false);
-            }
-          }
+          await carregarUltimoAgendamento(cliente?.id);
         } catch (e) {
           console.error('❌ Erro ao carregar dados do cliente:', e);
           setUltimoAgendamento(null);
@@ -187,21 +189,22 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
   };
 
   const obterLabelResponsavel = (responsavelValor: unknown): string => {
-    // Prioridade 1: Se tem ultimoAgendamento com responsavel, usa esse
+    if (ultimoAgendamento?.responsavel?.nome) {
+      return ultimoAgendamento.responsavel.nome;
+    }
     if (ultimoAgendamento?.responsavel?.login) {
       return ultimoAgendamento.responsavel.login;
     }
 
-    // Prioridade 2: Se tem um valor direto no cliente
     const { id, nome } = extrairIdOuNome(responsavelValor);
     if (nome) return nome;
     if (id) {
       const equipe = equipes.find(e => e.id === id);
       if (equipe) {
-        return equipe.login || id;
+        return equipe.nome || equipe.login || id;
       }
     }
-    // Se for uma string simples (pode ser o login ou nome do responsável)
+
     if (typeof responsavelValor === 'string' && responsavelValor !== '-') {
       return responsavelValor;
     }
@@ -373,7 +376,7 @@ export default function ClienteDetailsModal({ isOpen, cliente, onClose }: Props)
           }}
           onSuccess={() => {
             setIsAgendaQuickOpen(false);
-            onClose();
+            void carregarUltimoAgendamento(cliente?.id);
           }}
           cliente={cliente}
         />

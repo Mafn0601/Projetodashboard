@@ -124,7 +124,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
             setEquipes(
               equipesAtivas.map((eq: EquipeAPI) => ({
                 id: eq.id,
-                nome: eq.login,
+                nome: eq.nome || eq.login,
                 login: eq.login,
                 parceiroId: eq.parceiroId,
                 ativo: eq.ativo,
@@ -487,12 +487,18 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       return;
     }
 
+    const responsavelNome =
+      responsavelOptionsFiltrados.find((opt) => opt.value === responsavel)?.label ||
+      equipes.find((equipeAtual) => equipeAtual.id === responsavel)?.nome ||
+      equipes.find((equipeAtual) => equipeAtual.id === responsavel)?.login ||
+      'Atendente';
+
     // Também salvar no localStorage para compatibilidade (para cada item)
     for (const tipoItem of tiposItens) {
       const novoAgendamento = addAgendamento({
         titulo,
         placa: cliente.placaChassi || cliente.placa || 'SEM-PLACA',
-        responsavel: responsavel || 'Atendente',
+        responsavel: responsavelNome,
         cliente: cliente.nome || cliente.nomeCliente || 'Cliente',
         telefone: cliente.telefone || '',
         tipo: `${tipoItem.tipoNome} - ${tipoItem.itemNome}`,
@@ -554,6 +560,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     setHorario('');
     setDuracao(60);
     setParceiroId('');
+    setResponsavel('');
     setBoxId('');
     traceAgendar('quick-modal:submit-success');
     
@@ -571,6 +578,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     setHorario('');
     setDuracao(60);
     setParceiroId('');
+    setResponsavel('');
     setBoxId('');
     onClose();
   };

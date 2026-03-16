@@ -118,6 +118,7 @@ class ParceiroServiceAPI {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
         },
         body: JSON.stringify(parceiro),
       });

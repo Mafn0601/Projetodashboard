@@ -156,7 +156,7 @@ class ParceiroServiceAPI {
     }
   }
 
-  async update(id: string, parceiro: UpdateParceiroData): Promise<ParceiroAPI> {
+  async update(id: string, parceiro: UpdateParceiroData): Promise<ParceiroAPI | null> {
     try {
       const response = await fetch(`${API_URL}/api/parceiros/${id}`, {
         method: 'PUT',
@@ -166,6 +166,10 @@ class ParceiroServiceAPI {
         },
         body: JSON.stringify(parceiro),
       });
+
+      if (response.status === 404) {
+        return null;
+      }
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
@@ -182,12 +186,16 @@ class ParceiroServiceAPI {
     }
   }
 
-  async delete(id: string): Promise<{ message: string }> {
+  async delete(id: string): Promise<{ message: string } | null> {
     try {
       const response = await fetch(`${API_URL}/api/parceiros/${id}`, {
         method: 'DELETE',
         headers: this.getAuthHeaders(),
       });
+
+      if (response.status === 404) {
+        return null;
+      }
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);

@@ -47,6 +47,36 @@ export default function Page() {
   const [crudVersion, setCrudVersion] = useState(0);
   const [isHydrating, setIsHydrating] = useState(true);
 
+  const syncParceirosFromAPI = async () => {
+    const parceirosAPI = await parceiroServiceAPI.findAll({ preferCache: true, forceRefresh: true });
+    const parceirosParaCrud = (parceirosAPI || []).map((p) => {
+      const enderecoPartes = String(p.endereco || '').split(' - ').map((parte) => parte.trim());
+      const grupo = enderecoPartes[0] || '';
+      const cidade = enderecoPartes[1] || '';
+      const estado = enderecoPartes[2] || '';
+
+      return {
+        id: p.id,
+        cnpj: p.cnpj || '',
+        nome: p.nome || '',
+        telefone: p.telefone || '',
+        email: p.email || '',
+        grupo,
+        cidade,
+        estado,
+        status: p.ativo ? 'ativo' : 'inativo',
+        cep: p.cep || '',
+        rua: p.rua || '',
+        numero: p.numero || '',
+        complemento: p.complemento || '',
+        bairro: p.bairro || '',
+      };
+    });
+
+    localStorage.setItem('parceiros', JSON.stringify(parceirosParaCrud));
+    setCrudVersion((prev) => prev + 1);
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -63,39 +93,7 @@ export default function Page() {
           return;
         }
 
-        const parceirosAPI = await parceiroServiceAPI.findAll({ preferCache: true, forceRefresh: true });
-        if (!Array.isArray(parceirosAPI) || parceirosAPI.length === 0) {
-          return;
-        }
-
-        const parceirosParaCrud = parceirosAPI.map((p) => {
-          const enderecoPartes = String(p.endereco || '').split(' - ').map((parte) => parte.trim());
-          const grupo = enderecoPartes[0] || '';
-          const cidade = enderecoPartes[1] || '';
-          const estado = enderecoPartes[2] || '';
-
-          return {
-            id: p.id,
-            cnpj: p.cnpj || '',
-            nome: p.nome || '',
-            telefone: p.telefone || '',
-            email: p.email || '',
-            grupo,
-            cidade,
-            estado,
-            status: p.ativo ? 'ativo' : 'inativo',
-            cep: p.cep || '',
-            rua: p.rua || '',
-            numero: p.numero || '',
-            complemento: p.complemento || '',
-            bairro: p.bairro || '',
-          };
-        });
-
-        localStorage.setItem('parceiros', JSON.stringify(parceirosParaCrud));
-        if (mounted) {
-          setCrudVersion((prev) => prev + 1);
-        }
+        await syncParceirosFromAPI();
       } catch (error) {
         console.error('Erro ao sincronizar parceiros para localStorage:', error);
       } finally {
@@ -185,6 +183,11 @@ export default function Page() {
       ativo: status !== 'inativo',
     });
 
+    if (!parceiroAtualizado) {
+      await syncParceirosFromAPI();
+      throw new Error('Este parceiro nao existe mais. A lista foi atualizada.');
+    }
+
     return {
       id: parceiroAtualizado.id,
       cnpj: parceiroAtualizado.cnpj || '',
@@ -204,7 +207,11 @@ export default function Page() {
   };
 
   const handleBeforeDeleteParceiro = async (id: string) => {
-    await parceiroServiceAPI.delete(id);
+    const result = await parceiroServiceAPI.delete(id);
+    if (!result) {
+      await syncParceirosFromAPI();
+      throw new Error('Este parceiro ja foi removido. A lista foi atualizada.');
+    }
   };
 
   const handleRowClick = (item: { id: string; nome?: unknown; [key: string]: unknown }) => {

@@ -134,25 +134,6 @@ export default function Page() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const carregarParceirosLegadoLocal = (): Parceiro[] => {
-    if (typeof window === 'undefined') return [];
-
-    try {
-      const raw = localStorage.getItem('parceiros');
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(parsed)) return [];
-
-      return parsed
-        .map((item: any) => ({
-          id: String(item?.id || ''),
-          nome: String(item?.nome || ''),
-        }))
-        .filter((item: Parceiro) => Boolean(item.id) && Boolean(item.nome));
-    } catch {
-      return [];
-    }
-  };
-
   const resolverParceiroId = (equipe: EquipeLike, parceirosLista: Parceiro[]): string => {
     if (equipe.parceiroId) return equipe.parceiroId;
 
@@ -196,8 +177,7 @@ export default function Page() {
         equipeServiceAPI.findAll(undefined, undefined, { preferCache: !forceRefresh, forceRefresh })
       ]);
 
-      const parceirosAPI = parceirosData as unknown as Parceiro[];
-      const parceirosNormalizados = parceirosAPI.length > 0 ? parceirosAPI : carregarParceirosLegadoLocal();
+      const parceirosNormalizados = parceirosData as unknown as Parceiro[];
       const equipesNormalizadas = (equipesData as unknown as EquipeLike[]).map((e) => normalizarEquipe(e, parceirosNormalizados));
 
       setParceiros(parceirosNormalizados);
@@ -205,11 +185,6 @@ export default function Page() {
       setEquipes(equipesNormalizadas);
     } catch (error) {
       console.warn('Erro ao carregar dados da API/cache da API:', error);
-      const legado = carregarParceirosLegadoLocal();
-      if (legado.length > 0) {
-        setParceiros(legado);
-        setParceiroOptions(legado.map(p => ({ value: p.id, label: p.nome })));
-      }
     } finally {
       if (!silent) {
         setIsLoading(false);
@@ -222,11 +197,9 @@ export default function Page() {
 
     const cachedParceiros = parceiroServiceAPI.getCached();
     const cachedEquipes = equipeServiceAPI.getCached();
-    const legadoParceiros = carregarParceirosLegadoLocal();
-    const parceirosBootstrap = cachedParceiros.length > 0 ? (cachedParceiros as unknown as Parceiro[]) : legadoParceiros;
 
-    if (parceirosBootstrap.length > 0 || cachedEquipes.length > 0) {
-      const parceirosNormalizados = parceirosBootstrap;
+    if (cachedParceiros.length > 0 || cachedEquipes.length > 0) {
+      const parceirosNormalizados = cachedParceiros as unknown as Parceiro[];
       const equipesNormalizadas = (cachedEquipes as unknown as EquipeLike[]).map((e) => normalizarEquipe(e, parceirosNormalizados));
 
       setParceiros(parceirosNormalizados);

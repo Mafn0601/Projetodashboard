@@ -144,8 +144,12 @@ class AgendamentoServiceAPI {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Erro ao criar agendamento: ${error.error}`);
+        const errorBody = await response.json().catch(() => null);
+        const message =
+          errorBody?.error ||
+          errorBody?.message ||
+          `Erro ao criar agendamento (HTTP ${response.status})`;
+        throw new Error(message);
       }
 
       const novoAgendamento = await response.json();
@@ -153,7 +157,7 @@ class AgendamentoServiceAPI {
       return novoAgendamento;
     } catch (error) {
       console.error('❌ Erro ao criar agendamento:', error);
-      return null;
+      throw error;
     }
   }
 

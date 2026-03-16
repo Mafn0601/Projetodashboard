@@ -11,6 +11,7 @@ import boxServiceAPI, { BoxAPI } from '@/services/boxServiceAPI';
 import { ClienteCompleto } from '@/services/clienteService';
 import { parceiroServiceAPI, ParceiroAPI } from '@/services/parceiroServiceAPI';
 import { equipeServiceAPI, EquipeAPI } from '@/services/equipeServiceAPI';
+import { clienteServiceAPI } from '@/services/clienteServiceAPI';
 import { addAgendamento, getAgendamentos } from '@/services/agendaService';
 import { agendamentoServiceAPI } from '@/services/agendamentoServiceAPI';
 import { readArray } from '@/lib/storage';
@@ -54,6 +55,11 @@ type AgendarTraceEntry = {
   step: string;
   details?: Record<string, unknown>;
 };
+
+function isUuid(value?: string): boolean {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
 
 function traceAgendar(step: string, details?: Record<string, unknown>) {
   if (typeof window === 'undefined') return;
@@ -449,6 +455,56 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     const ano = String(getBrasiliaYear()).slice(-2);
     const titulo = `${ano} ${fabricanteNome} - ${modeloNome}`;
 
+    let clienteIdApi = cliente.id;
+    if (!isUuid(clienteIdApi)) {
+      try {
+        const termoBusca =
+          String(cliente.cpfCnpj || '').trim() ||
+          String(cliente.email || cliente.emailCliente || '').trim() ||
+          String(cliente.nome || cliente.nomeCliente || '').trim();
+
+        if (!termoBusca) {
+          setErroValidacao('Cliente sem identificador válido para agendamento. Abra o cadastro do cliente e atualize os dados.');
+          traceAgendar('quick-modal:cliente-id-invalid', { clienteId: cliente.id });
+          return;
+        }
+
+        const candidatos = await clienteServiceAPI.findAll(
+          { search: termoBusca, take: 30 },
+          { preferCache: false, forceRefresh: true }
+        );
+
+        const candidatoExato = (candidatos || []).find((c) => {
+          if (!isUuid(c.id)) return false;
+          const cpfA = String(c.cpfCnpj || '').replace(/\D/g, '');
+          const cpfB = String(cliente.cpfCnpj || '').replace(/\D/g, '');
+          if (cpfA && cpfB && cpfA === cpfB) return true;
+
+          const emailA = String(c.email || c.emailCliente || '').trim().toLowerCase();
+          const emailB = String(cliente.email || cliente.emailCliente || '').trim().toLowerCase();
+          if (emailA && emailB && emailA === emailB) return true;
+
+          const nomeA = String(c.nome || c.nomeCliente || '').trim().toLowerCase();
+          const nomeB = String(cliente.nome || cliente.nomeCliente || '').trim().toLowerCase();
+          return Boolean(nomeA && nomeB && nomeA === nomeB);
+        });
+
+        if (!candidatoExato?.id) {
+          setErroValidacao('Cliente ainda não sincronizado com o backend para agendamento. Reabra o cliente e tente novamente.');
+          traceAgendar('quick-modal:cliente-id-unresolved', { clienteId: cliente.id, termoBusca });
+          return;
+        }
+
+        clienteIdApi = candidatoExato.id;
+      } catch (resolveError) {
+        setErroValidacao('Não foi possível validar o cliente para agendamento. Tente novamente em instantes.');
+        traceAgendar('quick-modal:cliente-id-resolve-error', {
+          message: resolveError instanceof Error ? resolveError.message : 'erro desconhecido',
+        });
+        return;
+      }
+    }
+
     try {
       // Salvar agendamentos na API para cada tipo/item selecionado
       const dataAgendamentoISO = buildBrasiliaDateTimeISOString(dataIso, `${horario}:00`);
@@ -456,7 +512,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       let sucessoAgendamentos = 0;
       for (const tipoItem of tiposItens) {
         const novoAgendamentoAPI = await agendamentoServiceAPI.create({
-          clienteId: cliente.id,
+          clienteId: clienteIdApi,
           parceiroId: parceiroId || undefined,
           responsavelId: responsavel,
           dataAgendamento: dataAgendamentoISO,

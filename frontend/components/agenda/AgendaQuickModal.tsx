@@ -89,7 +89,7 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
   const { user } = useAuth();
   const [tipoOs, setTipoOs] = useState('');
   const [item, setItem] = useState('');
-  const [tiposItens, setTiposItens] = useState<Array<{tipoId: string; tipoNome: string; itemId: string; itemNome: string; preco: number}>>([]);
+  const [tiposItens, setTiposItens] = useState<Array<{tipoId: string; tipoNome: string; itemId: string; itemNome: string; preco: number; duracao: number}>>([]);
   const [tipoTemporario, setTipoTemporario] = useState('');
   const [itemTemporario, setItemTemporario] = useState('');
   const [dataIso, setDataIso] = useState('');
@@ -402,15 +402,27 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       tipoNome: tipoSelecionado.nome,
       itemId: itemTemporario,
       itemNome: itemSelecionado.nome,
-      preco: itemSelecionado.preco
+      preco: itemSelecionado.preco,
+      duracao: Math.max(45, Math.min(itemSelecionado.duracao || 60, 120)),
     }]);
+
+    setTipoOs(tipoTemporario);
+    setItem(itemTemporario);
 
     setTipoTemporario('');
     setItemTemporario('');
   };
 
   const handleRemoverItem = (index: number) => {
-    setTiposItens(tiposItens.filter((_, i) => i !== index));
+    const proximosItens = tiposItens.filter((_, i) => i !== index);
+    setTiposItens(proximosItens);
+
+    const itemAtualRemovido = tiposItens[index];
+    if (itemAtualRemovido && itemAtualRemovido.tipoId === tipoOs && itemAtualRemovido.itemId === item) {
+      const proximoItemAtivo = proximosItens[0];
+      setTipoOs(proximoItemAtivo?.tipoId || '');
+      setItem(proximoItemAtivo?.itemId || '');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -442,10 +454,6 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
     const dataCompleta = toDdMmYyyyFromISODate(dataIso);
 
     // Buscar dados para submit
-    const tipoSelecionado = tiposOsList.find(t => t.id === tipoOs);
-    const itemSelecionado = tipoSelecionado?.itens.find(i => i.id === item);
-    const boxSelecionado = boxes.find(b => b.id === boxId);
-
     // Criar título do veículo
     const fabricanteObj = mockFabricantes.find(f => f.value === cliente.fabricante);
     const fabricanteNome = fabricanteObj?.label.toUpperCase() || 'VEÍCULO';
@@ -516,14 +524,22 @@ export default function AgendaQuickModal({ isOpen, onClose, onSuccess, cliente }
       
       let sucessoAgendamentos = 0;
       for (const tipoItem of tiposItens) {
+        const observacoes = boxId
+          ? `Box: ${boxes.find((boxAtual) => boxAtual.id === boxId)?.nome || boxId}`
+          : undefined;
+
         const novoAgendamentoAPI = await agendamentoServiceAPI.create({
           clienteId: clienteIdApi,
           parceiroId: parceiroId || undefined,
           responsavelId: responsavel,
           dataAgendamento: dataAgendamentoISO,
           horarioAgendamento: horario,
+          tipoOSId: tipoItem.tipoId,
+          itemOSId: tipoItem.itemId,
           tipoAgendamento: `${tipoItem.tipoNome} - ${tipoItem.itemNome}`,
           descricaoServico: `${titulo} - ${cliente.placaChassi || cliente.placa || 'SEM PLACA'}`,
+          observacoes,
+          duracao: tipoItem.duracao,
         });
 
         if (novoAgendamentoAPI) {

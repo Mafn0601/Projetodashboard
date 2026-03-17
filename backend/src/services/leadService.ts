@@ -30,6 +30,25 @@ function isUuid(value?: string): boolean {
 }
 
 export class LeadService {
+  private isMaxClientsInSessionModeError(error: unknown): boolean {
+    if (!(error instanceof Error)) return false;
+    return /MaxClientsInSessionMode|max clients reached/i.test(error.message);
+  }
+
+  private async withPrismaRetry<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      if (!this.isMaxClientsInSessionModeError(error)) {
+        throw error;
+      }
+
+      // Backoff curto para picos transitórios de conexão no pooler.
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      return operation();
+    }
+  }
+
   private buildWhere(filters?: LeadFilters): Prisma.LeadWhereInput {
     const where: Prisma.LeadWhereInput = {};
 
@@ -83,28 +102,30 @@ export class LeadService {
   async summary(filters?: LeadFilters) {
     const where = this.buildWhere(filters);
 
-    const [totalLeads, activeLeads, aggregate, statusCounts] = await Promise.all([
-      prisma.lead.count({ where }),
-      prisma.lead.count({
-        where: {
-          ...where,
-          status: { in: ACTIVE_LEAD_STATUSES },
-        },
-      }),
-      prisma.lead.aggregate({
-        where,
-        _avg: {
-          score: true,
-        },
-      }),
-      prisma.lead.groupBy({
-        by: ['status'],
-        where,
-        _count: {
-          _all: true,
-        },
-      }),
-    ]);
+    const [totalLeads, activeLeads, aggregate, statusCounts] = await this.withPrismaRetry(() =>
+      prisma.$transaction([
+        prisma.lead.count({ where }),
+        prisma.lead.count({
+          where: {
+            ...where,
+            status: { in: ACTIVE_LEAD_STATUSES },
+          },
+        }),
+        prisma.lead.aggregate({
+          where,
+          _avg: {
+            score: true,
+          },
+        }),
+        prisma.lead.groupBy({
+          by: ['status'],
+          where,
+          _count: {
+            _all: true,
+          },
+        }),
+      ])
+    );
 
     return {
       totalLeads,
@@ -135,35 +156,37 @@ export class LeadService {
       : 'createdAt';
     const orderByDirection = filters?.sortOrder === 'asc' ? 'asc' : 'desc';
 
-    const [leads, total] = await Promise.all([
-      prisma.lead.findMany({
-        where,
-        skip: safeSkip,
-        take: safeTake,
-        orderBy: {
-          [orderByField]: orderByDirection,
-        },
-        include: {
-          cliente: {
-            select: {
-              id: true,
-              nome: true,
-              email: true,
-              telefone: true,
+    const [leads, total] = await this.withPrismaRetry(() =>
+      prisma.$transaction([
+        prisma.lead.findMany({
+          where,
+          skip: safeSkip,
+          take: safeTake,
+          orderBy: {
+            [orderByField]: orderByDirection,
+          },
+          include: {
+            cliente: {
+              select: {
+                id: true,
+                nome: true,
+                email: true,
+                telefone: true,
+              },
+            },
+            responsavel: {
+              select: {
+                id: true,
+                nome: true,
+                login: true,
+                email: true,
+              },
             },
           },
-          responsavel: {
-            select: {
-              id: true,
-              nome: true,
-              login: true,
-              email: true,
-            },
-          },
-        },
-      }),
-      prisma.lead.count({ where }),
-    ]);
+        }),
+        prisma.lead.count({ where }),
+      ])
+    );
 
     return { leads, total };
   }

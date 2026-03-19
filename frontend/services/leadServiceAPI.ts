@@ -79,8 +79,45 @@ export interface CreateLeadPayload {
   responsavelId?: string;
 }
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
 class LeadServiceAPI {
   private authToken: string | null = null;
+  private cache = new Map<string, CacheEntry<unknown>>();
+  private readonly CACHE_TTL = 30_000; // 30 segundos
+
+  private cacheKey(prefix: string, filters: LeadListFilters): string {
+    return `${prefix}:${JSON.stringify(filters)}`;
+  }
+
+  private getFromCache<T>(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.timestamp > this.CACHE_TTL) {
+      this.cache.delete(key);
+      return null;
+    }
+    return entry.data as T;
+  }
+
+  private setInCache<T>(key: string, data: T): void {
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  clearLeadsCache(): void {
+    this.cache.clear();
+  }
+
+  getCachedFindAll(filters: LeadListFilters = {}): LeadListResponse | null {
+    return this.getFromCache<LeadListResponse>(this.cacheKey('findAll', filters));
+  }
+
+  getCachedSummary(filters: LeadListFilters = {}): LeadSummary | null {
+    return this.getFromCache<LeadSummary>(this.cacheKey('summary', filters));
+  }
 
   setAuthToken(token: string | null): void {
     this.authToken = token;
@@ -136,7 +173,9 @@ class LeadServiceAPI {
       headers: this.getHeaders(),
     });
 
-    return this.parseResponse<LeadListResponse>(response);
+    const data = await this.parseResponse<LeadListResponse>(response);
+    this.setInCache(this.cacheKey('findAll', filters), data);
+    return data;
   }
 
   async summary(filters: LeadListFilters = {}): Promise<LeadSummary> {
@@ -145,7 +184,9 @@ class LeadServiceAPI {
       headers: this.getHeaders(),
     });
 
-    return this.parseResponse<LeadSummary>(response);
+    const data = await this.parseResponse<LeadSummary>(response);
+    this.setInCache(this.cacheKey('summary', filters), data);
+    return data;
   }
 
   async create(payload: CreateLeadPayload): Promise<LeadAPI> {
@@ -155,7 +196,9 @@ class LeadServiceAPI {
       body: JSON.stringify(payload),
     });
 
-    return this.parseResponse<LeadAPI>(response);
+    const data = await this.parseResponse<LeadAPI>(response);
+    this.clearLeadsCache();
+    return data;
   }
 
   async update(id: string, payload: Partial<CreateLeadPayload>): Promise<LeadAPI> {
@@ -165,7 +208,9 @@ class LeadServiceAPI {
       body: JSON.stringify(payload),
     });
 
-    return this.parseResponse<LeadAPI>(response);
+    const data = await this.parseResponse<LeadAPI>(response);
+    this.clearLeadsCache();
+    return data;
   }
 
   async delete(id: string): Promise<{ message: string }> {
@@ -173,6 +218,8 @@ class LeadServiceAPI {
       method: 'DELETE',
       headers: this.getHeaders(),
     });
+
+    this.clearLeadsCache();
 
     // Treat 404 as an idempotent delete: the lead is already gone.
     if (response.status === 404) {

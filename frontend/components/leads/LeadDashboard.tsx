@@ -114,7 +114,7 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
     createdAfter: createdAfter || undefined,
     sortBy: 'createdAt' as const,
     sortOrder: 'desc' as const,
-    take: 100,
+    take: 50,
   }), [activeFilter, createdAfter, deferredSearch]);
 
   const statusSnapshot = useMemo(() => {
@@ -124,9 +124,21 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
     }, {});
   }, [summary.statusCounts]);
 
-  const loadDashboard = async () => {
-    try {
+  const loadDashboard = async (opts?: { silent?: boolean }) => {
+    // Stale-while-revalidate: mostra cache imediatamente sem loading bloqueante.
+    const cachedLeads = leadServiceAPI.getCachedFindAll(filters);
+    const cachedSummary = leadServiceAPI.getCachedSummary(filters);
+
+    if (cachedLeads && cachedSummary) {
+      startTransition(() => {
+        setLeads(cachedLeads.leads);
+        setSummary(cachedSummary);
+      });
+    } else if (!opts?.silent) {
       setLoading(true);
+    }
+
+    try {
       setError(null);
 
       const [leadResponse, summaryResponse] = await Promise.all([
@@ -140,7 +152,9 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
       });
     } catch (loadError) {
       console.error('❌ Erro ao carregar dashboard de leads:', loadError);
-      setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar dashboard');
+      if (!cachedLeads) {
+        setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar dashboard');
+      }
     } finally {
       setLoading(false);
     }
@@ -273,11 +287,14 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
   };
 
   const handleToggleSequence = async (lead: LeadAPI) => {
+    const updated: LeadAPI = { ...lead, emSequencia: !lead.emSequencia, ultimaInteracao: getBrasiliaNowISO() };
+    setLeads((prev) => prev.map((l) => (l.id === lead.id ? updated : l)));
+
     await leadServiceAPI.update(lead.id, {
       emSequencia: !lead.emSequencia,
       ultimaInteracao: getBrasiliaNowISO(),
     });
-    await loadDashboard();
+    void loadDashboard({ silent: true });
   };
 
   const openNotes = (lead: LeadAPI) => {
@@ -294,9 +311,16 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
         observacoes: noteDraft,
         ultimaInteracao: getBrasiliaNowISO(),
       });
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.id === selectedLead.id
+            ? { ...l, observacoes: noteDraft, ultimaInteracao: getBrasiliaNowISO() }
+            : l
+        )
+      );
       setSelectedLead(null);
       setNoteDraft('');
-      await loadDashboard();
+      void loadDashboard({ silent: true });
     } finally {
       setIsSavingNote(false);
     }
@@ -342,8 +366,17 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
         ultimaInteracao: getBrasiliaNowISO(),
       });
 
-      await Promise.all([
-        loadDashboard(),
+      // Atualiza estado local otimisticamente antes do reload silencioso
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.id === lead.id
+            ? { ...l, clienteId: novoCliente.id, status: 'CONVERTIDO' as LeadStatus, ultimaInteracao: getBrasiliaNowISO() }
+            : l
+        )
+      );
+
+      void Promise.all([
+        loadDashboard({ silent: true }),
         loadClientes({ silent: true, forceRefresh: true }),
       ]);
     } catch (error) {
@@ -360,11 +393,13 @@ export function LeadDashboard({ compact = false, hideCreateButton = false, openC
 
     try {
       setDeletingLeadId(lead.id);
+      setLeads((prev) => prev.filter((l) => l.id !== lead.id));
       await leadServiceAPI.delete(lead.id);
-      await loadDashboard();
+      void loadDashboard({ silent: true });
     } catch (error) {
       console.error('Erro ao excluir lead:', error);
       window.alert('Erro ao excluir lead.');
+      void loadDashboard();
     } finally {
       setDeletingLeadId(null);
     }
